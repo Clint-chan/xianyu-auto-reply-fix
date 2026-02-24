@@ -849,14 +849,14 @@ class XianyuLive:
         # 消息防抖管理器：用于处理用户连续发送消息的情况
         # {chat_id: {'task': asyncio.Task, 'last_message': dict, 'timer': float}}
         self.message_debounce_tasks = {}  # 存储每个chat_id的防抖任务
-        self.message_debounce_delay = 3  # 防抖延迟时间（秒）：用户停止发送消息1秒后才回复
+        self.message_debounce_delay = 2  # 防抖延迟时间（秒）：用户停止发送消息2秒后才回复（原3秒改为2秒，更快响应）
         self.message_debounce_lock = asyncio.Lock()  # 防抖任务管理的锁
         
         # 消息去重机制：防止同一条消息被处理多次
         self.processed_message_ids = {}  # 存储已处理的消息ID和时间戳 {message_id: timestamp}
         self.processed_message_ids_lock = asyncio.Lock()  # 消息ID去重的锁
         self.processed_message_ids_max_size = 10000  # 最大保存10000个消息ID，防止内存泄漏
-        self.message_expire_time = 3600  # 消息过期时间（秒），默认1小时后可以重复回复
+        self.message_expire_time = 300  # 消息过期时间（秒），默认5分钟后可以重复回复（原1小时太长）
 
         # 初始化订单状态处理器
         self._init_order_status_handler()
@@ -8229,6 +8229,7 @@ Cookie数量: {cookie_count}
         # 提取消息ID并检查是否已处理
         message_id = self._extract_message_id(message_data)
         # 如果没有 messageId，使用备用标识（chat_id + send_message + 时间戳）
+        # 如果没有 messageId，使用备用标识（增强唯一性）
         if not message_id:
             try:
                 # 尝试从消息数据中提取时间戳
@@ -8237,11 +8238,22 @@ Cookie数量: {cookie_count}
                     message_1 = message_data.get("1")
                     if isinstance(message_1, dict):
                         create_time = message_1.get("5", 0)
-                # 使用组合键作为备用标识
-                message_id = f"{chat_id}_{send_message}_{create_time}"
+                
+                # 如果时间戳为0，使用当前时间戳 + 随机数确保唯一性
+                if create_time == 0:
+                    create_time = int(time.time() * 1000)
+                    # 添加随机数避免同一秒内的消息冲突
+                    import random
+                    random_suffix = random.randint(1000, 9999)
+                    message_id = f"{chat_id}_{send_message[:50]}_{create_time}_{random_suffix}"
+                else:
+                    # 使用提取到的时间戳
+                    message_id = f"{chat_id}_{send_message[:50]}_{create_time}"
             except Exception:
-                # 如果提取失败，使用当前时间戳
-                message_id = f"{chat_id}_{send_message}_{int(time.time() * 1000)}"
+                # 如果提取失败，使用当前时间戳 + 随机数
+                import random
+                random_suffix = random.randint(1000, 9999)
+                message_id = f"{chat_id}_{send_message[:50]}_{int(time.time() * 1000)}_{random_suffix}"
         
         async with self.processed_message_ids_lock:
             current_time = time.time()
