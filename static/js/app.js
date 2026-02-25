@@ -6290,9 +6290,61 @@ async function updateCardWithImage(cardId, cardData, imageFile) {
 
 
 
-// 测试卡券（占位函数）
-function testCard(cardId) {
-    showToast('测试功能开发中...', 'info');
+// 测试卡券
+async function testCard(cardId) {
+    try {
+        showToast('正在测试卡券...', 'info');
+        const response = await fetchWithAuth(`/cards/${cardId}/test`, { method: 'POST' });
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(`测试失败: ${data.detail || '未知错误'}`, 'danger');
+            return;
+        }
+
+        // 构建结果展示
+        let title = data.success ? '测试成功' : '测试失败';
+        let icon = data.success ? 'check-circle-fill text-success' : 'x-circle-fill text-danger';
+        let contentHtml = `<pre style="white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;background:#f8f9fa;padding:12px;border-radius:6px;font-size:13px;">${escapeHtml(data.content || '(无内容)')}</pre>`;
+
+        if (data.type === 'api') {
+            contentHtml += `<small class="text-muted">HTTP Status: ${data.status_code || 'N/A'}</small>`;
+        } else if (data.type === 'data') {
+            contentHtml += `<small class="text-muted">剩余数据: ${data.remaining} 条</small>`;
+        }
+
+        // 用模态框展示
+        const modalHtml = `
+            <div class="modal fade" id="testCardResultModal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-${icon} me-2"></i>${title}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="mb-2"><strong>类型：</strong>${data.type || '未知'}</p>
+                    ${contentHtml}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+
+        // 移除旧的模态框
+        const oldModal = document.getElementById('testCardResultModal');
+        if (oldModal) oldModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('testCardResultModal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('测试卡券失败:', error);
+        showToast('测试卡券失败: ' + error.message, 'danger');
+    }
 }
 
 // 删除卡券

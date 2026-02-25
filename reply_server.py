@@ -5536,6 +5536,116 @@ def delete_card(card_id: int, current_user: Dict[str, Any] = Depends(get_current
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/cards/{card_id}/test")
+async def test_card(card_id: int, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """测试卡券 - 模拟调用API或获取内容，不实际发货"""
+    try:
+        from db_manager import db_manager
+        import json, aiohttp
+
+        card = db_manager.get_card_by_id(card_id)
+        if not card:
+            raise HTTPException(status_code=404, detail="卡券不存在")
+
+        card_type = card.get('type', '')
+
+        if card_type == 'text':
+            return {"success": True, "type": "text", "content": card.get('text_content', '')}
+
+        elif card_type == 'data':
+            # 预览批量数据的第一条，不消耗
+            data_content = card.get('data_content', '')
+            first_line = data_content.split('\n')[0].strip() if data_content else '(无数据)'
+            remaining = len([l for l in data_content.split('\n') if l.strip()]) if data_content else 0
+            return {"success": True, "type": "data", "content": f"[预览] {first_line}", "remaining": remaining}
+
+        elif card_type == 'image':
+            return {"success": True, "type": "image", "content": card.get('image_url', '')}
+
+        elif card_type == 'api':
+            api_config = card.get('api_config')
+            if not api_config:
+                raise HTTPException(status_code=400, detail="API配置为空")
+            if isinstance(api_config, str):
+                api_config = json.loads(api_config)
+
+            url = api_config.get('url', '')
+            method = api_config.get('method', 'GET').upper()
+            timeout_val = api_config.get('timeout', 10)
+            headers = api_config.get('headers', '{}')
+            params = api_config.get('params', '{}')
+            response_template = api_config.get('response_template', '')
+
+            if isinstance(headers, str):
+                headers = json.loads(headers)
+            if isinstance(params, str):
+                params = json.loads(params)
+
+            # 替换动态参数为测试值
+            import re
+            test_mapping = {
+                '{order_id}': 'TEST_ORDER_001',
+                '{item_id}': 'TEST_ITEM_001',
+                '{buyer_id}': 'TEST_BUYER_001',
+                '{cookie_id}': 'TEST',
+                '{spec_name}': '',
+                '{spec_value}': '',
+                '{order_quantity}': '1',
+                '{order_amount}': '10.00',
+                '{timestamp}': str(int(__import__('time').time())),
+            }
+            params_str = json.dumps(params, ensure_ascii=False)
+            for placeholder, value in test_mapping.items():
+                params_str = params_str.replace(placeholder, value)
+            params = json.loads(params_str)
+
+            timeout_obj = aiohttp.ClientTimeout(total=timeout_val)
+            async with aiohttp.ClientSession() as session:
+                if method == 'GET':
+                    async with session.get(url, headers=headers, params=params, timeout=timeout_obj) as resp:
+                        status_code = resp.status
+                        response_text = await resp.text()
+                else:
+                    async with session.post(url, headers=headers, json=params, timeout=timeout_obj) as resp:
+                        status_code = resp.status
+                        response_text = await resp.text()
+
+            if 200 <= status_code < 300:
+                try:
+                    result = json.loads(response_text)
+                    if response_template and isinstance(result, dict):
+                        # 使用响应模板格式化
+                        import re as re2
+                        def get_nested(data, path):
+                            keys = path.split('.')
+                            current = data
+                            for k in keys:
+                                if isinstance(current, dict):
+                                    current = current.get(k)
+                                elif isinstance(current, list):
+                                    try: current = current[int(k)]
+                                    except: return ''
+                                else: return ''
+                            return str(current) if current is not None else ''
+                        content = re2.sub(r'\{([a-zA-Z0-9_.]+)\}', lambda m: get_nested(result, m.group(1)), response_template)
+                    else:
+                        content = response_text
+                except Exception:
+                    content = response_text
+                return {"success": True, "type": "api", "content": content, "status_code": status_code, "raw": response_text[:500]}
+            else:
+                return {"success": False, "type": "api", "content": f"API返回错误: {status_code}", "raw": response_text[:500]}
+
+        else:
+            return {"success": False, "content": f"不支持测试的卡券类型: {card_type}"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"测试卡券异常: {e}")
+        raise HTTPException(status_code=500, detail=f"测试失败: {str(e)}")
+
+
 @app.delete("/delivery-rules/{rule_id}")
 def delete_delivery_rule(rule_id: int, current_user: Dict[str, Any] = Depends(get_current_user)):
     """删除发货规则"""
