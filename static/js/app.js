@@ -5586,12 +5586,14 @@ async function saveCard() {
             return;
         }
 
+        const responseTemplate = document.getElementById('apiResponseTemplate').value.trim();
         cardData.api_config = {
             url: document.getElementById('apiUrl').value,
             method: document.getElementById('apiMethod').value,
             timeout: parseInt(document.getElementById('apiTimeout').value),
             headers: headers,
-            params: params
+            params: params,
+            response_template: responseTemplate
         };
         break;
         case 'yifan_api':
@@ -5997,6 +5999,7 @@ async function editCard(cardId) {
         document.getElementById('editApiTimeout').value = card.api_config.timeout || 10;
         document.getElementById('editApiHeaders').value = card.api_config.headers || '{}';
         document.getElementById('editApiParams').value = card.api_config.params || '{}';
+        document.getElementById('editApiResponseTemplate').value = card.api_config.response_template || '';
         } else if (card.type === 'yifan_api' && card.api_config) {
         document.getElementById('editYifanUserId').value = card.api_config.user_id || '';
         document.getElementById('editYifanUserKey').value = card.api_config.user_key || '';
@@ -6171,12 +6174,14 @@ async function updateCard() {
             return;
         }
 
+        const editResponseTemplate = document.getElementById('editApiResponseTemplate').value.trim();
         cardData.api_config = {
             url: document.getElementById('editApiUrl').value,
             method: document.getElementById('editApiMethod').value,
             timeout: parseInt(document.getElementById('editApiTimeout').value),
             headers: headers,
-            params: params
+            params: params,
+            response_template: editResponseTemplate
         };
         break;
         case 'yifan_api':

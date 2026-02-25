@@ -3126,6 +3126,16 @@
                     </div>
                   </div>
                 </div>
+
+                <div class="mb-3">
+                  <label class="form-label">响应模板 (可选)</label>
+                  <textarea class="form-control" id="apiResponseTemplate" rows="5"
+                    placeholder="感谢购买！您的专属接口信息如下：&#10;API Key: {data.0.api_key}&#10;额度: {data.0.balance}美元&#10;有效期: {data.0.duration_months}个月"></textarea>
+                  <small class="form-text text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    用于格式化API的JSON响应。支持嵌套取值：<code>{data.0.api_key}</code> 表示取 data 数组第1个元素的 api_key 字段。留空则直接返回原始响应。
+                  </small>
+                </div>
               </div>
             </div>
 
@@ -3438,6 +3448,15 @@
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">响应模板 (可选)</label>
+                  <textarea class="form-control" id="editApiResponseTemplate" rows="5"></textarea>
+                  <small class="form-text text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    用于格式化API的JSON响应。支持嵌套取值：<code>{data.0.api_key}</code> 表示取 data 数组第1个元素的 api_key 字段。留空则直接返回原始响应。
+                  </small>
                 </div>
               </div>
             </div>

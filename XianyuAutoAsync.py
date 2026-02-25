@@ -5838,13 +5838,21 @@ Cookie数量: {cookie_count}
                 # 尝试解析JSON响应，如果失败则使用原始文本
                 try:
                     result = json.loads(response_text)
-                    # 如果返回的是对象，尝试提取常见的内容字段
-                    if isinstance(result, dict):
+
+                    # 检查是否有响应模板
+                    response_template = api_config.get('response_template', '').strip()
+                    if response_template and isinstance(result, dict):
+                        content = self._format_api_response(result, response_template)
+                    elif isinstance(result, dict):
                         content = result.get('data') or result.get('content') or result.get('card') or str(result)
                     else:
                         content = str(result)
                 except Exception:
                     content = response_text
+
+                # 确保content是字符串
+                if not isinstance(content, str):
+                    content = json.dumps(content, ensure_ascii=False)
 
                 logger.info(f"API调用成功，返回内容长度: {len(content)}")
                 return content
@@ -5877,6 +5885,41 @@ Cookie数量: {cookie_count}
         except Exception as e:
             logger.error(f"API调用异常: {self._safe_str(e)}")
             return None
+
+    def _format_api_response(self, result: dict, template: str) -> str:
+        """使用响应模板格式化API返回数据
+
+        支持变量格式：
+        - {key} 直接取顶层字段
+        - {data.0.key} 取嵌套字段（data数组第0个元素的key）
+        """
+        import re
+
+        def get_nested_value(data, path):
+            """根据点号路径取嵌套值，如 data.0.api_key"""
+            keys = path.split('.')
+            current = data
+            for k in keys:
+                if current is None:
+                    return ''
+                if isinstance(current, dict):
+                    current = current.get(k)
+                elif isinstance(current, list):
+                    try:
+                        current = current[int(k)]
+                    except (ValueError, IndexError):
+                        return ''
+                else:
+                    return ''
+            return str(current) if current is not None else ''
+
+        # 查找所有 {xxx} 占位符并替换
+        def replacer(match):
+            path = match.group(1)
+            return get_nested_value(result, path)
+
+        formatted = re.sub(r'\{([a-zA-Z0-9_.]+)\}', replacer, template)
+        return formatted
 
     async def _get_yifan_api_card_content(self, rule, order_id=None, item_id=None, buyer_id=None, chat_id=None):
         """调用亦凡卡劵API获取内容"""
