@@ -3684,9 +3684,16 @@
         <div class="modal-body">
           <form id="addDeliveryRuleForm">
             <div class="mb-3">
-              <label class="form-label">商品关键字 <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="productKeyword" placeholder="例如：游戏点卡、会员卡等" required>
-              <small class="form-text text-muted">当商品标题包含此关键字时触发自动发货</small>
+              <label class="form-label">绑定商品（多选）</label>
+              <div id="ruleItemsContainer" style="max-height:200px;overflow-y:auto;border:1px solid #dee2e6;border-radius:6px;padding:8px;">
+                <small class="text-muted">加载中...</small>
+              </div>
+              <small class="form-text text-muted">勾选要应用此规则的商品，精确匹配不会误触其他商品</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">备用关键字</label>
+              <input type="text" class="form-control" id="productKeyword" placeholder="可选，未绑定商品时按关键字匹配">
+              <small class="form-text text-muted">未选择商品时使用关键字兜底匹配</small>
             </div>
             <div class="mb-3">
               <label class="form-label">匹配卡券 <span class="text-danger">*</span></label>
@@ -3694,7 +3701,6 @@
                 <option value="">请选择卡券</option>
               </select>
             </div>
-            <!-- 隐藏发货数量字段，默认为1 -->
             <input type="hidden" id="deliveryCount" value="1">
             <div class="mb-3">
               <div class="form-check">
@@ -3733,9 +3739,16 @@
           <form id="editDeliveryRuleForm">
             <input type="hidden" id="editRuleId">
             <div class="mb-3">
-              <label class="form-label">商品关键字 <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="editProductKeyword" required>
-              <small class="form-text text-muted">当商品标题包含此关键字时触发自动发货</small>
+              <label class="form-label">绑定商品（多选）</label>
+              <div id="editRuleItemsContainer" style="max-height:200px;overflow-y:auto;border:1px solid #dee2e6;border-radius:6px;padding:8px;">
+                <small class="text-muted">加载中...</small>
+              </div>
+              <small class="form-text text-muted">勾选要应用此规则的商品</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">备用关键字</label>
+              <input type="text" class="form-control" id="editProductKeyword">
+              <small class="form-text text-muted">未选择商品时使用关键字兜底匹配</small>
             </div>
             <div class="mb-3">
               <label class="form-label">匹配卡券 <span class="text-danger">*</span></label>
@@ -3743,7 +3756,6 @@
                 <option value="">请选择卡券</option>
               </select>
             </div>
-            <!-- 隐藏发货数量字段，默认为1 -->
             <input type="hidden" id="editDeliveryCount" value="1">
             <div class="mb-3">
               <div class="form-check">

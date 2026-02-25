@@ -5541,11 +5541,18 @@ Cookie数量: {cookie_count}
                 except Exception as e:
                     logger.error(f"获取订单规格信息失败: {self._safe_str(e)}，将使用兜底匹配")
 
-            # 智能匹配发货规则：优先精确匹配，然后兜底匹配
+            # 智能匹配发货规则：商品ID > 多规格 > 关键词兜底
             delivery_rules = []
 
+            # 第零步：优先按商品ID精确匹配
+            if item_id:
+                logger.info(f"尝试按商品ID精确匹配发货规则: {item_id}")
+                delivery_rules = db_manager.get_delivery_rules_by_item_id(item_id, user_id=self.user_id)
+                if delivery_rules:
+                    logger.info(f"✅ 按商品ID找到发货规则: {len(delivery_rules)}个")
+
             # 第一步：如果有规格信息，尝试精确匹配多规格发货规则
-            if spec_name and spec_value:
+            if not delivery_rules and spec_name and spec_value:
                 if spec_name_2 and spec_value_2:
                     logger.info(f"尝试精确匹配双规格发货规则: {search_text[:50]}... [{spec_name}:{spec_value}, {spec_name_2}:{spec_value_2}]")
                 else:
@@ -5704,7 +5711,7 @@ Cookie数量: {cookie_count}
                 # 根据卡券类型处理发货内容
                 if rule['card_type'] == 'api':
                     # API类型：调用API获取内容，传入订单和商品信息用于动态参数替换
-                    delivery_content = await self._get_api_card_content(rule, order_id, item_id, send_user_id, spec_name, spec_value)
+                    delivery_content = await self._get_api_card_content(rule, order_id, item_id, send_user_id, spec_name, spec_value, send_user_name)
 
                 elif rule['card_type'] == 'yifan_api':
                     # 亦凡卡劵API类型：调用亦凡API获取内容
@@ -5772,7 +5779,7 @@ Cookie数量: {cookie_count}
             # 出错时返回原始发货内容
             return delivery_content
 
-    async def _get_api_card_content(self, rule, order_id=None, item_id=None, buyer_id=None, spec_name=None, spec_value=None, retry_count=0):
+    async def _get_api_card_content(self, rule, order_id=None, item_id=None, buyer_id=None, spec_name=None, spec_value=None, send_user_name=None, retry_count=0):
         """调用API获取卡券内容，支持动态参数替换和重试机制"""
         max_retries = 4
 
@@ -5808,7 +5815,7 @@ Cookie数量: {cookie_count}
 
             # 如果是POST请求且有动态参数，进行参数替换
             if method == 'POST' and params:
-                params = await self._replace_api_dynamic_params(params, order_id, item_id, buyer_id, spec_name, spec_value)
+                params = await self._replace_api_dynamic_params(params, order_id, item_id, buyer_id, spec_name, spec_value, send_user_name)
 
             retry_info = f" (重试 {retry_count + 1}/{max_retries})" if retry_count > 0 else ""
             logger.info(f"调用API获取卡券: {method} {url}{retry_info}")
@@ -5865,7 +5872,7 @@ Cookie数量: {cookie_count}
                         wait_time = (retry_count + 1) * 2  # 递增等待时间: 2s, 4s, 6s
                         logger.info(f"等待 {wait_time} 秒后重试...")
                         await asyncio.sleep(wait_time)
-                        return await self._get_api_card_content(rule, order_id, item_id, buyer_id, spec_name, spec_value, retry_count + 1)
+                        return await self._get_api_card_content(rule, order_id, item_id, buyer_id, spec_name, spec_value, send_user_name, retry_count + 1)
 
                 return None
 
@@ -5877,7 +5884,7 @@ Cookie数量: {cookie_count}
                 wait_time = (retry_count + 1) * 2  # 递增等待时间
                 logger.info(f"等待 {wait_time} 秒后重试...")
                 await asyncio.sleep(wait_time)
-                return await self._get_api_card_content(rule, order_id, item_id, buyer_id, spec_name, spec_value, retry_count + 1)
+                return await self._get_api_card_content(rule, order_id, item_id, buyer_id, spec_name, spec_value, send_user_name, retry_count + 1)
             else:
                 logger.error(f"API调用网络异常，已达到最大重试次数: {self._safe_str(e)}")
                 return None
@@ -6225,7 +6232,7 @@ Cookie数量: {cookie_count}
             logger.error(f"询问充值账号异常: {self._safe_str(e)}")
             return None
 
-    async def _replace_api_dynamic_params(self, params, order_id=None, item_id=None, buyer_id=None, spec_name=None, spec_value=None):
+    async def _replace_api_dynamic_params(self, params, order_id=None, item_id=None, buyer_id=None, spec_name=None, spec_value=None, send_user_name=None):
         """替换API请求参数中的动态参数"""
         try:
             if not params or not isinstance(params, dict):
@@ -6271,6 +6278,8 @@ Cookie数量: {cookie_count}
                 'order_id': order_id or '',
                 'item_id': item_id or '',
                 'buyer_id': buyer_id or '',
+                'buyer_name': send_user_name or '',
+                'send_user_name': send_user_name or '',
                 'cookie_id': self.cookie_id or '',
                 'spec_name': spec_name or '',
                 'spec_value': spec_value or '',

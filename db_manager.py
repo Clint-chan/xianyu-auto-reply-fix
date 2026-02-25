@@ -597,6 +597,16 @@ Cookie数量: {cookie_count}
             if 'remark' not in cookie_columns:
                 logger.info("添加cookies表的remark列...")
                 cursor.execute("ALTER TABLE cookies ADD COLUMN remark TEXT DEFAULT ''")
+
+            # 检查ai_reply_settings表是否存在anthropic相关列
+            cursor.execute("PRAGMA table_info(ai_reply_settings)")
+            ai_settings_columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'anthropic_api_key' not in ai_settings_columns:
+                logger.info("添加ai_reply_settings表的anthropic支持列...")
+                cursor.execute("ALTER TABLE ai_reply_settings ADD COLUMN anthropic_api_key TEXT DEFAULT ''")
+                cursor.execute("ALTER TABLE ai_reply_settings ADD COLUMN anthropic_base_url TEXT DEFAULT 'https://api.anthropic.com'")
+                logger.info("数据库迁移完成：添加anthropic支持列")
                 logger.info("数据库迁移完成：添加remark列")
 
             # 检查cookies表是否存在pause_duration列
@@ -904,6 +914,13 @@ Cookie数量: {cookie_count}
                     self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN last_delivery_date DATE")
                     self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN today_delivery_times INTEGER DEFAULT 0")
                     logger.info("已添加 last_delivery_date 和 today_delivery_times 字段到 delivery_rules 表")
+
+                # 为delivery_rules表添加item_ids字段（如果不存在）
+                try:
+                    self._execute_sql(cursor, "SELECT item_ids FROM delivery_rules LIMIT 1")
+                except sqlite3.OperationalError:
+                    self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN item_ids TEXT")
+                    logger.info("已添加 item_ids 字段到 delivery_rules 表")
 
                 # 为notification_channels表添加user_id字段（如果不存在）
                 try:
@@ -2424,8 +2441,8 @@ Cookie数量: {cookie_count}
                 INSERT OR REPLACE INTO ai_reply_settings
                 (cookie_id, ai_enabled, model_name, api_key, base_url,
                  max_discount_percent, max_discount_amount, max_bargain_rounds,
-                 custom_prompts, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 custom_prompts, anthropic_api_key, anthropic_base_url, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ''', (
                     cookie_id,
                     settings.get('ai_enabled', False),
@@ -2435,7 +2452,9 @@ Cookie数量: {cookie_count}
                     settings.get('max_discount_percent', 10),
                     settings.get('max_discount_amount', 100),
                     settings.get('max_bargain_rounds', 3),
-                    settings.get('custom_prompts', '')
+                    settings.get('custom_prompts', ''),
+                    settings.get('anthropic_api_key', ''),
+                    settings.get('anthropic_base_url', 'https://api.anthropic.com')
                 ))
                 self.conn.commit()
                 logger.debug(f"AI回复设置保存成功: {cookie_id}")
@@ -2453,7 +2472,7 @@ Cookie数量: {cookie_count}
                 cursor.execute('''
                 SELECT ai_enabled, model_name, api_key, base_url,
                        max_discount_percent, max_discount_amount, max_bargain_rounds,
-                       custom_prompts
+                       custom_prompts, anthropic_api_key, anthropic_base_url
                 FROM ai_reply_settings WHERE cookie_id = ?
                 ''', (cookie_id,))
 
@@ -2467,7 +2486,9 @@ Cookie数量: {cookie_count}
                         'max_discount_percent': result[4],
                         'max_discount_amount': result[5],
                         'max_bargain_rounds': result[6],
-                        'custom_prompts': result[7]
+                        'custom_prompts': result[7],
+                        'anthropic_api_key': result[8] if len(result) > 8 else '',
+                        'anthropic_base_url': result[9] if len(result) > 9 else 'https://api.anthropic.com'
                     }
                 else:
                     # 返回默认设置
@@ -2479,7 +2500,9 @@ Cookie数量: {cookie_count}
                         'max_discount_percent': 10,
                         'max_discount_amount': 100,
                         'max_bargain_rounds': 3,
-                        'custom_prompts': ''
+                        'custom_prompts': '',
+                        'anthropic_api_key': '',
+                        'anthropic_base_url': 'https://api.anthropic.com'
                     }
             except Exception as e:
                 logger.error(f"获取AI回复设置失败: {e}")
@@ -2491,7 +2514,9 @@ Cookie数量: {cookie_count}
                     'max_discount_percent': 10,
                     'max_discount_amount': 100,
                     'max_bargain_rounds': 3,
-                    'custom_prompts': ''
+                    'custom_prompts': '',
+                    'anthropic_api_key': '',
+                    'anthropic_base_url': 'https://api.anthropic.com'
                 }
 
     def get_all_ai_reply_settings(self) -> Dict[str, dict]:
@@ -2502,10 +2527,9 @@ Cookie数量: {cookie_count}
                 cursor.execute('''
                 SELECT cookie_id, ai_enabled, model_name, api_key, base_url,
                        max_discount_percent, max_discount_amount, max_bargain_rounds,
-                       custom_prompts
+                       custom_prompts, anthropic_api_key, anthropic_base_url
                 FROM ai_reply_settings
                 ''')
-
                 result = {}
                 for row in cursor.fetchall():
                     cookie_id = row[0]
@@ -2517,7 +2541,9 @@ Cookie数量: {cookie_count}
                         'max_discount_percent': row[5],
                         'max_discount_amount': row[6],
                         'max_bargain_rounds': row[7],
-                        'custom_prompts': row[8]
+                        'custom_prompts': row[8],
+                        'anthropic_api_key': row[9] if len(row) > 9 else '',
+                        'anthropic_base_url': row[10] if len(row) > 10 else 'https://api.anthropic.com'
                     }
 
                 return result
@@ -4085,15 +4111,16 @@ Cookie数量: {cookie_count}
     # ==================== 自动发货规则方法 ====================
 
     def create_delivery_rule(self, keyword: str, card_id: int, delivery_count: int = 1,
-                           enabled: bool = True, description: str = None, user_id: int = None):
+                           enabled: bool = True, description: str = None, user_id: int = None,
+                           item_ids: str = None):
         """创建发货规则"""
         with self.lock:
             try:
                 cursor = self.conn.cursor()
                 cursor.execute('''
-                INSERT INTO delivery_rules (keyword, card_id, delivery_count, enabled, description, user_id)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ''', (keyword, card_id, delivery_count, enabled, description, user_id))
+                INSERT INTO delivery_rules (keyword, card_id, delivery_count, enabled, description, user_id, item_ids)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (keyword, card_id, delivery_count, enabled, description, user_id, item_ids))
                 self.conn.commit()
                 rule_id = cursor.lastrowid
                 logger.info(f"创建发货规则成功: {keyword} -> 卡券ID {card_id} (规则ID: {rule_id})")
@@ -4155,6 +4182,66 @@ Cookie数量: {cookie_count}
                 return rules
             except Exception as e:
                 logger.error(f"获取发货规则列表失败: {e}")
+                return []
+
+    def get_delivery_rules_by_item_id(self, item_id: str, user_id: int = None):
+        """根据商品ID精确匹配发货规则（优先于关键词匹配）"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                if user_id:
+                    cursor.execute('''
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.item_ids,
+                           c.name as card_name, c.type as card_type, c.api_config,
+                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled,
+                           c.description as card_description,
+                           c.delay_seconds as card_delay_seconds
+                    FROM delivery_rules dr
+                    LEFT JOIN cards c ON dr.card_id = c.id
+                    WHERE dr.enabled = 1 AND c.enabled = 1 AND dr.user_id = ?
+                    AND dr.item_ids IS NOT NULL AND dr.item_ids != ''
+                    ORDER BY dr.delivery_times ASC, dr.id ASC
+                    ''', (user_id,))
+                else:
+                    cursor.execute('''
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.item_ids,
+                           c.name as card_name, c.type as card_type, c.api_config,
+                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled,
+                           c.description as card_description,
+                           c.delay_seconds as card_delay_seconds
+                    FROM delivery_rules dr
+                    LEFT JOIN cards c ON dr.card_id = c.id
+                    WHERE dr.enabled = 1 AND c.enabled = 1
+                    AND dr.item_ids IS NOT NULL AND dr.item_ids != ''
+                    ORDER BY dr.delivery_times ASC, dr.id ASC
+                    ''')
+
+                import json
+                rules = []
+                for row in cursor.fetchall():
+                    item_ids_str = row[7] or ''
+                    try:
+                        item_ids_list = json.loads(item_ids_str) if item_ids_str else []
+                    except (json.JSONDecodeError, TypeError):
+                        item_ids_list = []
+
+                    if item_id in item_ids_list:
+                        rules.append({
+                            'id': row[0], 'keyword': row[1], 'card_id': row[2],
+                            'delivery_count': row[3], 'enabled': row[4],
+                            'description': row[5], 'delivery_times': row[6],
+                            'item_ids': item_ids_str,
+                            'card_name': row[8], 'card_type': row[9],
+                            'api_config': row[10], 'text_content': row[11],
+                            'data_content': row[12], 'image_url': row[13],
+                            'card_enabled': row[14], 'card_description': row[15],
+                            'card_delay_seconds': row[16]
+                        })
+                return rules
+            except Exception as e:
+                logger.error(f"根据商品ID获取发货规则失败: {e}")
                 return []
 
     def get_delivery_rules_by_keyword(self, keyword: str, user_id: int = None):
@@ -4252,7 +4339,7 @@ Cookie数量: {cookie_count}
                            dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
                            c.name as card_name, c.type as card_type,
                            c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2
+                           c.spec_name_2, c.spec_value_2, dr.item_ids
                     FROM delivery_rules dr
                     LEFT JOIN cards c ON dr.card_id = c.id
                     WHERE dr.id = ? AND dr.user_id = ?
@@ -4263,7 +4350,7 @@ Cookie数量: {cookie_count}
                            dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
                            c.name as card_name, c.type as card_type,
                            c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2
+                           c.spec_name_2, c.spec_value_2, dr.item_ids
                     FROM delivery_rules dr
                     LEFT JOIN cards c ON dr.card_id = c.id
                     WHERE dr.id = ?
@@ -4287,7 +4374,8 @@ Cookie数量: {cookie_count}
                         'spec_name': row[12],
                         'spec_value': row[13],
                         'spec_name_2': row[14],
-                        'spec_value_2': row[15]
+                        'spec_value_2': row[15],
+                        'item_ids': row[16]
                     }
                 return None
             except Exception as e:
@@ -4296,7 +4384,8 @@ Cookie数量: {cookie_count}
 
     def update_delivery_rule(self, rule_id: int, keyword: str = None, card_id: int = None,
                            delivery_count: int = None, enabled: bool = None,
-                           description: str = None, user_id: int = None):
+                           description: str = None, user_id: int = None,
+                           item_ids: str = None):
         """更新发货规则（支持用户隔离）"""
         with self.lock:
             try:
@@ -4321,6 +4410,9 @@ Cookie数量: {cookie_count}
                 if description is not None:
                     update_fields.append("description = ?")
                     params.append(description)
+                if item_ids is not None:
+                    update_fields.append("item_ids = ?")
+                    params.append(item_ids)
 
                 if not update_fields:
                     return True  # 没有需要更新的字段

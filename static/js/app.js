@@ -5843,9 +5843,44 @@ async function refreshTodayDeliveryCount() {
 // 显示添加发货规则模态框
 function showAddDeliveryRuleModal() {
     document.getElementById('addDeliveryRuleForm').reset();
-    loadCardsForSelect(); // 加载卡券选项
+    loadCardsForSelect();
+    loadItemsForRuleSelect('ruleItemsContainer');
     const modal = new bootstrap.Modal(document.getElementById('addDeliveryRuleModal'));
     modal.show();
+}
+
+// 加载商品列表用于发货规则多选
+async function loadItemsForRuleSelect(containerId, selectedIds = []) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '<small class="text-muted">加载中...</small>';
+    try {
+        const response = await fetchWithAuth('/items');
+        if (!response.ok) throw new Error('加载失败');
+        const data = await response.json();
+        const items = data.items || data || [];
+
+        if (items.length === 0) {
+            container.innerHTML = '<small class="text-muted">暂无商品数据，请先让系统接收到消息后自动录入商品</small>';
+            return;
+        }
+
+        let html = '';
+        items.forEach(item => {
+            const checked = selectedIds.includes(item.item_id) ? 'checked' : '';
+            const price = item.item_price ? ` - ¥${item.item_price}` : '';
+            const title = item.item_title || item.item_id;
+            html += `<div class="form-check mb-1">
+                <input class="form-check-input rule-item-check" type="checkbox" value="${item.item_id}" id="${containerId}_${item.item_id}" ${checked}>
+                <label class="form-check-label small" for="${containerId}_${item.item_id}" title="ID: ${item.item_id}">
+                    ${escapeHtml(title)}${price}
+                </label>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('加载商品列表失败:', error);
+        container.innerHTML = '<small class="text-danger">加载商品列表失败</small>';
+    }
 }
 
 // 加载卡券列表用于下拉选择
@@ -5920,17 +5955,26 @@ async function saveDeliveryRule() {
     const enabled = document.getElementById('ruleEnabled').checked;
     const description = document.getElementById('ruleDescription').value;
 
-    if (!keyword || !cardId) {
-        showToast('请填写必填字段', 'warning');
+    // 收集选中的商品ID
+    const checkedItems = document.querySelectorAll('#ruleItemsContainer .rule-item-check:checked');
+    const itemIds = Array.from(checkedItems).map(cb => cb.value);
+
+    if (!cardId) {
+        showToast('请选择卡券', 'warning');
+        return;
+    }
+    if (itemIds.length === 0 && !keyword) {
+        showToast('请至少选择商品或填写关键字', 'warning');
         return;
     }
 
     const ruleData = {
-        keyword: keyword,
+        keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
         card_id: parseInt(cardId),
         delivery_count: parseInt(deliveryCount),
         enabled: enabled,
-        description: description
+        description: description,
+        item_ids: JSON.stringify(itemIds)
     };
 
     const response = await fetch(`${apiBase}/delivery-rules`, {
@@ -6387,10 +6431,15 @@ async function editDeliveryRule(ruleId) {
 
         // 填充编辑表单
         document.getElementById('editRuleId').value = rule.id;
-        document.getElementById('editProductKeyword').value = rule.keyword;
+        document.getElementById('editProductKeyword').value = rule.keyword === '(商品绑定)' ? '' : (rule.keyword || '');
         document.getElementById('editDeliveryCount').value = rule.delivery_count || 1;
         document.getElementById('editRuleEnabled').checked = rule.enabled;
         document.getElementById('editRuleDescription').value = rule.description || '';
+
+        // 解析已绑定的商品ID
+        let selectedItemIds = [];
+        try { selectedItemIds = rule.item_ids ? JSON.parse(rule.item_ids) : []; } catch(e) {}
+        await loadItemsForRuleSelect('editRuleItemsContainer', selectedItemIds);
 
         // 加载卡券选项并设置当前选中的卡券
         await loadCardsForEditSelect();
@@ -6481,17 +6530,26 @@ async function updateDeliveryRule() {
     const enabled = document.getElementById('editRuleEnabled').checked;
     const description = document.getElementById('editRuleDescription').value;
 
-    if (!keyword || !cardId) {
-        showToast('请填写必填字段', 'warning');
+    // 收集选中的商品ID
+    const checkedItems = document.querySelectorAll('#editRuleItemsContainer .rule-item-check:checked');
+    const itemIds = Array.from(checkedItems).map(cb => cb.value);
+
+    if (!cardId) {
+        showToast('请选择卡券', 'warning');
+        return;
+    }
+    if (itemIds.length === 0 && !keyword) {
+        showToast('请至少选择商品或填写关键字', 'warning');
         return;
     }
 
     const ruleData = {
-        keyword: keyword,
+        keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
         card_id: parseInt(cardId),
         delivery_count: parseInt(deliveryCount),
         enabled: enabled,
-        description: description
+        description: description,
+        item_ids: JSON.stringify(itemIds)
     };
 
     const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
