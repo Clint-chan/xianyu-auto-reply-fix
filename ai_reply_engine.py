@@ -80,6 +80,80 @@ class AIReplyEngine:
         model_name = settings.get('model_name', '').lower()
         return 'gemini' in model_name
     
+    def _is_anthropic_api(self, settings: dict) -> bool:
+        """判断是否为Anthropic API（模型名含claude或配置了anthropic_api_key）"""
+        model_name = settings.get('model_name', '').lower()
+        anthropic_key = settings.get('anthropic_api_key', '')
+        return 'claude' in model_name or bool(anthropic_key and anthropic_key.strip())
+    
+    def _call_anthropic_api(self, settings: dict, messages: list, max_tokens: int = 100, temperature: float = 0.7) -> str:
+        """
+        调用Anthropic Claude API
+        """
+        api_key = settings.get('anthropic_api_key') or settings.get('api_key')
+        model_name = settings.get('model_name', 'claude-3-5-sonnet-20241022')
+
+        # 确定base_url：优先使用anthropic_base_url，否则回退到通用base_url
+        anthropic_base = settings.get('anthropic_base_url', '')
+        if anthropic_base and anthropic_base.strip() and anthropic_base != 'https://api.anthropic.com':
+            base_url = anthropic_base.rstrip('/')
+        elif settings.get('base_url', ''):
+            # 使用通用base_url，去掉/v1后缀（Anthropic API自己拼接/v1/messages）
+            base_url = settings['base_url'].rstrip('/')
+            if base_url.endswith('/v1'):
+                base_url = base_url[:-3].rstrip('/')
+        else:
+            base_url = 'https://api.anthropic.com'
+
+        url = f"{base_url}/v1/messages"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01"
+        }
+        
+        # 转换消息格式
+        system_content = ""
+        anthropic_messages = []
+        
+        for msg in messages:
+            if msg['role'] == 'system':
+                system_content = msg['content']
+            else:
+                anthropic_messages.append({
+                    "role": msg['role'],
+                    "content": msg['content']
+                })
+        
+        payload = {
+            "model": model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": anthropic_messages
+        }
+        
+        if system_content:
+            payload["system"] = system_content
+        
+        logger.info(f"Calling Anthropic API: {url}")
+        logger.debug(f"Anthropic Payload: {json.dumps(payload, ensure_ascii=False)}")
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        
+        if response.status_code != 200:
+            logger.error(f"Anthropic API 请求失败: {response.status_code} - {response.text}")
+            raise Exception(f"Anthropic API 请求失败: {response.status_code} - {response.text}")
+        
+        result = response.json()
+        logger.debug(f"Anthropic API 响应: {json.dumps(result, ensure_ascii=False)}")
+        
+        try:
+            reply_text = result['content'][0]['text']
+            return reply_text.strip()
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error(f"Anthropic API 响应格式错误: {result} - {e}")
+            raise Exception(f"Anthropic API 响应格式错误: {result}")
     def _build_unified_system_prompt(self, custom_prompts: dict, settings: dict) -> str:
         """
         构建统一的系统提示词
@@ -363,18 +437,22 @@ class AIReplyEngine:
 
                 if self._is_dashscope_api(settings):
                     logger.info("使用DashScope API生成回复")
-                    reply = self._call_dashscope_api(settings, messages, max_tokens=150, temperature=0.7)
+                    reply = self._call_dashscope_api(settings, messages, max_tokens=1024, temperature=0.7)
                 
                 elif self._is_gemini_api(settings):
                     logger.info("使用Gemini API生成回复")
-                    reply = self._call_gemini_api(settings, messages, max_tokens=150, temperature=0.7)
+                    reply = self._call_gemini_api(settings, messages, max_tokens=1024, temperature=0.7)
+                
+                elif self._is_anthropic_api(settings):
+                    logger.info("使用Anthropic API生成回复")
+                    reply = self._call_anthropic_api(settings, messages, max_tokens=1024, temperature=0.7)
                 
                 else:
                     logger.info("使用OpenAI兼容API生成回复")
                     client = self._create_openai_client(cookie_id)
                     if not client:
                         return None
-                    reply = self._call_openai_api(client, settings, messages, max_tokens=150, temperature=0.7)
+                    reply = self._call_openai_api(client, settings, messages, max_tokens=1024, temperature=0.7)
 
                 # 10. 保存AI回复到对话记录
                 self.save_conversation(chat_id, cookie_id, user_id, item_id, "assistant", reply, intent=None)
