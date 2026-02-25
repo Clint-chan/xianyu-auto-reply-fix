@@ -5834,7 +5834,7 @@ Cookie数量: {cookie_count}
                 logger.error(f"不支持的HTTP方法: {method}")
                 return None
 
-            if status_code == 200:
+            if 200 <= status_code < 300:
                 # 尝试解析JSON响应，如果失败则使用原始文本
                 try:
                     result = json.loads(response_text)
