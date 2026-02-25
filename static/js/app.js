@@ -995,7 +995,7 @@ function renderKeywordsList(keywords) {
         <div class="empty-state">
         <i class="bi bi-chat-dots"></i>
         <h3>还没有关键词</h3>
-        <p>添加第一个关键词，让您的闲鱼店铺自动回复客户消息</p>
+        <p>添加第一个关键词，让您的店铺自动回复客户消息</p>
         <button class="quick-add-btn" onclick="focusKeywordInput()">
             <i class="bi bi-plus-lg me-2"></i>立即添加
         </button>
@@ -1653,7 +1653,7 @@ async function loadCookies() {
             <td colspan="10" class="text-center py-4 text-muted empty-state">
             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
             <h5>暂无账号</h5>
-            <p class="mb-0">请添加新的闲鱼账号开始使用</p>
+            <p class="mb-0">请添加新的账号开始使用</p>
             </td>
         </tr>
         `;
@@ -1903,7 +1903,7 @@ async function refreshRealCookie(cookieId) {
         }
 
         // 确认操作
-        if (!confirm(`确定要刷新账号 "${cookieId}" 的真实Cookie吗？\n\n此操作将使用当前Cookie访问闲鱼IM界面获取最新的真实Cookie。`)) {
+        if (!confirm(`确定要刷新账号 "${cookieId}" 的真实Cookie吗？\n\n此操作将使用当前Cookie访问IM界面获取最新的真实Cookie。`)) {
             return;
         }
 
@@ -3362,6 +3362,7 @@ async function configAIReply(accountId) {
     document.getElementById('promptPrice').value = prompts.price || '';
     document.getElementById('promptTech').value = prompts.tech || '';
     document.getElementById('promptDefault').value = prompts.default || '';
+    document.getElementById('promptKnowledgeBase').value = prompts.knowledge_base || '';
 
     // 切换设置显示状态
     toggleAIReplySettings();
@@ -3422,14 +3423,16 @@ async function saveAIReplyConfig() {
         }
         modelName = customModelName;
     }
-    // 从三个文本框组装自定义提示词 JSON
+    // 从文本框组装自定义提示词 JSON
     const promptsObj = {};
     const priceVal = document.getElementById('promptPrice').value.trim();
     const techVal = document.getElementById('promptTech').value.trim();
     const defaultVal = document.getElementById('promptDefault').value.trim();
+    const knowledgeBaseVal = document.getElementById('promptKnowledgeBase').value.trim();
     if (priceVal) promptsObj.price = priceVal;
     if (techVal) promptsObj.tech = techVal;
     if (defaultVal) promptsObj.default = defaultVal;
+    if (knowledgeBaseVal) promptsObj.knowledge_base = knowledgeBaseVal;
     const customPromptsJson = Object.keys(promptsObj).length > 0 ? JSON.stringify(promptsObj) : '';
 
     // 构建设置对象
@@ -3733,7 +3736,7 @@ const outgoingConfigs = {
                 id: 'smtp_from',
                 label: '发件人显示名（可选）',
                 type: 'text',
-                placeholder: '闲鱼自动回复系统',
+                placeholder: '自动回复系统',
                 required: false,
                 help: '邮件发件人显示的名称，留空则使用邮箱地址'
             },
@@ -3859,7 +3862,7 @@ const channelTypeConfigs = {
         id: 'title',
         label: '通知标题（可选）',
         type: 'text',
-        placeholder: '闲鱼自动回复通知',
+        placeholder: '自动回复通知',
         required: false,
         help: '推送通知的标题'
         },
@@ -9501,7 +9504,7 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
     // 更新模态框标题
     const modalTitle = document.getElementById('passwordLoginQRModalLabel');
     if (modalTitle) {
-        modalTitle.innerHTML = '<i class="bi bi-shield-exclamation text-warning me-2"></i>闲鱼验证';
+        modalTitle.innerHTML = '<i class="bi bi-shield-exclamation text-warning me-2"></i>平台验证';
     }
     
     // 获取或创建模态框实例
@@ -9536,7 +9539,7 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
         
         // 更新状态文本
         if (statusText) {
-            statusText.textContent = '需要闲鱼人脸验证，请使用手机闲鱼APP扫描下方二维码完成验证';
+            statusText.textContent = '需要人脸验证，请使用手机APP扫描下方二维码完成验证';
         }
     } else if (verificationUrl) {
         // 隐藏截图
@@ -9552,7 +9555,7 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
         
         // 更新状态文本
         if (statusText) {
-            statusText.textContent = '需要闲鱼验证，请点击下方按钮跳转到验证页面';
+            statusText.textContent = '需要平台验证，请点击下方按钮跳转到验证页面';
         }
     } else {
         // 都没有，显示等待
@@ -9563,7 +9566,7 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
             linkButton.style.display = 'none';
         }
         if (statusText) {
-            statusText.textContent = '需要闲鱼验证，请等待验证信息...';
+            statusText.textContent = '需要平台验证，请等待验证信息...';
         }
     }
 }
@@ -9576,13 +9579,13 @@ function createPasswordLoginQRModal() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="passwordLoginQRModalLabel">
-                            <i class="bi bi-shield-exclamation text-warning me-2"></i>闲鱼验证
+                            <i class="bi bi-shield-exclamation text-warning me-2"></i>平台验证
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-center">
                         <p id="passwordLoginQRStatusText" class="text-muted mb-3">
-                            需要闲鱼人脸验证，请等待验证信息...
+                            需要人脸验证，请等待验证信息...
                         </p>
                         
                         <!-- 截图显示区域 -->
@@ -9596,7 +9599,7 @@ function createPasswordLoginQRModal() {
                             <a id="passwordLoginVerificationLink" href="#" target="_blank" 
                                class="btn btn-warning btn-lg" style="display: none;">
                                 <i class="bi bi-shield-check me-2"></i>
-                                跳转闲鱼人脸验证
+                                跳转人脸验证
                             </a>
                         </div>
                         
@@ -13258,7 +13261,7 @@ async function handleItemSearch(event) {
         if (cookiesCheckResponse.ok) {
             const cookiesData = await cookiesCheckResponse.json();
             if (!cookiesData.hasValidCookies) {
-                showToast('搜索失败：系统中不存在有效的账户信息。请先在Cookie管理中添加有效的闲鱼账户。', 'warning');
+                showToast('搜索失败：系统中不存在有效的账户信息。请先在Cookie管理中添加有效的账户。', 'warning');
                 showSearchStatus(false);
                 return;
             }
@@ -13746,7 +13749,7 @@ const LOCAL_VERSION_HISTORY = {
                 '【新功能】新增 {verification_type} 模板变量',
                 '【新功能】风控日志支持多种事件类型',
                 '【修复】修复密码登录时 db_manager 变量作用域问题',
-                '【修复】移除通知中的【闲鱼通知】前缀'
+                '【修复】移除通知中的前缀'
             ]
         },
         {
@@ -13892,7 +13895,7 @@ const LOCAL_VERSION_HISTORY = {
             version: 'v1.0.0',
             date: '2026-01-24',
             updates: [
-                '闲鱼自动回复系统初始版本'
+                '自动回复系统初始版本'
             ]
         }
     ]
@@ -14758,7 +14761,7 @@ function showAccountFaceVerificationModal(accountId, screenshot) {
     
     // 更新状态文本
     if (statusText) {
-        statusText.innerHTML = `需要闲鱼人脸验证，请使用手机闲鱼APP扫描下方二维码完成验证<br><small class="text-muted">创建时间: ${screenshot.created_time_str}</small>`;
+        statusText.innerHTML = `需要人脸验证，请使用手机APP扫描下方二维码完成验证<br><small class="text-muted">创建时间: ${screenshot.created_time_str}</small>`;
     }
     
     // 获取或创建模态框实例
@@ -14868,7 +14871,7 @@ async function showVersionInfo(version) {
                         <div class="text-center mt-4">
                             <small style="color: #888; font-size: 14px;">
                                 <i class="bi bi-github me-1"></i>
-                                闲鱼自动回复助手 | 让客服工作更轻松
+                                自动回复助手 | 让客服工作更轻松
                             </small>
                         </div>
                     </div>
@@ -15473,7 +15476,7 @@ function refreshImIframe() {
 }
 
 /**
- * 在新窗口打开闲鱼IM
+ * 在新窗口打开IM
  */
 function openGoofishImNewWindow() {
     window.open('https://www.goofish.com/im', '_blank');
@@ -15492,7 +15495,7 @@ function openGoofishIm() {
 function loadOnlineIm() {
     loadImAccountList();
 
-    // 延迟加载 iframe，避免页面加载时直接加载闲鱼导致跳转问题
+    // 延迟加载 iframe，避免页面加载时直接加载导致跳转问题
     const iframe = document.getElementById('goofishImIframe');
     if (iframe && iframe.src === 'about:blank') {
         const realSrc = iframe.dataset.src || 'https://www.goofish.com/im';

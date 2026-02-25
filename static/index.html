@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>闲鱼自动回复管理系统</title>
+  <title>自动回复管理系统</title>
   <link rel="icon" type="image/png" href="/static/favicon.png">
   <!-- 防止主题闪烁：先隐藏页面，设置好主题后再显示 -->
   <style>
@@ -36,7 +36,7 @@
     <div class="sidebar-header">
       <a href="#" class="sidebar-brand">
         <img src="/static/favicon.png" alt="Logo" height="24" class="me-2">
-        <span>闲鱼管理系统</span>
+        <span>管理系统</span>
       </a>
       <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="切换主题（浅色/深色/跟随系统）">
         <i class="bi bi-moon-fill" id="darkModeIcon"></i>
@@ -105,7 +105,8 @@
       </div>
       <div class="nav-item" data-menu-id="online-im">
         <a href="javascript:void(0)" class="nav-link" onclick="showSection('online-im')">
-          <i class="bi bi-headset"></i>
+          <i class="bi bi-window"></i>
+          <span>工作台</span>
           <span>在线客服</span>
         </a>
       </div>
@@ -269,7 +270,7 @@
           <i class="bi bi-person-circle me-2"></i>
           账号管理
         </h2>
-        <p class="text-muted mb-0">管理闲鱼账号Cookie信息</p>
+        <p class="text-muted mb-0">管理账号Cookie信息</p>
       </div>
       <div class="content-body">
         <!-- 添加Cookie卡片 -->
@@ -895,7 +896,7 @@
             </div>
             <div>
               <h3 class="selector-title">选择账号</h3>
-              <p class="selector-subtitle">选择要配置自动回复的闲鱼账号</p>
+              <p class="selector-subtitle">选择要配置自动回复的账号</p>
             </div>
           </div>
           <div class="row g-3 align-items-end">
@@ -2035,10 +2036,11 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
             <h2 class="mb-0">
-              <i class="bi bi-headset me-2"></i>
+              <i class="bi bi-window me-2"></i>
+              工作台
               在线客服
             </h2>
-            <p class="text-muted mb-0">内嵌闲鱼IM页面，快速处理客户咨询</p>
+            <p class="text-muted mb-0">快速访问和管理</p>
           </div>
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <select class="form-select form-select-sm" id="imAccountSelect" style="width: auto; min-width: 150px;" onchange="onImAccountChange()">
@@ -2074,8 +2076,14 @@
         </div>
       </div>
       <div class="content-body p-0" style="flex: 1; overflow: hidden;">
-        <!-- 内嵌闲鱼IM iframe -->
-        <div class="im-iframe-container" style="height: 100%;">
+        <!-- 内嵌IM iframe -->
+        <div class="im-iframe-container" style="height: 100%; position: relative;">
+          <!-- 顶部遮罩层，遮挡logo区域 -->
+          <div style="position: absolute; top: 0; left: 0; right: 0; height: 60px; background: white; z-index: 10; border-bottom: 1px solid #e0e0e0;">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 14px;">
+              <i class="bi bi-chat-dots me-2"></i>在线客服系统
+            </div>
+          </div>
           <iframe
             id="goofishImIframe"
             src="about:blank"
@@ -2095,7 +2103,7 @@
           <i class="bi bi-search me-2"></i>
           商品搜索
         </h2>
-        <p class="text-muted mb-0">搜索闲鱼商品，获取真实商品数据</p>
+        <p class="text-muted mb-0">搜索商品，获取真实商品数据</p>
       </div>
       <div class="content-body">
         <!-- 搜索表单 -->
@@ -2103,7 +2111,7 @@
           <div class="card-header">
             <h5 class="mb-0">
               <i class="bi bi-search me-2"></i>
-              闲鱼商品搜索
+              商品搜索
             </h5>
           </div>
           <div class="card-body">
@@ -2113,7 +2121,7 @@
               <ul class="mb-0 mt-2">
                 <li><strong>查询总页数：</strong>输入要获取的页数（1-20页），系统会一次性获取所有页面的数据</li>
                 <li><strong>每页显示：</strong>前端分页显示的每页商品数量</li>
-                <li><strong>数据来源：</strong>使用真实的闲鱼数据，通过浏览器自动化技术获取</li>
+                <li><strong>数据来源：</strong>使用真实的商品数据，通过浏览器自动化技术获取</li>
               </ul>
             </div>
             <form id="itemSearchForm">
@@ -2775,7 +2783,7 @@
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title">
-            <i class="bi bi-qr-code me-2"></i>扫码登录闲鱼账号
+            <i class="bi bi-qr-code me-2"></i>扫码登录账号
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
@@ -2786,7 +2794,7 @@
               <div class="d-flex justify-content-center align-items-center">
                 <div class="step-item me-3">
                   <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">1</div>
-                  <small class="d-block mt-1">打开闲鱼APP</small>
+                  <small class="d-block mt-1">打开APP</small>
                 </div>
                 <i class="bi bi-arrow-right text-muted me-3"></i>
                 <div class="step-item me-3">
@@ -2818,7 +2826,7 @@
               <img id="qrCodeImg" src="" alt="登录二维码" class="img-fluid" style="max-width: 280px;">
             </div>
             <h6 class="text-success mb-2">
-              <i class="bi bi-phone me-2"></i>请使用闲鱼APP扫描二维码
+              <i class="bi bi-phone me-2"></i>请使用APP扫描二维码
             </h6>
             <div class="alert alert-info border-0 bg-light">
               <i class="bi bi-info-circle me-2 text-info"></i>
@@ -4064,7 +4072,16 @@
                   <label class="form-label fw-bold">一般咨询</label>
                   <small class="form-text text-muted d-block mb-1">物流、售后、商品介绍等其他咨询的回复策略</small>
                   <textarea class="form-control" id="promptDefault" rows="3"
-                            placeholder="【一般咨询】&#10;基于商品信息回答物流、售后等问题。&#10;如果问题超出商品信息范围，回复：&quot;等等，这个我需要看一看&quot;&#10;如果客户明确询问退款，回复：&quot;虚拟产品，一旦发出是不可以退款的&quot;"></textarea>
+                            placeholder="【一般咨询】&#10;基于知识库回答发货、售后等问题。&#10;如果问题超出知识库范围，回复：&quot;这个我确认一下，稍等哈&quot;"></textarea>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-book me-1"></i>产品知识库</label>
+                  <small class="form-text text-muted d-block mb-1">AI回复的核心依据。填入产品FAQ、价格套餐、技术参数、发货流程等信息，AI会严格基于此内容回答客户问题。</small>
+                  <textarea class="form-control" id="promptKnowledgeBase" rows="12"
+                            placeholder="### 价格与套餐&#10;- 套餐A：xx元 = xx额度&#10;- 套餐B：xx元 = xx额度&#10;&#10;### 产品特点&#10;- 支持xxx功能&#10;- 不限速、国内直连&#10;&#10;### 发货方式&#10;- 拍下后发送API地址和Key&#10;&#10;### 售后政策&#10;- 虚拟产品不支持退款"></textarea>
                 </div>
               </div>
             </div>
