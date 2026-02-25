@@ -30,20 +30,19 @@ class AIReplyEngine:
         """初始化默认提示词（用于构建统一提示词）"""
         self.default_prompts = {
             'price': '''【议价场景】
-策略：根据议价次数递减优惠
-- 第1次：可小幅优惠，表达诚意
-- 第2次：中等优惠，强调已是优惠价
-- 第3次及以后：最大优惠或坚持底线
-语气友好但坚定，突出商品价值和优势。''',
-            
+策略：不接受任何议价，价格已经是官方的十分之一，非常便宜。
+- 友好但坚定地拒绝砍价
+- 强调性价比：我们的价格已经是官方定价的1/10，非常实惠了
+- 如果对方坚持，可以推荐尝鲜体验套餐（10元=128刀额度）先试用''',
+
             'tech': '''【技术/产品问题】
-基于商品信息回答，不要自行发挥。
-如果问题超出商品信息范围，回复："等等，这个我需要看一看"''',
-            
+基于知识库中的Q&A信息回答，不要自行发挥和编造。
+如果问题超出知识库范围，回复："这个我确认一下，稍等哈"''',
+
             'default': '''【一般咨询】
-基于商品信息回答物流、售后等问题。
-如果问题超出商品信息范围，回复："等等，这个我需要看一看"
-如果客户明确询问退款，回复："虚拟产品，一旦发出是不可以退款的"'''
+基于知识库回答物流、售后、发货等问题。
+如果问题超出知识库范围，回复："这个我确认一下，稍等哈"
+如果客户明确询问退款，回复："虚拟产品，发出后不支持退款哦"'''
         }
     
     def _create_openai_client(self, cookie_id: str) -> Optional[OpenAI]:
@@ -163,39 +162,59 @@ class AIReplyEngine:
         price_guide = custom_prompts.get('price', self.default_prompts['price'])
         tech_guide = custom_prompts.get('tech', self.default_prompts['tech'])
         default_guide = custom_prompts.get('default', self.default_prompts['default'])
-        
-        # 获取议价设置
-        max_bargain_rounds = settings.get('max_bargain_rounds', 3)
-        max_discount_percent = settings.get('max_discount_percent', 10)
-        max_discount_amount = settings.get('max_discount_amount', 100)
-        
-        unified_prompt = f"""你是一位专业的电商客服AI助手。请根据用户消息和上下文，直接生成合适的回复。
+        knowledge_base = custom_prompts.get('knowledge_base', '')
+
+        unified_prompt = f"""你是一位专业的电商客服AI助手，负责在闲鱼平台上回复买家咨询。请根据用户消息、知识库和上下文，直接生成合适的回复。
 
 ## 核心原则
-1. **准确理解意图**：只根据用户实际说的内容判断，不要过度解读
-2. **不要主动提及敏感话题**：用户没提到的（如退款、砍价）不要主动提
-3. **基于商品信息回答**：只回答商品信息中有的内容
+1. **严格基于知识库回答**：只回答知识库和商品信息中有的内容，不编造
+2. **准确理解意图**：只根据用户实际说的内容判断，不要过度解读
+3. **不要主动提及敏感话题**：用户没提到的（如退款、砍价）不要主动提
 4. **避免重复**：结合对话历史，不要重复之前说过的话
-5. **语言简洁友好**：回复要自然、简短，尽量别超过20个字
+5. **语言简洁自然**：像真人聊天一样，简短友好，一般不超过30个字
+6. **不要使用markdown格式**：回复纯文本，不要用**加粗**、#标题等格式
 
 ## 场景处理指南
 
 ### 当用户明确要求降价/优惠/砍价时
 {price_guide}
-- 议价限制：最多{max_bargain_rounds}轮，最大优惠{max_discount_percent}%或{max_discount_amount}元
 
 ### 当用户询问产品技术/功能/使用问题时
 {tech_guide}
 
-### 其他一般咨询（物流、售后、商品介绍等）
+### 其他一般咨询（发货、售后等）
 {default_guide}
 
-## 特别注意
-- 用户只是问价格≠用户在砍价，正常回答价格即可
-- 用户咨询售后≠用户要退款，正常解答即可
-- 如果用户的问题超过你的回答范围，比如发图片，可以说"等等，这个问题我需要看看"，不要自己回答
+{f'## 产品知识库（回答问题的核心依据）{chr(10)}{knowledge_base}' if knowledge_base else ''}
 
-请直接输出回复内容，不要输出分析过程。"""
+## 回复示例（学习语气和风格）
+
+客户: 怎么收费的
+客服: 10元=128刀额度尝鲜，140元=1800刀囤货特惠，官方1/10的价格~
+
+客户: 能便宜点吗
+客服: 已经是官方十分之一的价格了，真的很划算了哦
+
+客户: 支持Claude Code吗
+客服: 支持的，完美适配Claude Code，国内直连不限速
+
+客户: 怎么发货
+客服: 拍下后直接发API地址和Key，附带保姆级教程
+
+客户: 可以用酒馆吗
+客服: 不支持酒馆哦，主要适配Claude Code、OpenCode、OpenClaw等开发工具
+
+客户: 有后台看消耗吗
+客服: 有的，购买后给您专属后台地址，用量随时可查
+
+客户: 国内能用吗需要翻墙吗
+客服: 国内直连，走CN2 GIA专线，不需要翻墙
+
+## 特别注意
+- 用户只是问价格 ≠ 用户在砍价，正常回答价格即可
+- 用户咨询售后 ≠ 用户要退款，正常解答即可
+- 超出知识库范围的问题，回复"这个我确认一下，稍等哈"
+- 不要输出分析过程，直接输出回复内容"""
         
         return unified_prompt
 
@@ -437,22 +456,22 @@ class AIReplyEngine:
 
                 if self._is_dashscope_api(settings):
                     logger.info("使用DashScope API生成回复")
-                    reply = self._call_dashscope_api(settings, messages, max_tokens=1024, temperature=0.7)
-                
+                    reply = self._call_dashscope_api(settings, messages, max_tokens=1024, temperature=0.4)
+
                 elif self._is_gemini_api(settings):
                     logger.info("使用Gemini API生成回复")
-                    reply = self._call_gemini_api(settings, messages, max_tokens=1024, temperature=0.7)
-                
+                    reply = self._call_gemini_api(settings, messages, max_tokens=1024, temperature=0.4)
+
                 elif self._is_anthropic_api(settings):
                     logger.info("使用Anthropic API生成回复")
-                    reply = self._call_anthropic_api(settings, messages, max_tokens=1024, temperature=0.7)
-                
+                    reply = self._call_anthropic_api(settings, messages, max_tokens=1024, temperature=0.4)
+
                 else:
                     logger.info("使用OpenAI兼容API生成回复")
                     client = self._create_openai_client(cookie_id)
                     if not client:
                         return None
-                    reply = self._call_openai_api(client, settings, messages, max_tokens=1024, temperature=0.7)
+                    reply = self._call_openai_api(client, settings, messages, max_tokens=1024, temperature=0.4)
 
                 # 10. 保存AI回复到对话记录
                 self.save_conversation(chat_id, cookie_id, user_id, item_id, "assistant", reply, intent=None)
