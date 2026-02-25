@@ -5854,7 +5854,9 @@ async function loadItemsForRuleSelect(containerId, selectedIds = []) {
     const container = document.getElementById(containerId);
     container.innerHTML = '<small class="text-muted">加载中...</small>';
     try {
-        const response = await fetchWithAuth('/items');
+        const response = await fetch('/items', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
         if (!response.ok) throw new Error('加载失败');
         const data = await response.json();
         const items = data.items || data || [];
@@ -6338,7 +6340,10 @@ async function updateCardWithImage(cardId, cardData, imageFile) {
 async function testCard(cardId) {
     try {
         showToast('正在测试卡券...', 'info');
-        const response = await fetchWithAuth(`/cards/${cardId}/test`, { method: 'POST' });
+        const response = await fetch(`/cards/${cardId}/test`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
         const data = await response.json();
 
         if (!response.ok) {
