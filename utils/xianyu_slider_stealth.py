@@ -3897,8 +3897,8 @@ class XianyuSliderStealth:
             except:
                 pass
 
-            # 1. 检查是否是账密错误
-            password_error_keywords = ['账密错误', '账号密码错误', '用户名或密码错误', '密码错误', '账号或密码错误', '登录失败']
+            # 1. 检查是否是账密错误（注意：不包含宽泛的"登录失败"，避免滑块失败等场景被误判）
+            password_error_keywords = ['账密错误', '账号密码错误', '用户名或密码错误', '密码错误', '账号或密码错误']
             for keyword in password_error_keywords:
                 if keyword in content:
                     logger.info(f"【{self.pure_user_id}】检测到验证类型: 账密错误 (关键词: {keyword})")
@@ -4510,21 +4510,31 @@ class XianyuSliderStealth:
                             logger.info(f"【{self.pure_user_id}】使用浏览器版本: {chromium_dir.name}")
                             break
             
-            # 启动浏览器
+            # 启动浏览器（如果因profile损坏闪退，自动清理后重试一次）
             playwright = sync_playwright().start()
-            context = playwright.chromium.launch_persistent_context(
-                user_data_dir,
+            launch_kwargs = dict(
                 headless=not show_browser,
                 args=browser_args,
                 viewport={'width': 1980, 'height': 1024},
                 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                locale='zh-CN',  # 设置浏览器区域为中文
+                locale='zh-CN',
                 accept_downloads=True,
                 ignore_https_errors=True,
                 extra_http_headers={
-                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'  # 设置HTTP Accept-Language header为中文
+                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
                 }
             )
+            try:
+                context = playwright.chromium.launch_persistent_context(user_data_dir, **launch_kwargs)
+            except Exception as launch_e:
+                if 'Target' in str(launch_e) and 'closed' in str(launch_e):
+                    logger.warning(f"【{self.pure_user_id}】浏览器启动闪退（可能profile损坏），清理数据目录后重试...")
+                    import shutil
+                    shutil.rmtree(user_data_dir, ignore_errors=True)
+                    os.makedirs(user_data_dir, exist_ok=True)
+                    context = playwright.chromium.launch_persistent_context(user_data_dir, **launch_kwargs)
+                else:
+                    raise
             logger.info(f"【{self.pure_user_id}】已设置浏览器语言为中文（zh-CN）")
             
             browser = context.browser

@@ -534,19 +534,33 @@ class XianyuLive:
             self.cookie_refresh_task = None
             logger.info(f"【{self.cookie_id}】后台任务引用已全部重置")
 
-    def _calculate_retry_delay(self, error_msg: str) -> int:
-        """根据错误类型和失败次数计算重试延迟"""
+    def _calculate_retry_delay(self, error_msg: str) -> float:
+        """根据错误类型和失败次数计算重试延迟（含±20%随机抖动，避免多账号惊群效应）"""
         # WebSocket意外断开 - 短延迟
         if "no close frame received or sent" in error_msg:
-            return min(3 * self.connection_failures, 15)
-        
+            base_delay = min(3 * self.connection_failures, 15)
+
         # 网络连接问题 - 长延迟
         elif "Connection refused" in error_msg or "timeout" in error_msg.lower():
-            return min(10 * self.connection_failures, 60)
-        
+            base_delay = min(10 * self.connection_failures, 60)
+
         # 其他未知错误 - 中等延迟
         else:
-            return min(5 * self.connection_failures, 30)
+            base_delay = min(5 * self.connection_failures, 30)
+
+        # 添加±20%随机抖动，避免多账号同时重连
+        jitter = base_delay * random.uniform(-0.2, 0.2)
+        return max(0, base_delay + jitter)
+
+    async def _check_network_connectivity(self) -> bool:
+        """HEAD请求goofish.com检查网络连通性，5秒超时"""
+        try:
+            timeout = aiohttp.ClientTimeout(total=5)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.head("https://www.goofish.com") as resp:
+                    return resp.status < 500
+        except Exception:
+            return False
 
     def _cleanup_instance_caches(self):
         """清理实例级别的缓存，防止内存泄漏"""
@@ -748,6 +762,7 @@ class XianyuLive:
         self.last_token_refresh_time = 0
         self.current_token = None
         self.token_refresh_task = None
+        self.token_refresh_consecutive_failures = 0  # Token刷新连续失败计数（用于渐进式退避）
         self.connection_restart_flag = False  # 连接重启标志
 
         # 通知防重复机制
@@ -2874,15 +2889,27 @@ class XianyuLive:
                 )
             
             # 在单独的线程中运行同步的登录方法
+            # 注意：不能使用 asyncio.to_thread()，因为它会通过 contextvars 传播事件循环上下文，
+            # 导致 Playwright sync API 检测到 asyncio loop 而报错
             import asyncio
+            import functools
             slider = XianyuSliderStealth(user_id=self.cookie_id, enable_learning=False, headless=not show_browser)
-            result = await asyncio.to_thread(
-                slider.login_with_password_playwright,
-                account=username,
-                password=password,
-                show_browser=show_browser,
-                notification_callback=notification_callback_wrapper
-            )
+
+            def _run_playwright_login():
+                """在线程中安全运行Playwright，绕过事件循环检测"""
+                try:
+                    asyncio._set_running_loop(None)
+                except Exception:
+                    pass
+                return slider.login_with_password_playwright(
+                    account=username,
+                    password=password,
+                    show_browser=show_browser,
+                    notification_callback=notification_callback_wrapper
+                )
+
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, _run_playwright_login)
             
             if result:
                 logger.info(f"【{self.cookie_id}】密码登录成功，获取到Cookie")
@@ -5551,6 +5578,18 @@ Cookie数量: {cookie_count}
                 if delivery_rules:
                     logger.info(f"✅ 按商品ID找到发货规则: {len(delivery_rules)}个")
 
+                    # 如果有规格信息，在商品ID匹配的结果中按规格进一步筛选
+                    if spec_name and spec_value and len(delivery_rules) > 1:
+                        spec_matched = [
+                            r for r in delivery_rules
+                            if r.get('is_multi_spec') and r.get('spec_value') == spec_value
+                        ]
+                        if spec_matched:
+                            logger.info(f"🎯 按规格 {spec_name}:{spec_value} 从{len(delivery_rules)}个规则中精确筛选到{len(spec_matched)}个")
+                            delivery_rules = spec_matched
+                        else:
+                            logger.info(f"⚠️ 按规格 {spec_name}:{spec_value} 未筛选到匹配规则，使用全部{len(delivery_rules)}个规则")
+
             # 第一步：如果有规格信息，尝试精确匹配多规格发货规则
             if not delivery_rules and spec_name and spec_value:
                 if spec_name_2 and spec_value_2:
@@ -6367,8 +6406,10 @@ Cookie数量: {cookie_count}
                         logger.info("Token即将过期，准备刷新...")
                         new_token = await self.refresh_token()
                         if new_token:
+                            # 刷新成功，重置连续失败计数
+                            self.token_refresh_consecutive_failures = 0
                             logger.info(f"【{self.cookie_id}】Token刷新成功，将关闭WebSocket以使用新Token重连")
-                            
+
                             # Token刷新成功后，需要关闭WebSocket连接，让它用新Token重新连接
                             # 原因：WebSocket连接建立时使用的是旧Token，新Token需要重新建立连接才能生效
                             # 注意：只关闭WebSocket，不重启整个实例（后台任务继续运行）
@@ -6387,18 +6428,24 @@ Cookie数量: {cookie_count}
                             logger.info(f"【{self.cookie_id}】Token刷新完成，WebSocket将使用新Token重新连接")
                             break
                         else:
-                            # 根据上一次刷新状态决定日志级别（冷却/已重启为正常情况）
-                            if getattr(self, 'last_token_refresh_status', None) in ("skipped_cooldown", "restarted_after_cookie_refresh"):
-                                logger.info(f"【{self.cookie_id}】Token刷新未执行或已重启（正常），将在{self.token_retry_interval // 60}分钟后重试")
+                            # 根据上一次刷新状态决定日志级别和重试间隔
+                            last_status = getattr(self, 'last_token_refresh_status', None)
+                            if last_status in ("skipped_cooldown", "restarted_after_cookie_refresh"):
+                                # 冷却跳过不算失败，固定60秒后重试
+                                retry_wait = 60
+                                logger.info(f"【{self.cookie_id}】Token刷新未执行或已重启（正常），{retry_wait}秒后重试")
                             else:
-                                logger.error(f"【{self.cookie_id}】Token刷新失败，将在{self.token_retry_interval // 60}分钟后重试")
+                                # 真正失败：渐进式指数退避 60s → 120s → 240s → ... → 7200s
+                                self.token_refresh_consecutive_failures += 1
+                                retry_wait = min(60 * (2 ** (self.token_refresh_consecutive_failures - 1)), 7200)
+                                logger.error(f"【{self.cookie_id}】Token刷新失败（连续第{self.token_refresh_consecutive_failures}次），{retry_wait}秒后重试")
 
                             # 清空当前token，确保下次重试时重新获取
                             self.current_token = None
 
                             # 发送Token刷新失败通知
                             await self.send_token_refresh_notification("Token定时刷新失败，将自动重试", "token_scheduled_refresh_failed")
-                            await self._interruptible_sleep(self.token_retry_interval)
+                            await self._interruptible_sleep(retry_wait)
                             continue
                     await self._interruptible_sleep(60)
                 except asyncio.CancelledError:
@@ -6491,13 +6538,33 @@ Cookie数量: {cookie_count}
         await ws.send(json.dumps(msg))
 
     async def init(self, ws):
-        # 如果没有token或者token过期，获取新token
+        # 如果没有token或者token过期，获取新token（最多重试3次）
         token_refresh_attempted = False
         if not self.current_token or (time.time() - self.last_token_refresh_time) >= self.token_refresh_interval:
-            logger.info(f"【{self.cookie_id}】获取初始token...")
             token_refresh_attempted = True
+            max_retries = 3
+            retry_delays = [3, 6]  # 第1次重试等3s，第2次等6s
 
-            await self.refresh_token()
+            for attempt in range(1, max_retries + 1):
+                logger.info(f"【{self.cookie_id}】获取初始token...（第{attempt}/{max_retries}次尝试）")
+
+                # 重试前检查网络连通性（首次尝试跳过检查）
+                if attempt > 1:
+                    network_ok = await self._check_network_connectivity()
+                    if not network_ok:
+                        logger.warning(f"【{self.cookie_id}】网络不通，跳过第{attempt}次token获取尝试")
+                        if attempt < max_retries:
+                            await asyncio.sleep(retry_delays[attempt - 2])
+                        continue
+
+                await self.refresh_token()
+                if self.current_token:
+                    break
+
+                if attempt < max_retries:
+                    delay = retry_delays[attempt - 1]
+                    logger.warning(f"【{self.cookie_id}】Token获取失败，{delay}秒后进行第{attempt + 1}次重试...")
+                    await asyncio.sleep(delay)
 
         if not self.current_token:
             logger.error("无法获取有效token，初始化失败")

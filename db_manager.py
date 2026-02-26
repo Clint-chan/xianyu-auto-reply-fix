@@ -4184,6 +4184,26 @@ Cookie数量: {cookie_count}
                 logger.error(f"获取发货规则列表失败: {e}")
                 return []
 
+    def _get_card_spec_info(self, cursor, card_id: int) -> dict:
+        """获取卡券的规格信息（内部方法，调用者需持有锁）"""
+        try:
+            cursor.execute(
+                'SELECT is_multi_spec, spec_name, spec_value, spec_name_2, spec_value_2 FROM cards WHERE id = ?',
+                (card_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'is_multi_spec': bool(row[0]),
+                    'spec_name': row[1] or '',
+                    'spec_value': row[2] or '',
+                    'spec_name_2': row[3] or '',
+                    'spec_value_2': row[4] or ''
+                }
+        except Exception:
+            pass
+        return {'is_multi_spec': False, 'spec_name': '', 'spec_value': '', 'spec_name_2': '', 'spec_value_2': ''}
+
     def get_delivery_rules_by_item_id(self, item_id: str, user_id: int = None):
         """根据商品ID精确匹配发货规则（优先于关键词匹配）"""
         with self.lock:
@@ -4228,8 +4248,11 @@ Cookie数量: {cookie_count}
                         item_ids_list = []
 
                     if item_id in item_ids_list:
-                        rules.append({
-                            'id': row[0], 'keyword': row[1], 'card_id': row[2],
+                        # 获取卡券的规格信息
+                        card_id = row[2]
+                        card_spec = self._get_card_spec_info(cursor, card_id)
+                        rule_dict = {
+                            'id': row[0], 'keyword': row[1], 'card_id': card_id,
                             'delivery_count': row[3], 'enabled': row[4],
                             'description': row[5], 'delivery_times': row[6],
                             'item_ids': item_ids_str,
@@ -4238,7 +4261,9 @@ Cookie数量: {cookie_count}
                             'data_content': row[12], 'image_url': row[13],
                             'card_enabled': row[14], 'card_description': row[15],
                             'card_delay_seconds': row[16]
-                        })
+                        }
+                        rule_dict.update(card_spec)
+                        rules.append(rule_dict)
                 return rules
             except Exception as e:
                 logger.error(f"根据商品ID获取发货规则失败: {e}")
