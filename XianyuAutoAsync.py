@@ -5876,7 +5876,7 @@ Cookie数量: {cookie_count}
 
                 return None
 
-        except (aiohttp.ClientTimeout, aiohttp.ClientError) as e:
+        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
             logger.warning(f"API调用网络异常: {self._safe_str(e)}")
 
             # 网络异常也进行重试
