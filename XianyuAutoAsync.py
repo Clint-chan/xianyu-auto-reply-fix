@@ -197,17 +197,7 @@ def log_captcha_event(cookie_id: str, event_type: str, success: bool = None, det
 # setup_logging(LOG_CONFIG)  # 已移除，模块不存在
 
 class XianyuLive:
-    # 类级别的锁字典，为每个order_id维护一个锁（用于自动发货）
-    _order_locks = defaultdict(lambda: asyncio.Lock())
-    # 记录锁的最后使用时间，用于清理
-    _lock_usage_times = {}
-    # 记录锁的持有状态和释放时间 {lock_key: {'locked': bool, 'release_time': float, 'task': asyncio.Task}}
-    _lock_hold_info = {}
-
-    # 独立的锁字典，用于订单详情获取（不使用延迟锁机制）
-    _order_detail_locks = defaultdict(lambda: asyncio.Lock())
-    # 记录订单详情锁的使用时间
-    _order_detail_lock_times = {}
+    # 注意：_order_locks 等锁字典已移至 __init__ 作为实例变量，避免多账号实例共享
 
     # 商品详情缓存（24小时有效）
     _item_detail_cache = {}  # {item_id: {'detail': str, 'timestamp': float, 'access_time': float}}
@@ -588,6 +578,7 @@ class XianyuLive:
             ]
             for order_id in expired_deliveries:
                 del self.last_delivery_time[order_id]
+                self.delivery_sent_orders.discard(order_id)
             if expired_deliveries:
                 cleaned_total += len(expired_deliveries)
                 logger.warning(f"【{self.cookie_id}】清理了 {len(expired_deliveries)} 个过期发货记录")
@@ -747,6 +738,13 @@ class XianyuLive:
         self.myid = self.cookies['unb']
         logger.info(f"【{cookie_id}】用户ID: {self.myid}")
         self.device_id = generate_device_id(self.myid)
+
+        # 订单锁（实例级别，避免多账号共享）
+        self._order_locks = defaultdict(lambda: asyncio.Lock())
+        self._lock_usage_times = {}
+        self._lock_hold_info = {}
+        self._order_detail_locks = defaultdict(lambda: asyncio.Lock())
+        self._order_detail_lock_times = {}
 
         # 心跳相关配置
         self.heartbeat_interval = HEARTBEAT_INTERVAL
