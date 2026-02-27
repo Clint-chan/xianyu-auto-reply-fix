@@ -135,11 +135,16 @@ class SecureConfirm:
             # 设置请求超时
             request_timeout = aiohttp.ClientTimeout(total=30)
 
+            # 显式使用最新的cookies覆盖session默认headers中的旧Cookie
+            # 避免session创建时的Cookie与sign签名用的token不匹配导致令牌过期
+            request_headers = {'cookie': self.cookies_str}
+
             async with self.session.post(
                 'https://h5api.m.goofish.com/h5/mtop.taobao.idle.logistic.consign.dummy/1.0/',
                 params=params,
                 data=data,
-                timeout=request_timeout
+                timeout=request_timeout,
+                headers=request_headers
             ) as response:
                 res_json = await response.json()
 

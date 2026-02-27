@@ -8773,14 +8773,22 @@ Cookie数量: {cookie_count}
                             temp_user_id = "unknown_user"
 
                         # 提取sid（会话ID）用于简化消息匹配订单
-                        # 完整消息结构: {'1': {'1': {...}, '2': '56226853668@goofish', ...}}
-                        # sid在message['1']['2']中
+                        # 完整消息结构1: {'1': {'1': {...}, '2': '56226853668@goofish', ...}}
+                        #   → sid在message['1']['2']中
+                        # 完整消息结构2: {'1': 'xxxx.PNM', '2': '58852634909@goofish', ...}
+                        #   → sid在message['2']中（message['1']为字符串时）
                         try:
                             message_1 = message.get("1")
                             if isinstance(message_1, dict):
                                 temp_sid = message_1.get("2", "")
                                 if temp_sid:
-                                    logger.info(f"【{self.cookie_id}】[{msg_id}] 📌 提取到sid: {temp_sid}")
+                                    logger.info(f"【{self.cookie_id}】[{msg_id}] 📌 从message['1']['2']提取到sid: {temp_sid}")
+                            if not temp_sid:
+                                # message['1']不是dict时（如'xxxx.PNM'），sid可能在message['2']中
+                                message_2 = message.get("2")
+                                if isinstance(message_2, str) and '@' in message_2:
+                                    temp_sid = message_2
+                                    logger.info(f"【{self.cookie_id}】[{msg_id}] 📌 从message['2']提取到sid: {temp_sid}")
                         except Exception as sid_e:
                             logger.warning(f"【{self.cookie_id}】[{msg_id}] 提取sid失败: {self._safe_str(sid_e)}")
 
