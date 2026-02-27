@@ -49,7 +49,7 @@ class SecureFreeshipping:
         params = {
             'jsv': '2.7.2',
             'appKey': '34839810',
-            't': str(int(time.time()) * 1000),
+            't': str(int(time.time() * 1000)),
             'sign': '',
             'v': '1.0',
             'type': 'originaljson',
@@ -86,11 +86,15 @@ class SecureFreeshipping:
             # 设置请求超时
             request_timeout = aiohttp.ClientTimeout(total=30)
 
+            # 显式使用最新的cookies覆盖session默认headers中的旧Cookie
+            request_headers = {'cookie': self.cookies_str}
+
             async with self.session.post(
                 'https://h5api.m.goofish.com/h5/mtop.idle.groupon.activity.seller.freeshipping/1.0/',
                 params=params,
                 data=data,
-                timeout=request_timeout
+                timeout=request_timeout,
+                headers=request_headers
             ) as response:
                 res_json = await response.json()
 

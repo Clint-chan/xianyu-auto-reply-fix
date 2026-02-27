@@ -1370,6 +1370,7 @@ class XianyuLive:
     def mark_delivery_sent(self, order_id: str):
         """标记订单已发货"""
         self.delivery_sent_orders.add(order_id)
+        self.last_delivery_time[order_id] = time.time()
         logger.info(f"【{self.cookie_id}】订单 {order_id} 已标记为发货")
         
         # 更新订单状态为已发货
@@ -1754,16 +1755,8 @@ class XianyuLive:
                     logger.info(f'[{msg_time}] 【{self.cookie_id}】[{msg_id}] 获取锁后检查发现订单已处理，跳过发货')
                     return
                 
-                # 【关键】先执行自动确认发货
-                logger.info(f'[{msg_time}] 【{self.cookie_id}】[{msg_id}] 📦 开始自动确认发货: order_id={order_id}')
-                confirm_result = await self.auto_confirm(order_id, item_id)
-                
-                if not confirm_result.get('success'):
-                    error_msg = confirm_result.get('error', '未知错误')
-                    logger.warning(f'[{msg_time}] 【{self.cookie_id}】[{msg_id}] ❌ 自动确认发货失败: {error_msg}，不执行自动发货')
-                    return
-                
-                logger.info(f'[{msg_time}] 【{self.cookie_id}】[{msg_id}] ✅ 自动确认发货成功，订单ID: {order_id}')
+                # 确认发货将由 _auto_delivery 统一处理，此处不再单独调用
+                # 避免双重调用 auto_confirm 浪费API配额
                 
                 # 确认发货成功后，执行自动发货内容发送
                 logger.info(f'[{msg_time}] 【{self.cookie_id}】[{msg_id}] 📤 开始执行自动发货内容发送')
@@ -3753,7 +3746,8 @@ class XianyuLive:
             async with self.session.post(
                 'https://h5api.m.goofish.com/h5/mtop.taobao.idle.pc.detail/1.0/',
                 params=params,
-                data=data
+                data=data,
+                headers={'cookie': self.cookies_str}
             ) as response:
                 res_json = await response.json()
 
@@ -5325,7 +5319,20 @@ Cookie数量: {cookie_count}
             secure_freeshipping.token_refresh_interval = self.token_refresh_interval
 
             # 调用免拼发货方法
-            return await secure_freeshipping.auto_freeshipping(order_id, item_id, buyer_id, retry_count)
+            result = await secure_freeshipping.auto_freeshipping(order_id, item_id, buyer_id, retry_count)
+
+            # 同步更新后的cookies和token（与auto_confirm保持一致）
+            if secure_freeshipping.cookies_str != self.cookies_str:
+                self.cookies_str = secure_freeshipping.cookies_str
+                self.cookies = secure_freeshipping.cookies
+                logger.warning(f"【{self.cookie_id}】已同步免拼发货模块更新的cookies")
+
+            if secure_freeshipping.current_token != self.current_token:
+                self.current_token = secure_freeshipping.current_token
+                self.last_token_refresh_time = secure_freeshipping.last_token_refresh_time
+                logger.warning(f"【{self.cookie_id}】已同步免拼发货模块更新的token")
+
+            return result
 
         except Exception as e:
             logger.error(f"【{self.cookie_id}】免拼发货模块调用失败: {self._safe_str(e)}")
@@ -8173,9 +8180,9 @@ Cookie数量: {cookie_count}
     async def create_session(self):
         """创建aiohttp session，支持代理配置"""
         if not self.session:
-            # 创建带有cookies和headers的session
+            # 创建session（不在默认headers中设置Cookie，避免token刷新后Cookie过期）
+            # Cookie在每次API请求时通过 headers={'cookie': self.cookies_str} 显式传入
             headers = DEFAULT_HEADERS.copy()
-            headers['cookie'] = self.cookies_str
 
             proxy_url = self._get_proxy_url()
             connector = None
@@ -8965,8 +8972,10 @@ Cookie数量: {cookie_count}
                             logger.info(f"【{self.cookie_id}】[{msg_id}] ⏹️ 处理结束（未启用自动发货）")
                             return
                     # 如果不是简化结构，继续走正常流程
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"【{self.cookie_id}】[{msg_id}] 简化消息自动发货处理异常: {self._safe_str(e)}")
+                import traceback
+                logger.error(f"【{self.cookie_id}】[{msg_id}] 详细错误: {traceback.format_exc()}")
 
             # 判断是否为聊天消息
             if not self.is_chat_message(message):
@@ -9806,7 +9815,8 @@ Cookie数量: {cookie_count}
             async with self.session.post(
                 'https://h5api.m.goofish.com/h5/mtop.idle.web.xyh.item.list/1.0/',
                 params=params,
-                data={'data': data_val}
+                data={'data': data_val},
+                headers={'cookie': self.cookies_str}
             ) as response:
                 res_json = await response.json()
 

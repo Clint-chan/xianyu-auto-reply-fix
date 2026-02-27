@@ -6064,7 +6064,8 @@ Cookie数量: {cookie_count}
                     params.append(cookie_id)
                 
                 if status:
-                    conditions.append("order_status != 'shipped' ")
+                    conditions.append("order_status != 'shipped'")
+                    conditions.append("order_status != 'completed'")
                 
                 # 添加时间限制
                 conditions.append("datetime(created_at) >= datetime('now', ?)")
