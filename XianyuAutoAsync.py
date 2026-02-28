@@ -196,6 +196,12 @@ def log_captcha_event(cookie_id: str, event_type: str, success: bool = None, det
 
 # setup_logging(LOG_CONFIG)  # 已移除，模块不存在
 
+
+class CaptchaBlockedException(Exception):
+    """验证码阻塞异常，需要人工介入时抛出，阻止主循环快速重试"""
+    pass
+
+
 class XianyuLive:
     # 注意：_order_locks 等锁字典已移至 __init__ 作为实例变量，避免多账号实例共享
 
@@ -813,6 +819,8 @@ class XianyuLive:
         # 滑块验证相关
         self.captcha_verification_count = 0  # 滑块验证次数计数器
         self.max_captcha_verification_count = 3  # 最大滑块验证次数，防止无限递归
+        self.captcha_blocked = False  # 标记是否因验证码阻塞需要人工介入
+        self.captcha_blocked_time = 0  # 验证码阻塞时间戳
 
         # WebSocket连接监控
         self.connection_state = ConnectionState.DISCONNECTED  # 连接状态
@@ -2058,6 +2066,10 @@ class XianyuLive:
                     "captcha_max_retries_exceeded"
                 )
                 notification_sent = True
+                # 标记为验证码阻塞，阻止外层循环无限重试
+                self.captcha_blocked = True
+                self.captcha_blocked_time = time.time()
+                logger.warning(f"【{self.cookie_id}】验证码重试达上限，已标记阻塞")
                 return None
 
             # 【消息接收检查】检查是否在消息接收后的冷却时间内，与 cookie_refresh_loop 保持一致
@@ -2265,6 +2277,10 @@ class XianyuLive:
                                 
                                 # 标记已发送通知（通知已在_handle_captcha_verification中发送）
                                 notification_sent = True
+                                # 标记为验证码阻塞，阻止外层循环无限重试
+                                self.captcha_blocked = True
+                                self.captcha_blocked_time = time.time()
+                                logger.warning(f"【{self.cookie_id}】已标记验证码阻塞，需要人工介入")
                         except Exception as captcha_e:
                             logger.error(f"【{self.cookie_id}】滑块验证处理异常: {self._safe_str(captcha_e)}")
 
@@ -2284,6 +2300,10 @@ class XianyuLive:
                             
                             # 标记已发送通知（通知已在_handle_captcha_verification中发送）
                             notification_sent = True
+                            # 标记为验证码阻塞，阻止外层循环无限重试
+                            self.captcha_blocked = True
+                            self.captcha_blocked_time = time.time()
+                            logger.warning(f"【{self.cookie_id}】已标记验证码阻塞（异常），需要人工介入")
 
                     # 检查是否包含"令牌过期"或"Session过期"
                     if isinstance(res_json, dict):
@@ -2441,12 +2461,24 @@ class XianyuLive:
                 from utils.xianyu_slider_stealth import XianyuSliderStealth
                 logger.info(f"【{self.cookie_id}】XianyuSliderStealth导入成功，使用滑块验证")
 
+                # 从数据库读取 show_browser 配置，决定是否显示浏览器
+                show_browser = False
+                try:
+                    from db_manager import db_manager
+                    account_info = db_manager.get_cookie_details(self.cookie_id)
+                    if account_info:
+                        show_browser = account_info.get('show_browser', False)
+                except Exception as db_e:
+                    logger.warning(f"【{self.cookie_id}】读取show_browser配置失败: {db_e}，使用默认无头模式")
+
+                browser_mode = "有头" if show_browser else "无头"
+                logger.info(f"【{self.cookie_id}】使用{browser_mode}模式进行滑块验证")
+
                 # 创建独立的滑块验证实例（每个用户独立实例，避免并发冲突）
                 slider_stealth = XianyuSliderStealth(
-                    # user_id=f"{self.cookie_id}_{int(time.time() * 1000)}",  # 使用唯一ID避免冲突
                     user_id=f"{self.cookie_id}",  # 使用唯一ID避免冲突
                     enable_learning=True,  # 启用学习功能
-                    headless=True  # 使用有头模式（可视化浏览器）
+                    headless=not show_browser  # 根据配置决定是否显示浏览器
                 )
 
                 # 直接使用异步方法执行滑块验证（避免 ThreadPoolExecutor 导致的 Playwright 初始化问题）
@@ -2540,22 +2572,13 @@ class XianyuLive:
                     log_captcha_event(self.cookie_id, "滑块验证失败", False,
                         f"XianyuSliderStealth执行失败, 环境: {'Docker' if os.getenv('DOCKER_ENV') else '本地'}")
 
-                    # 发送通知（检查WebSocket连接状态）
-                    # 只有在WebSocket未连接时才发送通知，已连接说明可能是暂时性问题
-                    is_ws_connected = (
-                        self.connection_state == ConnectionState.CONNECTED and 
-                        self.ws and 
-                        not self.ws.closed
+                    # 滑块验证失败是关键事件，无条件发送通知请求人工介入
+                    # （不再检查WebSocket状态，因为无论连接是否正常都需要人工处理）
+                    logger.warning(f"【{self.cookie_id}】滑块验证失败，发送人工介入通知")
+                    await self.send_token_refresh_notification(
+                        f"滑块验证失败，需要手动处理。验证URL: {verification_url}",
+                        "captcha_verification_failed"
                     )
-                    
-                    if is_ws_connected:
-                        logger.info(f"【{self.cookie_id}】WebSocket连接正常，滑块验证失败可能是暂时的，跳过通知")
-                    else:
-                        logger.warning(f"【{self.cookie_id}】WebSocket未连接，发送滑块验证失败通知")
-                        await self.send_token_refresh_notification(
-                            f"滑块验证失败，需要手动处理。验证URL: {verification_url}",
-                            "captcha_verification_failed"
-                        )
                     return None
 
             except ImportError as import_e:
@@ -2606,22 +2629,12 @@ class XianyuLive:
                 except Exception as log_e:
                     logger.error(f"【{self.cookie_id}】记录风控日志失败: {log_e}")
 
-                # 发送通知（检查WebSocket连接状态）
-                # 只有在WebSocket未连接时才发送通知，已连接说明可能是暂时性问题
-                is_ws_connected = (
-                    self.connection_state == ConnectionState.CONNECTED and 
-                    self.ws and 
-                    not self.ws.closed
+                # 滑块验证异常是关键事件，无条件发送通知请求人工介入
+                logger.warning(f"【{self.cookie_id}】滑块验证执行异常，发送人工介入通知")
+                await self.send_token_refresh_notification(
+                    f"滑块验证执行异常，需要手动处理。验证URL: {verification_url}",
+                    "captcha_execution_error"
                 )
-                
-                if is_ws_connected:
-                    logger.info(f"【{self.cookie_id}】WebSocket连接正常，滑块验证执行异常可能是暂时的，跳过通知")
-                else:
-                    logger.warning(f"【{self.cookie_id}】WebSocket未连接，发送滑块验证执行异常通知")
-                    await self.send_token_refresh_notification(
-                        f"滑块验证执行异常，需要手动处理。验证URL: {verification_url}",
-                        "captcha_execution_error"
-                    )
                 return None
 
 
@@ -6566,6 +6579,11 @@ Cookie数量: {cookie_count}
                 if self.current_token:
                     break
 
+                # 如果验证码已阻塞，立即停止重试，不再浪费时间
+                if getattr(self, 'captcha_blocked', False):
+                    logger.warning(f"【{self.cookie_id}】验证码已阻塞，停止token获取重试")
+                    break
+
                 if attempt < max_retries:
                     delay = retry_delays[attempt - 1]
                     logger.warning(f"【{self.cookie_id}】Token获取失败，{delay}秒后进行第{attempt + 1}次重试...")
@@ -6573,6 +6591,10 @@ Cookie数量: {cookie_count}
 
         if not self.current_token:
             logger.error("无法获取有效token，初始化失败")
+            # 检查是否因验证码阻塞
+            if getattr(self, 'captcha_blocked', False):
+                logger.error(f"【{self.cookie_id}】验证码阻塞，需要人工介入，停止快速重试")
+                raise CaptchaBlockedException("验证码需要人工介入，请手动处理后重试")
             # 只有在没有尝试刷新token的情况下才发送通知，避免与refresh_token中的通知重复
             if not token_refresh_attempted:
                 await self.send_token_refresh_notification("初始化时无法获取有效Token", "token_init_failed")
@@ -9498,6 +9520,34 @@ Cookie数量: {cookie_count}
                             if self.ws == websocket:
                                 self.ws = None
                                 logger.info(f"【{self.cookie_id}】WebSocket连接已退出，引用已清理")
+
+                except CaptchaBlockedException as captcha_e:
+                    # 验证码阻塞：不应快速重试，需等待人工介入
+                    logger.error(f"【{self.cookie_id}】验证码需要人工介入，暂停5分钟后重试")
+                    self._set_connection_state(ConnectionState.RECONNECTING, "验证码需人工介入，等待中")
+                    
+                    # 长时间等待，给人工介入留足时间
+                    captcha_wait = 300  # 5分钟
+                    logger.warning(f"【{self.cookie_id}】将等待 {captcha_wait} 秒后重试，期间请人工处理验证码")
+                    
+                    # 使用可中断的等待
+                    remaining = captcha_wait
+                    chunk = 30  # 每30秒输出一次日志
+                    while remaining > 0:
+                        sleep_time = min(chunk, remaining)
+                        try:
+                            await asyncio.sleep(sleep_time)
+                            remaining -= sleep_time
+                            if remaining > 0:
+                                logger.info(f"【{self.cookie_id}】等待人工处理验证码中... 剩余 {remaining:.0f} 秒")
+                        except asyncio.CancelledError:
+                            logger.warning(f"【{self.cookie_id}】验证码等待期间收到取消信号")
+                            raise
+                    
+                    # 重试前清除阻塞标记，允许新一轮尝试
+                    self.captcha_blocked = False
+                    logger.info(f"【{self.cookie_id}】验证码等待结束，清除阻塞标记，重新尝试连接")
+                    continue
 
                 except Exception as e:
                     error_msg = self._safe_str(e)

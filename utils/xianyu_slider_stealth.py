@@ -5840,10 +5840,107 @@ class XianyuSliderStealth:
                     # 在关闭浏览器前获取cookie
                     try:
                         cookies = self._get_cookies_after_success()
+                        if not cookies:
+                            logger.warning(f"【{self.pure_user_id}】滑块成功但未获取到有效cookie，可能进入了二阶段验证(例如: 图像选择)")
+                            success = False  # 标记为失败，以便触发下面的人工等待逻辑
                     except Exception as e:
                         logger.warning(f"【{self.pure_user_id}】获取cookie时出错: {str(e)}")
-                else:
-                    logger.warning(f"【{self.pure_user_id}】滑块验证失败")
+                        success = False
+                
+                if not success:
+                    logger.warning(f"【{self.pure_user_id}】自动验证未完全成功（滑块失败或遇到二阶段验证）")
+                    
+                    # 如果是有头模式（show_browser），等待人工处理验证码
+                    if not self.headless:
+                        logger.warning(f"【{self.pure_user_id}】" + "=" * 60)
+                        logger.warning(f"【{self.pure_user_id}】⚠️ 自动验证未完成，请在浏览器中手动处理二次验证码(如辨别图像)")
+                        logger.warning(f"【{self.pure_user_id}】验证URL: {url}")
+                        logger.warning(f"【{self.pure_user_id}】程序将等待最多5分钟...")
+                        logger.warning(f"【{self.pure_user_id}】" + "=" * 60)
+                        
+                        # 等待人工处理验证码
+                        check_interval = 10  # 每10秒检查一次
+                        max_wait_time = 300  # 最多等待5分钟
+                        waited_time = 0
+                        human_success = False
+                        
+                        while waited_time < max_wait_time:
+                            time.sleep(check_interval)
+                            waited_time += check_interval
+                            
+                            try:
+                                # 检查页面状态
+                                current_url = self.page.url
+                                current_content = self.page.content()
+                                
+                                # 判断依据1：URL发生实质跳转（不再是punish拦截页）
+                                url_redirected = current_url != url and "punish" not in current_url
+                                
+                                # 判断依据2：页面验证码特征消失（去掉"验证码"等容易误判的通用词）
+                                no_captcha_keywords = not any(keyword in current_content for keyword in ["nocaptcha", "slider-bg", "baxia-dialog"])
+                                
+                                # 判断依据3：能提取到有效 x5sec cookie（最准确）
+                                has_valid_cookie = False
+                                try:
+                                    temp_cookies = self._get_cookies_after_success()
+                                    if temp_cookies:
+                                        has_valid_cookie = True
+                                        cookies = temp_cookies  # 提前保存获取到的cookie
+                                except Exception:
+                                    pass
+                                
+                                if has_valid_cookie or url_redirected or (no_captcha_keywords and "punish" not in current_url):
+                                    if has_valid_cookie:
+                                        logger.success(f"【{self.pure_user_id}】✅ 成功获取到x5sec Cookie，人工验证已完成！")
+                                    elif url_redirected:
+                                        logger.success(f"【{self.pure_user_id}】✅ 页面已跳转到 {current_url[:50]}...，人工验证可能已完成！")
+                                    else:
+                                        logger.success(f"【{self.pure_user_id}】✅ 验证码特征已消失，人工验证可能已完成！")
+                                        
+                                    human_success = True
+                                    success = True  # 标记外层状态为成功
+                                    break
+                                
+                                # 检查是否有滑块出现（可能验证码类型变了，再试自动处理）
+                                slider_selectors = ["#nc_1_n1z", ".nc-container", "#baxia-dialog-content"]
+                                for selector in slider_selectors:
+                                    try:
+                                        element = self.page.query_selector(selector)
+                                        if element and element.is_visible():
+                                            logger.info(f"【{self.pure_user_id}】🔍 检测到滑块，尝试自动处理...")
+                                            if self.solve_slider(max_retries=3, fast_mode=True):
+                                                logger.success(f"【{self.pure_user_id}】✅ 自动滑块处理成功！")
+                                                human_success = True
+                                            break
+                                    except Exception:
+                                        pass
+                                
+                                if human_success:
+                                    break
+                                    
+                                logger.info(f"【{self.pure_user_id}】等待人工处理验证码中... (已等待{waited_time}秒/{max_wait_time}秒)")
+                            except Exception as check_e:
+                                logger.debug(f"【{self.pure_user_id}】检查验证码状态时出错: {check_e}")
+                        
+                        if human_success:
+                            logger.info(f"【{self.pure_user_id}】人工/自动验证成功，等待页面加载...")
+                            try:
+                                time.sleep(2)
+                                self.page.wait_for_load_state("networkidle", timeout=10000)
+                                time.sleep(1)
+                            except Exception:
+                                pass
+                            
+                            # 获取cookie
+                            try:
+                                cookies = self._get_cookies_after_success()
+                                if cookies:
+                                    success = True
+                                    logger.success(f"【{self.pure_user_id}】✅ 人工验证后成功获取cookies")
+                            except Exception as e:
+                                logger.warning(f"【{self.pure_user_id}】获取cookie时出错: {str(e)}")
+                        else:
+                            logger.error(f"【{self.pure_user_id}】❌ 等待人工处理超时（{max_wait_time}秒），将关闭浏览器")
                 
                 return success, cookies
             else:
