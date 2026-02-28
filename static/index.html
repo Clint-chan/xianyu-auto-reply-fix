@@ -1362,6 +1362,42 @@
         <p class="text-muted mb-0">为每个账号配置消息通知渠道</p>
       </div>
       <div class="content-body">
+        <!-- 账号通知渠道绑定 -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-link-45deg me-2"></i>账号通知渠道绑定</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationBindings()">
+              <i class="bi bi-arrow-clockwise me-1"></i>刷新
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-3">选择账号并勾选需要接收通知的渠道，保存后该账号的通知将发送到对应渠道</p>
+            <div class="row g-3 align-items-end mb-3">
+              <div class="col-md-6">
+                <label class="form-label"><i class="bi bi-person-circle me-1"></i>选择账号</label>
+                <select class="form-select" id="notifBindAccountSelect" onchange="onNotifBindAccountChange()">
+                  <option value="">🔍 请选择要配置通知的账号...</option>
+                </select>
+              </div>
+              <div class="col-md-6 d-flex gap-2">
+                <button class="btn btn-primary" id="saveNotifBindingsBtn" onclick="saveNotificationBindings()" disabled>
+                  <i class="bi bi-check-lg me-1"></i>保存绑定
+                </button>
+                <button class="btn btn-outline-secondary" onclick="loadNotifBindAccountList()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>刷新账号
+                </button>
+              </div>
+            </div>
+            <!-- 渠道复选框列表 -->
+            <div id="notifChannelCheckboxes">
+              <div class="text-center text-muted py-3">
+                <i class="bi bi-arrow-up-circle fs-4 d-block mb-2"></i>
+                请先选择账号
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 通知样式配置 -->
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">

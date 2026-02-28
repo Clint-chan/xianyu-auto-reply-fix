@@ -1764,6 +1764,10 @@ class MessageNotificationIn(BaseModel):
     enabled: bool = True
 
 
+class AccountNotificationBindingsIn(BaseModel):
+    channel_ids: List[int]  # 要绑定的渠道ID列表
+
+
 class SystemSettingIn(BaseModel):
     value: str
     description: Optional[str] = None
@@ -3521,6 +3525,36 @@ def set_message_notification(cid: str, notification_data: MessageNotificationIn,
             return {'msg': 'message notification set'}
         else:
             raise HTTPException(status_code=400, detail='设置失败')
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put('/message-notifications/account/{cid}')
+def update_account_notification_bindings(cid: str, bindings: AccountNotificationBindingsIn, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """批量更新账号的通知渠道绑定（替换式：先清空再写入）"""
+    from db_manager import db_manager
+    try:
+        # 检查cookie是否属于当前用户
+        user_id = current_user['user_id']
+        user_cookies = db_manager.get_all_cookies(user_id)
+
+        if cid not in user_cookies:
+            raise HTTPException(status_code=403, detail="无权限操作该Cookie")
+
+        # 先删除该账号的所有通知绑定
+        db_manager.delete_account_notifications(cid)
+
+        # 逐个插入新的绑定
+        bound_channels = []
+        for channel_id in bindings.channel_ids:
+            channel = db_manager.get_notification_channel(channel_id)
+            if channel:
+                db_manager.set_message_notification(cid, channel_id, True)
+                bound_channels.append(channel_id)
+
+        return {'msg': 'account notification bindings updated', 'bound_channels': bound_channels}
     except HTTPException:
         raise
     except Exception as e:

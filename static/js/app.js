@@ -41,112 +41,113 @@ function showSection(sectionName) {
 
     // 隐藏所有内容区域
     document.querySelectorAll('.content-section').forEach(section => {
-    section.classList.remove('active');
+        section.classList.remove('active');
     });
 
     // 移除所有菜单项的active状态
     document.querySelectorAll('.nav-link').forEach(link => {
-    link.classList.remove('active');
+        link.classList.remove('active');
     });
 
     // 显示选中的内容区域
     const targetSection = document.getElementById(sectionName + '-section');
     if (targetSection) {
-    targetSection.classList.add('active');
-    console.log('页面已激活:', sectionName + '-section'); // 调试信息
+        targetSection.classList.add('active');
+        console.log('页面已激活:', sectionName + '-section'); // 调试信息
     } else {
-    console.error('找不到页面元素:', sectionName + '-section'); // 调试信息
+        console.error('找不到页面元素:', sectionName + '-section'); // 调试信息
     }
 
     // 设置对应菜单项为active（修复event.target问题）
     const menuLinks = document.querySelectorAll('.nav-link');
     menuLinks.forEach(link => {
-    if (link.onclick && link.onclick.toString().includes(`showSection('${sectionName}')`)) {
-        link.classList.add('active');
-    }
+        if (link.onclick && link.onclick.toString().includes(`showSection('${sectionName}')`)) {
+            link.classList.add('active');
+        }
     });
 
     // 根据不同section加载对应数据
-    switch(sectionName) {
-    case 'dashboard':        // 【仪表盘菜单】
-        loadDashboard();
-        break;
-    case 'accounts':         // 【账号管理菜单】
-        loadCookies();
-        break;
-    case 'items':           // 【商品管理菜单】
-        loadItems();
-        initItemsSearch(); // 确保搜索功能已初始化
-        break;
-    case 'items-reply':           // 【商品回复管理菜单】
-        loadItemsReplay();
-        break;
-    case 'orders':          // 【订单管理菜单】
-        loadOrders();
-        break;
-    case 'auto-reply':      // 【自动回复菜单】
-        refreshAccountList();
-        break;
-    case 'cards':           // 【卡券管理菜单】
-        loadCards();
-        break;
-    case 'auto-delivery':   // 【自动发货菜单】
-        loadDeliveryRules();
-        break;
-    case 'notification-channels':  // 【通知渠道菜单】
-        loadNotificationChannels();
-        break;
-    case 'message-notifications':  // 【消息通知菜单】
-        loadMessageNotifications();
-        loadNotificationTemplates();
-        break;
-    case 'system-settings':    // 【系统设置菜单】
-        loadSystemSettings();
-        initMenuManagement();
-        break;
-    case 'logs':            // 【日志管理菜单】
-        // 自动加载系统日志
-        setTimeout(() => {
-            // 检查是否在正确的页面并且元素存在
-            const systemLogContainer = document.getElementById('systemLogContainer');
-            if (systemLogContainer) {
-                console.log('首次进入日志页面，自动加载日志...');
-                loadSystemLogs();
-            }
-        }, 100);
-        break;
-    case 'risk-control-logs': // 【风控日志菜单】
-        // 自动加载风控日志
-        setTimeout(() => {
-            const riskLogContainer = document.getElementById('riskLogContainer');
-            if (riskLogContainer) {
-                console.log('首次进入风控日志页面，自动加载日志...');
-                loadRiskControlLogs();
-                loadCookieFilterOptions();
-            }
-        }, 100);
-        break;
-    case 'user-management':  // 【用户管理菜单】
-        loadUserManagement();
-        break;
-    case 'online-im':        // 【在线客服菜单】
-        loadOnlineIm();
-        break;
-    case 'data-management':  // 【数据管理菜单】
-        loadDataManagement();
-        break;
+    switch (sectionName) {
+        case 'dashboard':        // 【仪表盘菜单】
+            loadDashboard();
+            break;
+        case 'accounts':         // 【账号管理菜单】
+            loadCookies();
+            break;
+        case 'items':           // 【商品管理菜单】
+            loadItems();
+            initItemsSearch(); // 确保搜索功能已初始化
+            break;
+        case 'items-reply':           // 【商品回复管理菜单】
+            loadItemsReplay();
+            break;
+        case 'orders':          // 【订单管理菜单】
+            loadOrders();
+            break;
+        case 'auto-reply':      // 【自动回复菜单】
+            refreshAccountList();
+            break;
+        case 'cards':           // 【卡券管理菜单】
+            loadCards();
+            break;
+        case 'auto-delivery':   // 【自动发货菜单】
+            loadDeliveryRules();
+            break;
+        case 'notification-channels':  // 【通知渠道菜单】
+            loadNotificationChannels();
+            break;
+        case 'message-notifications':  // 【消息通知菜单】
+            loadMessageNotifications();
+            loadNotificationTemplates();
+            loadNotifBindAccountList();
+            break;
+        case 'system-settings':    // 【系统设置菜单】
+            loadSystemSettings();
+            initMenuManagement();
+            break;
+        case 'logs':            // 【日志管理菜单】
+            // 自动加载系统日志
+            setTimeout(() => {
+                // 检查是否在正确的页面并且元素存在
+                const systemLogContainer = document.getElementById('systemLogContainer');
+                if (systemLogContainer) {
+                    console.log('首次进入日志页面，自动加载日志...');
+                    loadSystemLogs();
+                }
+            }, 100);
+            break;
+        case 'risk-control-logs': // 【风控日志菜单】
+            // 自动加载风控日志
+            setTimeout(() => {
+                const riskLogContainer = document.getElementById('riskLogContainer');
+                if (riskLogContainer) {
+                    console.log('首次进入风控日志页面，自动加载日志...');
+                    loadRiskControlLogs();
+                    loadCookieFilterOptions();
+                }
+            }, 100);
+            break;
+        case 'user-management':  // 【用户管理菜单】
+            loadUserManagement();
+            break;
+        case 'online-im':        // 【在线客服菜单】
+            loadOnlineIm();
+            break;
+        case 'data-management':  // 【数据管理菜单】
+            loadDataManagement();
+            break;
     }
 
     // 如果切换到非日志页面，停止自动刷新
     if (sectionName !== 'logs' && window.autoRefreshInterval) {
-    clearInterval(window.autoRefreshInterval);
-    window.autoRefreshInterval = null;
-    const button = document.querySelector('#autoRefreshText');
-    const icon = button?.previousElementSibling;
-    if (button) {
-        button.textContent = '开启自动刷新';
-        if (icon) icon.className = 'bi bi-play-circle me-1';
-    }
+        clearInterval(window.autoRefreshInterval);
+        window.autoRefreshInterval = null;
+        const button = document.querySelector('#autoRefreshText');
+        const icon = button?.previousElementSibling;
+        if (button) {
+            button.textContent = '开启自动刷新';
+            if (icon) icon.className = 'bi bi-play-circle me-1';
+        }
     }
 }
 
@@ -272,87 +273,87 @@ function initDarkMode() {
 // 加载仪表盘数据
 async function loadDashboard() {
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    // 获取账号列表
-    const cookiesResponse = await fetch(`${apiBase}/cookies/details`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (cookiesResponse.ok) {
-        const cookiesData = await cookiesResponse.json();
-
-        // 为每个账号获取关键词信息
-        const accountsWithKeywords = await Promise.all(
-        cookiesData.map(async (account) => {
-            try {
-            const keywordsResponse = await fetch(`${apiBase}/keywords/${account.id}`, {
-                headers: {
+        // 获取账号列表
+        const cookiesResponse = await fetch(`${apiBase}/cookies/details`, {
+            headers: {
                 'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (cookiesResponse.ok) {
+            const cookiesData = await cookiesResponse.json();
+
+            // 为每个账号获取关键词信息
+            const accountsWithKeywords = await Promise.all(
+                cookiesData.map(async (account) => {
+                    try {
+                        const keywordsResponse = await fetch(`${apiBase}/keywords/${account.id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`
+                            }
+                        });
+
+                        if (keywordsResponse.ok) {
+                            const keywordsData = await keywordsResponse.json();
+                            return {
+                                ...account,
+                                keywords: keywordsData,
+                                keywordCount: keywordsData.length
+                            };
+                        } else {
+                            return {
+                                ...account,
+                                keywords: [],
+                                keywordCount: 0
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`获取账号 ${account.id} 关键词失败:`, error);
+                        return {
+                            ...account,
+                            keywords: [],
+                            keywordCount: 0
+                        };
+                    }
+                })
+            );
+
+            dashboardData.accounts = accountsWithKeywords;
+
+            // 计算统计数据
+            let totalKeywords = 0;
+            let activeAccounts = 0;
+            let enabledAccounts = 0;
+
+            accountsWithKeywords.forEach(account => {
+                const keywordCount = account.keywordCount || 0;
+                const isEnabled = account.enabled === undefined ? true : account.enabled;
+
+                if (isEnabled) {
+                    enabledAccounts++;
+                    totalKeywords += keywordCount;
+                    if (keywordCount > 0) {
+                        activeAccounts++;
+                    }
                 }
             });
 
-            if (keywordsResponse.ok) {
-                const keywordsData = await keywordsResponse.json();
-                return {
-                ...account,
-                keywords: keywordsData,
-                keywordCount: keywordsData.length
-                };
-            } else {
-                return {
-                ...account,
-                keywords: [],
-                keywordCount: 0
-                };
-            }
-            } catch (error) {
-            console.error(`获取账号 ${account.id} 关键词失败:`, error);
-            return {
-                ...account,
-                keywords: [],
-                keywordCount: 0
-            };
-            }
-        })
-        );
+            dashboardData.totalKeywords = totalKeywords;
 
-        dashboardData.accounts = accountsWithKeywords;
+            // 加载订单数量
+            await loadOrdersCount();
 
-        // 计算统计数据
-        let totalKeywords = 0;
-        let activeAccounts = 0;
-        let enabledAccounts = 0;
-
-        accountsWithKeywords.forEach(account => {
-        const keywordCount = account.keywordCount || 0;
-        const isEnabled = account.enabled === undefined ? true : account.enabled;
-
-        if (isEnabled) {
-            enabledAccounts++;
-            totalKeywords += keywordCount;
-            if (keywordCount > 0) {
-            activeAccounts++;
-            }
+            // 更新仪表盘显示
+            updateDashboardStats(accountsWithKeywords.length, totalKeywords, enabledAccounts);
+            updateDashboardAccountsList(accountsWithKeywords);
         }
-        });
-
-        dashboardData.totalKeywords = totalKeywords;
-
-        // 加载订单数量
-        await loadOrdersCount();
-
-        // 更新仪表盘显示
-        updateDashboardStats(accountsWithKeywords.length, totalKeywords, enabledAccounts);
-        updateDashboardAccountsList(accountsWithKeywords);
-    }
     } catch (error) {
-    console.error('加载仪表盘数据失败:', error);
-    showToast('加载仪表盘数据失败', 'danger');
+        console.error('加载仪表盘数据失败:', error);
+        showToast('加载仪表盘数据失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -393,7 +394,7 @@ function updateDashboardAccountsList(accounts) {
     tbody.innerHTML = '';
 
     if (accounts.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="4" class="text-center text-muted py-4">
             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
@@ -401,25 +402,25 @@ function updateDashboardAccountsList(accounts) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     accounts.forEach(account => {
-    const keywordCount = account.keywordCount || 0;
-    const isEnabled = account.enabled === undefined ? true : account.enabled;
+        const keywordCount = account.keywordCount || 0;
+        const isEnabled = account.enabled === undefined ? true : account.enabled;
 
-    let status = '';
-    if (!isEnabled) {
-        status = '<span class="badge bg-danger">已禁用</span>';
-    } else if (keywordCount > 0) {
-        status = '<span class="badge bg-success">活跃</span>';
-    } else {
-        status = '<span class="badge bg-secondary">未配置</span>';
-    }
+        let status = '';
+        if (!isEnabled) {
+            status = '<span class="badge bg-danger">已禁用</span>';
+        } else if (keywordCount > 0) {
+            status = '<span class="badge bg-success">活跃</span>';
+        } else {
+            status = '<span class="badge bg-secondary">未配置</span>';
+        }
 
-    const row = document.createElement('tr');
-    row.className = isEnabled ? '' : 'table-secondary';
-    row.innerHTML = `
+        const row = document.createElement('tr');
+        row.className = isEnabled ? '' : 'table-secondary';
+        row.innerHTML = `
         <td>
         <strong class="text-primary ${!isEnabled ? 'text-muted' : ''}">${account.id}</strong>
         ${!isEnabled ? '<i class="bi bi-pause-circle-fill text-danger ms-1" title="已禁用"></i>' : ''}
@@ -432,7 +433,7 @@ function updateDashboardAccountsList(accounts) {
         <small class="text-muted">${new Date().toLocaleString()}</small>
         </td>
     `;
-    tbody.appendChild(row);
+        tbody.appendChild(row);
     });
 }
 
@@ -442,32 +443,32 @@ async function getAccountKeywordCount(accountId) {
 
     // 检查缓存
     if (accountKeywordCache[accountId] && (now - cacheTimestamp) < CACHE_DURATION) {
-    return accountKeywordCache[accountId];
+        return accountKeywordCache[accountId];
     }
 
     try {
-    const response = await fetch(`${apiBase}/keywords/${accountId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/keywords/${accountId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const keywordsData = await response.json();
+            // 现在API返回的是包含普通关键词和商品关键词的完整列表
+            const count = keywordsData.length;
+
+            // 更新缓存
+            accountKeywordCache[accountId] = count;
+            cacheTimestamp = now;
+
+            return count;
+        } else {
+            return 0;
         }
-    });
-
-    if (response.ok) {
-        const keywordsData = await response.json();
-        // 现在API返回的是包含普通关键词和商品关键词的完整列表
-        const count = keywordsData.length;
-
-        // 更新缓存
-        accountKeywordCache[accountId] = count;
-        cacheTimestamp = now;
-
-        return count;
-    } else {
-        return 0;
-    }
     } catch (error) {
-    console.error(`获取账号 ${accountId} 关键词失败:`, error);
-    return 0;
+        console.error(`获取账号 ${accountId} 关键词失败:`, error);
+        return 0;
     }
 }
 
@@ -484,131 +485,131 @@ function clearKeywordCache() {
 // 刷新账号列表（用于自动回复页面）
 async function refreshAccountList() {
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    // 获取账号列表
-    const response = await fetch(`${apiBase}/cookies/details`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const accounts = await response.json();
-        const select = document.getElementById('accountSelect');
-        select.innerHTML = '<option value="">🔍 请选择一个账号开始配置...</option>';
-
-        // 为每个账号获取关键词数量
-        const accountsWithKeywords = await Promise.all(
-        accounts.map(async (account) => {
-            try {
-            const keywordsResponse = await fetch(`${apiBase}/keywords/${account.id}`, {
-                headers: {
+        // 获取账号列表
+        const response = await fetch(`${apiBase}/cookies/details`, {
+            headers: {
                 'Authorization': `Bearer ${authToken}`
-                }
+            }
+        });
+
+        if (response.ok) {
+            const accounts = await response.json();
+            const select = document.getElementById('accountSelect');
+            select.innerHTML = '<option value="">🔍 请选择一个账号开始配置...</option>';
+
+            // 为每个账号获取关键词数量
+            const accountsWithKeywords = await Promise.all(
+                accounts.map(async (account) => {
+                    try {
+                        const keywordsResponse = await fetch(`${apiBase}/keywords/${account.id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`
+                            }
+                        });
+
+                        if (keywordsResponse.ok) {
+                            const keywordsData = await keywordsResponse.json();
+                            return {
+                                ...account,
+                                keywords: keywordsData,
+                                keywordCount: keywordsData.length
+                            };
+                        } else {
+                            return {
+                                ...account,
+                                keywordCount: 0
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`获取账号 ${account.id} 关键词失败:`, error);
+                        return {
+                            ...account,
+                            keywordCount: 0
+                        };
+                    }
+                })
+            );
+
+            // 渲染账号选项（显示所有账号，但标识禁用状态）
+            if (accountsWithKeywords.length === 0) {
+                select.innerHTML = '<option value="">❌ 暂无账号，请先添加账号</option>';
+                return;
+            }
+
+            // 分组显示：先显示启用的账号，再显示禁用的账号
+            const enabledAccounts = accountsWithKeywords.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                console.log(`账号 ${account.id} 过滤状态: enabled=${account.enabled}, 判断为启用=${enabled}`); // 调试信息
+                return enabled;
+            });
+            const disabledAccounts = accountsWithKeywords.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                return !enabled;
             });
 
-            if (keywordsResponse.ok) {
-                const keywordsData = await keywordsResponse.json();
-                return {
-                ...account,
-                keywords: keywordsData,
-                keywordCount: keywordsData.length
-                };
-            } else {
-                return {
-                ...account,
-                keywordCount: 0
-                };
+            // 渲染启用的账号
+            enabledAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+
+                // 根据关键词数量显示不同的图标和样式
+                let icon = '📝';
+                let status = '';
+                if (account.keywordCount === 0) {
+                    icon = '⚪';
+                    status = ' (未配置)';
+                } else if (account.keywordCount >= 5) {
+                    icon = '🟢';
+                    status = ` (${account.keywordCount} 个关键词)`;
+                } else {
+                    icon = '🟡';
+                    status = ` (${account.keywordCount} 个关键词)`;
+                }
+
+                option.textContent = `${icon} ${account.id}${status}`;
+                select.appendChild(option);
+            });
+
+            // 如果有禁用的账号，添加分隔线和禁用账号
+            if (disabledAccounts.length > 0) {
+                // 添加分隔线
+                const separatorOption = document.createElement('option');
+                separatorOption.disabled = true;
+                separatorOption.textContent = `--- 禁用账号 (${disabledAccounts.length} 个) ---`;
+                select.appendChild(separatorOption);
+
+                // 渲染禁用的账号
+                disabledAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+
+                    // 禁用账号使用特殊图标和样式
+                    let icon = '🔴';
+                    let status = '';
+                    if (account.keywordCount === 0) {
+                        status = ' (未配置) [已禁用]';
+                    } else {
+                        status = ` (${account.keywordCount} 个关键词) [已禁用]`;
+                    }
+
+                    option.textContent = `${icon} ${account.id}${status}`;
+                    option.style.color = '#6b7280';
+                    option.style.fontStyle = 'italic';
+                    select.appendChild(option);
+                });
             }
-            } catch (error) {
-            console.error(`获取账号 ${account.id} 关键词失败:`, error);
-            return {
-                ...account,
-                keywordCount: 0
-            };
-            }
-        })
-        );
 
-        // 渲染账号选项（显示所有账号，但标识禁用状态）
-        if (accountsWithKeywords.length === 0) {
-        select.innerHTML = '<option value="">❌ 暂无账号，请先添加账号</option>';
-        return;
-        }
-
-        // 分组显示：先显示启用的账号，再显示禁用的账号
-        const enabledAccounts = accountsWithKeywords.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        console.log(`账号 ${account.id} 过滤状态: enabled=${account.enabled}, 判断为启用=${enabled}`); // 调试信息
-        return enabled;
-        });
-        const disabledAccounts = accountsWithKeywords.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        return !enabled;
-        });
-
-        // 渲染启用的账号
-        enabledAccounts.forEach(account => {
-        const option = document.createElement('option');
-        option.value = account.id;
-
-        // 根据关键词数量显示不同的图标和样式
-        let icon = '📝';
-        let status = '';
-        if (account.keywordCount === 0) {
-            icon = '⚪';
-            status = ' (未配置)';
-        } else if (account.keywordCount >= 5) {
-            icon = '🟢';
-            status = ` (${account.keywordCount} 个关键词)`;
+            console.log('账号列表刷新完成，关键词统计:', accountsWithKeywords.map(a => ({ id: a.id, keywords: a.keywordCount })));
         } else {
-            icon = '🟡';
-            status = ` (${account.keywordCount} 个关键词)`;
+            showToast('获取账号列表失败', 'danger');
         }
-
-        option.textContent = `${icon} ${account.id}${status}`;
-        select.appendChild(option);
-        });
-
-        // 如果有禁用的账号，添加分隔线和禁用账号
-        if (disabledAccounts.length > 0) {
-        // 添加分隔线
-        const separatorOption = document.createElement('option');
-        separatorOption.disabled = true;
-        separatorOption.textContent = `--- 禁用账号 (${disabledAccounts.length} 个) ---`;
-        select.appendChild(separatorOption);
-
-        // 渲染禁用的账号
-        disabledAccounts.forEach(account => {
-            const option = document.createElement('option');
-            option.value = account.id;
-
-            // 禁用账号使用特殊图标和样式
-            let icon = '🔴';
-            let status = '';
-            if (account.keywordCount === 0) {
-            status = ' (未配置) [已禁用]';
-            } else {
-            status = ` (${account.keywordCount} 个关键词) [已禁用]`;
-            }
-
-            option.textContent = `${icon} ${account.id}${status}`;
-            option.style.color = '#6b7280';
-            option.style.fontStyle = 'italic';
-            select.appendChild(option);
-        });
-        }
-
-        console.log('账号列表刷新完成，关键词统计:', accountsWithKeywords.map(a => ({id: a.id, keywords: a.keywordCount})));
-    } else {
-        showToast('获取账号列表失败', 'danger');
-    }
     } catch (error) {
-    console.error('刷新账号列表失败:', error);
-    showToast('刷新账号列表失败', 'danger');
+        console.error('刷新账号列表失败:', error);
+        showToast('刷新账号列表失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -654,61 +655,61 @@ async function loadAccountKeywords() {
     const keywordManagement = document.getElementById('keywordManagement');
 
     if (!accountId) {
-    keywordManagement.style.display = 'none';
-    return;
+        keywordManagement.style.display = 'none';
+        return;
     }
 
     try {
-    toggleLoading(true);
-    currentCookieId = accountId;
+        toggleLoading(true);
+        currentCookieId = accountId;
 
-    // 获取账号详情以检查状态
-    const accountResponse = await fetch(`${apiBase}/cookies/details`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取账号详情以检查状态
+        const accountResponse = await fetch(`${apiBase}/cookies/details`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        let accountStatus = true; // 默认启用
+        if (accountResponse.ok) {
+            const accounts = await accountResponse.json();
+            const currentAccount = accounts.find(acc => acc.id === accountId);
+            accountStatus = currentAccount ? (currentAccount.enabled === undefined ? true : currentAccount.enabled) : true;
+            console.log(`加载关键词时账号 ${accountId} 状态: enabled=${currentAccount?.enabled}, accountStatus=${accountStatus}`); // 调试信息
         }
-    });
 
-    let accountStatus = true; // 默认启用
-    if (accountResponse.ok) {
-        const accounts = await accountResponse.json();
-        const currentAccount = accounts.find(acc => acc.id === accountId);
-        accountStatus = currentAccount ? (currentAccount.enabled === undefined ? true : currentAccount.enabled) : true;
-        console.log(`加载关键词时账号 ${accountId} 状态: enabled=${currentAccount?.enabled}, accountStatus=${accountStatus}`); // 调试信息
-    }
+        const response = await fetch(`${apiBase}/keywords-with-item-id/${accountId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    const response = await fetch(`${apiBase}/keywords-with-item-id/${accountId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        if (response.ok) {
+            const data = await response.json();
+            console.log('从服务器获取的关键词数据:', data); // 调试信息
+
+            // 后端返回的是 [{keyword, reply, item_id, type, image_url}, ...] 格式，直接使用
+            const formattedData = data;
+
+            console.log('格式化后的关键词数据:', formattedData); // 调试信息
+            keywordsData[accountId] = formattedData;
+            renderKeywordsList(formattedData);
+
+            // 加载商品列表
+            await loadItemsList(accountId);
+
+            // 更新账号徽章显示
+            updateAccountBadge(accountId, accountStatus);
+
+            keywordManagement.style.display = 'block';
+        } else {
+            showToast('加载关键词失败', 'danger');
         }
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        console.log('从服务器获取的关键词数据:', data); // 调试信息
-
-        // 后端返回的是 [{keyword, reply, item_id, type, image_url}, ...] 格式，直接使用
-        const formattedData = data;
-
-        console.log('格式化后的关键词数据:', formattedData); // 调试信息
-        keywordsData[accountId] = formattedData;
-        renderKeywordsList(formattedData);
-
-        // 加载商品列表
-        await loadItemsList(accountId);
-
-        // 更新账号徽章显示
-        updateAccountBadge(accountId, accountStatus);
-
-        keywordManagement.style.display = 'block';
-    } else {
-        showToast('加载关键词失败', 'danger');
-    }
     } catch (error) {
-    console.error('加载关键词失败:', error);
-    showToast('加载关键词失败', 'danger');
+        console.error('加载关键词失败:', error);
+        showToast('加载关键词失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -738,44 +739,44 @@ function showAddKeywordForm() {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
 
     if (form.style.display === 'block') {
-    document.getElementById('newKeyword').focus();
+        document.getElementById('newKeyword').focus();
     }
 }
 
 // 加载商品列表
 async function loadItemsList(accountId) {
     try {
-    const response = await fetch(`${apiBase}/items/${accountId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        const items = data.items || [];
-
-        // 更新商品选择下拉框
-        const selectElement = document.getElementById('newItemIdSelect');
-        if (selectElement) {
-        // 清空现有选项（保留第一个默认选项）
-        selectElement.innerHTML = '<option value="">选择商品或留空表示通用关键词</option>';
-
-        // 添加商品选项
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.item_id;
-            option.textContent = `${item.item_id} - ${item.item_title}`;
-            selectElement.appendChild(option);
+        const response = await fetch(`${apiBase}/items/${accountId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
         });
-        }
 
-        console.log(`加载了 ${items.length} 个商品到选择列表`);
-    } else {
-        console.warn('加载商品列表失败:', response.status);
-    }
+        if (response.ok) {
+            const data = await response.json();
+            const items = data.items || [];
+
+            // 更新商品选择下拉框
+            const selectElement = document.getElementById('newItemIdSelect');
+            if (selectElement) {
+                // 清空现有选项（保留第一个默认选项）
+                selectElement.innerHTML = '<option value="">选择商品或留空表示通用关键词</option>';
+
+                // 添加商品选项
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.item_id;
+                    option.textContent = `${item.item_id} - ${item.item_title}`;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            console.log(`加载了 ${items.length} 个商品到选择列表`);
+        } else {
+            console.warn('加载商品列表失败:', response.status);
+        }
     } catch (error) {
-    console.error('加载商品列表时发生错误:', error);
+        console.error('加载商品列表时发生错误:', error);
     }
 }
 
@@ -789,13 +790,13 @@ async function addKeyword() {
     const selectedOptions = Array.from(selectElement.selectedOptions);
 
     if (!keywordInput) {
-    showToast('请填写关键词', 'warning');
-    return;
+        showToast('请填写关键词', 'warning');
+        return;
     }
 
     if (!currentCookieId) {
-    showToast('请先选择账号', 'warning');
-    return;
+        showToast('请先选择账号', 'warning');
+        return;
     }
 
     // 检查是否为编辑模式
@@ -803,177 +804,177 @@ async function addKeyword() {
     const actionText = isEditMode ? '更新' : '添加';
 
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    // 解析多个关键词（支持竖线、换行符分隔）
-    const keywords = keywordInput
-        .split(/[\|\n]/)
-        .map(k => k.trim())
-        .filter(k => k.length > 0);
-    
-    if (keywords.length === 0) {
-        showToast('请填写有效的关键词', 'warning');
-        toggleLoading(false);
-        return;
-    }
+        // 解析多个关键词（支持竖线、换行符分隔）
+        const keywords = keywordInput
+            .split(/[\|\n]/)
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
 
-    // 获取选中的商品ID列表
-    let itemIds = selectedOptions
-        .map(opt => opt.value)
-        .filter(id => id !== ''); // 过滤掉空值（通用关键词选项）
-    
-    // 如果没有选中任何商品，或者选中了空值，则作为通用关键词
-    if (itemIds.length === 0) {
-        itemIds = [''];
-    }
-
-    // 获取当前关键词列表
-    let currentKeywords = [...(keywordsData[currentCookieId] || [])];
-
-    // 如果是编辑模式，先移除原关键词
-    if (isEditMode) {
-        currentKeywords.splice(window.editingIndex, 1);
-    }
-
-    // 准备要保存的关键词列表（只包含文本类型的关键字）
-    let textKeywords = currentKeywords.filter(item => (item.type || 'text') === 'text');
-
-    // 如果是编辑模式，先移除原关键词
-    if (isEditMode && typeof window.editingIndex !== 'undefined') {
-        // 需要重新计算在文本关键字中的索引
-        const originalKeyword = keywordsData[currentCookieId][window.editingIndex];
-        const textIndex = textKeywords.findIndex(item =>
-            item.keyword === originalKeyword.keyword &&
-            (item.item_id || '') === (originalKeyword.item_id || '')
-        );
-        if (textIndex !== -1) {
-            textKeywords.splice(textIndex, 1);
+        if (keywords.length === 0) {
+            showToast('请填写有效的关键词', 'warning');
+            toggleLoading(false);
+            return;
         }
-    }
 
-    // 检查关键词是否已存在（考虑商品ID，检查所有类型的关键词）
-    // 在编辑模式下，需要排除正在编辑的关键词本身
-    let allKeywords = keywordsData[currentCookieId] || [];
-    if (isEditMode && typeof window.editingIndex !== 'undefined') {
-        // 创建一个副本，排除正在编辑的关键词
-        allKeywords = allKeywords.filter((item, index) => index !== window.editingIndex);
-    }
+        // 获取选中的商品ID列表
+        let itemIds = selectedOptions
+            .map(opt => opt.value)
+            .filter(id => id !== ''); // 过滤掉空值（通用关键词选项）
 
-    // 检查重复关键词
-    const duplicates = [];
-    for (const keyword of keywords) {
-        for (const itemId of itemIds) {
-    const existingKeyword = allKeywords.find(item =>
-        item.keyword === keyword &&
-        (item.item_id || '') === (itemId || '')
-    );
-    if (existingKeyword) {
-        const itemIdText = itemId ? `（商品ID: ${itemId}）` : '（通用关键词）';
-        const typeText = existingKeyword.type === 'image' ? '图片' : '文本';
-                duplicates.push(`"${keyword}" ${itemIdText}`);
-            }
+        // 如果没有选中任何商品，或者选中了空值，则作为通用关键词
+        if (itemIds.length === 0) {
+            itemIds = [''];
         }
-    }
 
-    if (duplicates.length > 0) {
-        showToast(`以下关键词已存在：\n${duplicates.join('\n')}\n请修改后重试`, 'warning');
-        toggleLoading(false);
-        return;
-    }
+        // 获取当前关键词列表
+        let currentKeywords = [...(keywordsData[currentCookieId] || [])];
 
-    // 展开添加多个关键词和多个商品ID的组合
-    for (const keyword of keywords) {
-        for (const itemId of itemIds) {
-    const newKeyword = {
-        keyword: keyword,
-        reply: reply,
-        item_id: itemId || ''
-    };
-    textKeywords.push(newKeyword);
-        }
-    }
-
-    const response = await fetch(`${apiBase}/keywords-with-item-id/${currentCookieId}`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        keywords: textKeywords
-        })
-    });
-
-    if (response.ok) {
-        const totalAdded = keywords.length * itemIds.length;
-        const keywordText = keywords.length > 1 ? `${keywords.length}个关键词` : `"${keywords[0]}"`;
-        const itemText = itemIds.length > 1 ? `${itemIds.length}个商品` : (itemIds[0] ? '指定商品' : '通用');
-        showToast(`✨ ${keywordText} ${actionText}成功！（共${totalAdded}条配置，应用于${itemText}）`, 'success');
-
-        // 清空输入框并重置样式
-        const keywordInputEl = document.getElementById('newKeyword');
-        const replyInput = document.getElementById('newReply');
-        const selectElement = document.getElementById('newItemIdSelect');
-        const addBtn = document.querySelector('.add-btn');
-
-        keywordInputEl.value = '';
-        replyInput.value = '';
-        if (selectElement) {
-            // 清除所有选中项
-            Array.from(selectElement.options).forEach(opt => opt.selected = false);
-        }
-        keywordInputEl.style.borderColor = '#e5e7eb';
-        replyInput.style.borderColor = '#e5e7eb';
-        addBtn.style.opacity = '0.7';
-        addBtn.style.transform = 'scale(0.95)';
-
-        // 如果是编辑模式，重置编辑状态
+        // 如果是编辑模式，先移除原关键词
         if (isEditMode) {
-        delete window.editingIndex;
-        delete window.originalKeyword;
-
-        // 恢复添加按钮
-        addBtn.innerHTML = '<i class="bi bi-plus-lg"></i>添加';
-        addBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-
-        // 移除取消按钮
-        const cancelBtn = document.getElementById('cancelEditBtn');
-        if (cancelBtn) {
-            cancelBtn.remove();
-        }
+            currentKeywords.splice(window.editingIndex, 1);
         }
 
-        // 聚焦到关键词输入框，方便连续添加
-        setTimeout(() => {
-        keywordInputEl.focus();
-        }, 100);
+        // 准备要保存的关键词列表（只包含文本类型的关键字）
+        let textKeywords = currentKeywords.filter(item => (item.type || 'text') === 'text');
 
-        // 只刷新关键词列表，不重新加载整个界面
-        await refreshKeywordsList();
-    } else {
-        try {
-            const errorData = await response.json();
-            const errorMessage = errorData.detail || '关键词添加失败';
-            console.error('关键词添加失败:', errorMessage);
-
-            // 检查是否是重复关键词的错误
-            if (errorMessage.includes('关键词已存在') || errorMessage.includes('关键词重复') || errorMessage.includes('UNIQUE constraint')) {
-                showToast(`❌ 关键词重复：${errorMessage}`, 'warning');
-            } else {
-                showToast(`❌ ${errorMessage}`, 'danger');
+        // 如果是编辑模式，先移除原关键词
+        if (isEditMode && typeof window.editingIndex !== 'undefined') {
+            // 需要重新计算在文本关键字中的索引
+            const originalKeyword = keywordsData[currentCookieId][window.editingIndex];
+            const textIndex = textKeywords.findIndex(item =>
+                item.keyword === originalKeyword.keyword &&
+                (item.item_id || '') === (originalKeyword.item_id || '')
+            );
+            if (textIndex !== -1) {
+                textKeywords.splice(textIndex, 1);
             }
-        } catch (parseError) {
-            // 如果无法解析JSON，使用原始文本
-            const errorText = await response.text();
-            console.error('关键词添加失败:', errorText);
-            showToast('❌ 关键词添加失败', 'danger');
         }
-    }
+
+        // 检查关键词是否已存在（考虑商品ID，检查所有类型的关键词）
+        // 在编辑模式下，需要排除正在编辑的关键词本身
+        let allKeywords = keywordsData[currentCookieId] || [];
+        if (isEditMode && typeof window.editingIndex !== 'undefined') {
+            // 创建一个副本，排除正在编辑的关键词
+            allKeywords = allKeywords.filter((item, index) => index !== window.editingIndex);
+        }
+
+        // 检查重复关键词
+        const duplicates = [];
+        for (const keyword of keywords) {
+            for (const itemId of itemIds) {
+                const existingKeyword = allKeywords.find(item =>
+                    item.keyword === keyword &&
+                    (item.item_id || '') === (itemId || '')
+                );
+                if (existingKeyword) {
+                    const itemIdText = itemId ? `（商品ID: ${itemId}）` : '（通用关键词）';
+                    const typeText = existingKeyword.type === 'image' ? '图片' : '文本';
+                    duplicates.push(`"${keyword}" ${itemIdText}`);
+                }
+            }
+        }
+
+        if (duplicates.length > 0) {
+            showToast(`以下关键词已存在：\n${duplicates.join('\n')}\n请修改后重试`, 'warning');
+            toggleLoading(false);
+            return;
+        }
+
+        // 展开添加多个关键词和多个商品ID的组合
+        for (const keyword of keywords) {
+            for (const itemId of itemIds) {
+                const newKeyword = {
+                    keyword: keyword,
+                    reply: reply,
+                    item_id: itemId || ''
+                };
+                textKeywords.push(newKeyword);
+            }
+        }
+
+        const response = await fetch(`${apiBase}/keywords-with-item-id/${currentCookieId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                keywords: textKeywords
+            })
+        });
+
+        if (response.ok) {
+            const totalAdded = keywords.length * itemIds.length;
+            const keywordText = keywords.length > 1 ? `${keywords.length}个关键词` : `"${keywords[0]}"`;
+            const itemText = itemIds.length > 1 ? `${itemIds.length}个商品` : (itemIds[0] ? '指定商品' : '通用');
+            showToast(`✨ ${keywordText} ${actionText}成功！（共${totalAdded}条配置，应用于${itemText}）`, 'success');
+
+            // 清空输入框并重置样式
+            const keywordInputEl = document.getElementById('newKeyword');
+            const replyInput = document.getElementById('newReply');
+            const selectElement = document.getElementById('newItemIdSelect');
+            const addBtn = document.querySelector('.add-btn');
+
+            keywordInputEl.value = '';
+            replyInput.value = '';
+            if (selectElement) {
+                // 清除所有选中项
+                Array.from(selectElement.options).forEach(opt => opt.selected = false);
+            }
+            keywordInputEl.style.borderColor = '#e5e7eb';
+            replyInput.style.borderColor = '#e5e7eb';
+            addBtn.style.opacity = '0.7';
+            addBtn.style.transform = 'scale(0.95)';
+
+            // 如果是编辑模式，重置编辑状态
+            if (isEditMode) {
+                delete window.editingIndex;
+                delete window.originalKeyword;
+
+                // 恢复添加按钮
+                addBtn.innerHTML = '<i class="bi bi-plus-lg"></i>添加';
+                addBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+                // 移除取消按钮
+                const cancelBtn = document.getElementById('cancelEditBtn');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+            }
+
+            // 聚焦到关键词输入框，方便连续添加
+            setTimeout(() => {
+                keywordInputEl.focus();
+            }, 100);
+
+            // 只刷新关键词列表，不重新加载整个界面
+            await refreshKeywordsList();
+        } else {
+            try {
+                const errorData = await response.json();
+                const errorMessage = errorData.detail || '关键词添加失败';
+                console.error('关键词添加失败:', errorMessage);
+
+                // 检查是否是重复关键词的错误
+                if (errorMessage.includes('关键词已存在') || errorMessage.includes('关键词重复') || errorMessage.includes('UNIQUE constraint')) {
+                    showToast(`❌ 关键词重复：${errorMessage}`, 'warning');
+                } else {
+                    showToast(`❌ ${errorMessage}`, 'danger');
+                }
+            } catch (parseError) {
+                // 如果无法解析JSON，使用原始文本
+                const errorText = await response.text();
+                console.error('关键词添加失败:', errorText);
+                showToast('❌ 关键词添加失败', 'danger');
+            }
+        }
     } catch (error) {
-    console.error('添加关键词失败:', error);
-    showToast('添加关键词失败', 'danger');
+        console.error('添加关键词失败:', error);
+        showToast('添加关键词失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -983,15 +984,15 @@ function renderKeywordsList(keywords) {
     const container = document.getElementById('keywordsList');
 
     if (!container) {
-    console.error('找不到关键词列表容器元素');
-    return;
+        console.error('找不到关键词列表容器元素');
+        return;
     }
 
     container.innerHTML = '';
 
     if (!keywords || keywords.length === 0) {
-    console.log('关键词列表为空，显示空状态');
-    container.innerHTML = `
+        console.log('关键词列表为空，显示空状态');
+        container.innerHTML = `
         <div class="empty-state">
         <i class="bi bi-chat-dots"></i>
         <h3>还没有关键词</h3>
@@ -1001,12 +1002,12 @@ function renderKeywordsList(keywords) {
         </button>
         </div>
     `;
-    return;
+        return;
     }
 
     // 按回复内容和类型分组
     const groups = groupKeywordsByReply(keywords);
-    
+
     console.log(`开始渲染 ${groups.length} 个分组，共 ${keywords.length} 个关键词`);
 
     groups.forEach((group, groupIndex) => {
@@ -1014,13 +1015,13 @@ function renderKeywordsList(keywords) {
         groupItem.className = 'keyword-group-item';
 
         const isImageType = group.type === 'image';
-    const typeBadge = isImageType ?
-        '<span class="keyword-type-badge keyword-type-image"><i class="bi bi-image"></i> 图片</span>' :
-        '<span class="keyword-type-badge keyword-type-text"><i class="bi bi-chat-text"></i> 文本</span>';
+        const typeBadge = isImageType ?
+            '<span class="keyword-type-badge keyword-type-image"><i class="bi bi-image"></i> 图片</span>' :
+            '<span class="keyword-type-badge keyword-type-text"><i class="bi bi-chat-text"></i> 文本</span>';
 
         // 回复内容显示
         let replyDisplay = '';
-    if (isImageType) {
+        if (isImageType) {
             const imageUrl = group.reply || group.image_url || '';
             replyDisplay = `
                 <div class="keyword-group-reply">
@@ -1033,7 +1034,7 @@ function renderKeywordsList(keywords) {
                     </div>
                 </div>
             `;
-    } else {
+        } else {
             replyDisplay = `
                 <div class="keyword-group-reply" id="reply-display-${groupIndex}">
                     <div class="d-flex align-items-center">
@@ -1045,7 +1046,7 @@ function renderKeywordsList(keywords) {
                     </div>
                 </div>
             `;
-    }
+        }
 
         // 关键词列表
         const keywordsList = group.keywords.map((kw, kwIndex) => `
@@ -1061,11 +1062,11 @@ function renderKeywordsList(keywords) {
         // 商品列表
         const itemsList = group.items.map((itemInfo, itemIndex) => {
             const itemName = getItemName(itemInfo.item_id, itemInfo.item_title);
-            const displayText = itemInfo.item_id ? 
-                `${itemInfo.item_id} - ${itemName}` : 
+            const displayText = itemInfo.item_id ?
+                `${itemInfo.item_id} - ${itemName}` :
                 '通用关键词（所有商品）';
             const icon = itemInfo.item_id ? 'bi-box' : 'bi-globe';
-            
+
             return `
                 <span class="item-chip">
                     <i class="bi ${icon}"></i>
@@ -1100,7 +1101,7 @@ function renderKeywordsList(keywords) {
                 </div>
         </div>
     `;
-        
+
         container.appendChild(groupItem);
     });
 
@@ -1110,11 +1111,11 @@ function renderKeywordsList(keywords) {
 // 按回复内容分组关键词
 function groupKeywordsByReply(keywords) {
     const groupMap = new Map();
-    
+
     keywords.forEach((item, index) => {
         // 使用回复内容+类型+图片URL作为分组键
         const key = `${item.type || 'text'}:${item.reply || ''}:${item.image_url || ''}`;
-        
+
         if (!groupMap.has(key)) {
             groupMap.set(key, {
                 id: `group_${groupMap.size}`,
@@ -1126,14 +1127,14 @@ function groupKeywordsByReply(keywords) {
                 indices: [] // 保存原始索引
             });
         }
-        
+
         const group = groupMap.get(key);
-        
+
         // 添加关键词（去重）
         if (!group.keywords.includes(item.keyword)) {
             group.keywords.push(item.keyword);
         }
-        
+
         // 添加商品（去重）
         const itemId = item.item_id || '';
         const existingItem = group.items.find(i => (i.item_id || '') === itemId);
@@ -1146,25 +1147,25 @@ function groupKeywordsByReply(keywords) {
         } else {
             existingItem.indices.push(index);
         }
-        
+
         // 记录原始索引
         group.indices.push(index);
     });
-    
+
     return Array.from(groupMap.values());
 }
 
 // 获取商品名称（截取前30个字符）
 function getItemName(itemId, itemTitle) {
     if (!itemId) return '';
-    
+
     // 优先使用传入的商品名称
     if (itemTitle && itemTitle.trim()) {
         const name = itemTitle.trim();
         // 截取前30个字符
         return name.length > 30 ? name.substring(0, 30) + '...' : name;
     }
-    
+
     // 从商品列表中查找商品名称
     const itemsSelect = document.getElementById('newItemIdSelect');
     if (itemsSelect) {
@@ -1179,7 +1180,7 @@ function getItemName(itemId, itemTitle) {
             }
         }
     }
-    
+
     return '未知商品';
 }
 
@@ -1295,8 +1296,8 @@ function editKeyword(index) {
     const keyword = keywords[index];
 
     if (!keyword) {
-    showToast('关键词不存在', 'warning');
-    return;
+        showToast('关键词不存在', 'warning');
+        return;
     }
 
     // 将关键词信息填入输入框
@@ -1306,7 +1307,7 @@ function editKeyword(index) {
     // 设置商品ID选择框
     const selectElement = document.getElementById('newItemIdSelect');
     if (selectElement) {
-    selectElement.value = keyword.item_id || '';
+        selectElement.value = keyword.item_id || '';
     }
 
     // 设置编辑模式标识
@@ -1324,9 +1325,9 @@ function editKeyword(index) {
 
     // 聚焦到关键词输入框并选中文本
     setTimeout(() => {
-    const keywordInput = document.getElementById('newKeyword');
-    keywordInput.focus();
-    keywordInput.select();
+        const keywordInput = document.getElementById('newKeyword');
+        keywordInput.focus();
+        keywordInput.select();
     }, 100);
 
     showToast('📝 编辑模式：修改后点击"更新"按钮保存', 'info');
@@ -1336,7 +1337,7 @@ function editKeyword(index) {
 function showCancelEditButton() {
     // 检查是否已存在取消按钮
     if (document.getElementById('cancelEditBtn')) {
-    return;
+        return;
     }
 
     const addBtn = document.querySelector('.add-btn');
@@ -1359,7 +1360,7 @@ function cancelEdit() {
     // 清空商品ID选择框
     const selectElement = document.getElementById('newItemIdSelect');
     if (selectElement) {
-    selectElement.value = '';
+        selectElement.value = '';
     }
 
     // 重置编辑状态
@@ -1375,7 +1376,7 @@ function cancelEdit() {
     // 移除取消按钮
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) {
-    cancelBtn.remove();
+        cancelBtn.remove();
     }
 
     showToast('已取消编辑', 'info');
@@ -1384,34 +1385,34 @@ function cancelEdit() {
 // 删除关键词
 async function deleteKeyword(cookieId, index) {
     if (!confirm('确定要删除这个关键词吗？')) {
-    return;
+        return;
     }
 
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    // 使用新的删除API
-    const response = await fetch(`${apiBase}/keywords/${cookieId}/${index}`, {
-        method: 'DELETE',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 使用新的删除API
+        const response = await fetch(`${apiBase}/keywords/${cookieId}/${index}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            showToast('关键词删除成功', 'success');
+            // 只刷新关键词列表，不重新加载整个界面
+            await refreshKeywordsList();
+        } else {
+            const errorText = await response.text();
+            console.error('关键词删除失败:', errorText);
+            showToast('关键词删除失败', 'danger');
         }
-    });
-
-    if (response.ok) {
-        showToast('关键词删除成功', 'success');
-        // 只刷新关键词列表，不重新加载整个界面
-        await refreshKeywordsList();
-    } else {
-        const errorText = await response.text();
-        console.error('关键词删除失败:', errorText);
-        showToast('关键词删除失败', 'danger');
-    }
     } catch (error) {
-    console.error('删除关键词失败:', error);
-    showToast('删除关键词删除失败', 'danger');
+        console.error('删除关键词失败:', error);
+        showToast('删除关键词删除失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -1420,34 +1421,34 @@ async function deleteSpecificKeyword(groupId, keywordIndex) {
     const keywords = keywordsData[currentCookieId] || [];
     const groups = groupKeywordsByReply(keywords);
     const group = groups.find(g => g.id === groupId);
-    
+
     if (!group) {
         showToast('找不到关键词分组', 'warning');
         return;
     }
-    
+
     const targetKeyword = group.keywords[keywordIndex];
     if (!confirm(`确定要删除关键词 "${targetKeyword}" 在所有商品中的配置吗？`)) {
         return;
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         // 找到所有需要删除的索引（从后往前删除，避免索引变化）
         const indicesToDelete = [];
         keywords.forEach((item, index) => {
-            if (item.keyword === targetKeyword && 
+            if (item.keyword === targetKeyword &&
                 (item.type || 'text') === group.type &&
                 (item.reply || '') === group.reply &&
                 (item.image_url || '') === group.image_url) {
                 indicesToDelete.push(index);
             }
         });
-        
+
         // 从后往前删除
         indicesToDelete.sort((a, b) => b - a);
-        
+
         for (const index of indicesToDelete) {
             const response = await fetch(`${apiBase}/keywords/${currentCookieId}/${index}`, {
                 method: 'DELETE',
@@ -1455,15 +1456,15 @@ async function deleteSpecificKeyword(groupId, keywordIndex) {
                     'Authorization': `Bearer ${authToken}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('删除失败');
             }
         }
-        
+
         showToast(`✅ 关键词 "${targetKeyword}" 已删除（${indicesToDelete.length}条配置）`, 'success');
         await refreshKeywordsList();
-        
+
     } catch (error) {
         console.error('删除关键词失败:', error);
         showToast('删除关键词失败', 'danger');
@@ -1477,23 +1478,23 @@ async function deleteSpecificItem(groupId, itemIndex) {
     const keywords = keywordsData[currentCookieId] || [];
     const groups = groupKeywordsByReply(keywords);
     const group = groups.find(g => g.id === groupId);
-    
+
     if (!group) {
         showToast('找不到关键词分组', 'warning');
         return;
     }
-    
+
     const targetItem = group.items[itemIndex];
     const itemId = targetItem.item_id || '';
     const itemName = itemId ? `商品 ${itemId} - ${getItemName(itemId, targetItem.item_title)}` : '通用关键词（所有商品）';
-    
+
     if (!confirm(`确定要删除 "${itemName}" 的所有关键词配置吗？\n将删除该商品下的 ${group.keywords.length} 个关键词。`)) {
         return;
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         // 找到所有需要删除的索引
         const indicesToDelete = [];
         keywords.forEach((item, index) => {
@@ -1504,10 +1505,10 @@ async function deleteSpecificItem(groupId, itemIndex) {
                 indicesToDelete.push(index);
             }
         });
-        
+
         // 从后往前删除
         indicesToDelete.sort((a, b) => b - a);
-        
+
         for (const index of indicesToDelete) {
             const response = await fetch(`${apiBase}/keywords/${currentCookieId}/${index}`, {
                 method: 'DELETE',
@@ -1515,20 +1516,20 @@ async function deleteSpecificItem(groupId, itemIndex) {
                     'Authorization': `Bearer ${authToken}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('删除失败');
             }
         }
-        
+
         showToast(`✅ ${itemName} 的配置已删除（${indicesToDelete.length}条）`, 'success');
         await refreshKeywordsList();
-        
+
     } catch (error) {
         console.error('删除商品配置失败:', error);
         showToast('删除商品配置失败', 'danger');
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -1547,9 +1548,9 @@ function showToast(message, type = 'success') {
     if (type === 'error') {
         type = 'danger';
     }
-    
+
     let toastContainer = document.querySelector('.toast-container');
-    
+
     // 如果 toast 容器不存在，创建一个
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -1557,7 +1558,7 @@ function showToast(message, type = 'success') {
         toastContainer.style.zIndex = '9999';
         document.body.appendChild(toastContainer);
     }
-    
+
     const toast = document.createElement('div');
     toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.setAttribute('role', 'alert');
@@ -1594,43 +1595,43 @@ async function handleApiError(err) {
 async function fetchJSON(url, opts = {}) {
     toggleLoading(true);
     try {
-    // 添加认证头
-    if (authToken) {
-        opts.headers = opts.headers || {};
-        opts.headers['Authorization'] = `Bearer ${authToken}`;
-    }
+        // 添加认证头
+        if (authToken) {
+            opts.headers = opts.headers || {};
+            opts.headers['Authorization'] = `Bearer ${authToken}`;
+        }
 
-    const res = await fetch(url, opts);
-    if (res.status === 401) {
-        // 未授权，跳转到登录页面
-        localStorage.removeItem('auth_token');
-        window.location.href = '/';
-        return;
-    }
-    if (!res.ok) {
-        let errorMessage = `HTTP ${res.status}`;
-        try {
-        const errorText = await res.text();
-        if (errorText) {
-            // 尝试解析JSON错误信息
+        const res = await fetch(url, opts);
+        if (res.status === 401) {
+            // 未授权，跳转到登录页面
+            localStorage.removeItem('auth_token');
+            window.location.href = '/';
+            return;
+        }
+        if (!res.ok) {
+            let errorMessage = `HTTP ${res.status}`;
             try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.detail || errorJson.message || errorText;
+                const errorText = await res.text();
+                if (errorText) {
+                    // 尝试解析JSON错误信息
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.detail || errorJson.message || errorText;
+                    } catch {
+                        errorMessage = errorText;
+                    }
+                }
             } catch {
-            errorMessage = errorText;
+                errorMessage = `HTTP ${res.status} ${res.statusText}`;
             }
+            throw new Error(errorMessage);
         }
-        } catch {
-        errorMessage = `HTTP ${res.status} ${res.statusText}`;
-        }
-        throw new Error(errorMessage);
-    }
-    const data = await res.json();
-    toggleLoading(false);
-    return data;
+        const data = await res.json();
+        toggleLoading(false);
+        return data;
     } catch (err) {
-    handleApiError(err);
-    throw err;
+        handleApiError(err);
+        throw err;
     }
 }
 
@@ -1641,14 +1642,14 @@ async function fetchJSON(url, opts = {}) {
 // 加载Cookie列表
 async function loadCookies() {
     try {
-    toggleLoading(true);
-    const tbody = document.querySelector('#cookieTable tbody');
-    tbody.innerHTML = '';
+        toggleLoading(true);
+        const tbody = document.querySelector('#cookieTable tbody');
+        tbody.innerHTML = '';
 
-    const cookieDetails = await fetchJSON(apiBase + '/cookies/details');
+        const cookieDetails = await fetchJSON(apiBase + '/cookies/details');
 
-    if (cookieDetails.length === 0) {
-        tbody.innerHTML = `
+        if (cookieDetails.length === 0) {
+            tbody.innerHTML = `
         <tr>
             <td colspan="10" class="text-center py-4 text-muted empty-state">
             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
@@ -1657,86 +1658,86 @@ async function loadCookies() {
             </td>
         </tr>
         `;
-        return;
-    }
-
-    // 为每个账号获取关键词数量和默认回复设置并渲染
-    const accountsWithKeywords = await Promise.all(
-        cookieDetails.map(async (cookie) => {
-        try {
-            // 获取关键词数量
-            const keywordsResponse = await fetch(`${apiBase}/keywords/${cookie.id}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-
-            let keywordCount = 0;
-            if (keywordsResponse.ok) {
-            const keywordsData = await keywordsResponse.json();
-            keywordCount = keywordsData.length;
-            }
-
-            // 获取默认回复设置
-            const defaultReplyResponse = await fetch(`${apiBase}/default-replies/${cookie.id}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-
-            let defaultReply = { enabled: false, reply_content: '' };
-            if (defaultReplyResponse.ok) {
-            defaultReply = await defaultReplyResponse.json();
-            }
-
-            // 获取AI回复设置
-            const aiReplyResponse = await fetch(`${apiBase}/ai-reply-settings/${cookie.id}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-
-            let aiReply = { ai_enabled: false, model_name: 'qwen-plus' };
-            if (aiReplyResponse.ok) {
-            aiReply = await aiReplyResponse.json();
-            }
-
-            return {
-            ...cookie,
-            keywordCount: keywordCount,
-            defaultReply: defaultReply,
-            aiReply: aiReply
-            };
-        } catch (error) {
-            return {
-            ...cookie,
-            keywordCount: 0,
-            defaultReply: { enabled: false, reply_content: '' },
-            aiReply: { ai_enabled: false, model_name: 'qwen-plus' }
-            };
+            return;
         }
-        })
-    );
 
-    accountsWithKeywords.forEach(cookie => {
-        // 使用数据库中的实际状态，默认为启用
-        const isEnabled = cookie.enabled === undefined ? true : cookie.enabled;
+        // 为每个账号获取关键词数量和默认回复设置并渲染
+        const accountsWithKeywords = await Promise.all(
+            cookieDetails.map(async (cookie) => {
+                try {
+                    // 获取关键词数量
+                    const keywordsResponse = await fetch(`${apiBase}/keywords/${cookie.id}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
 
-        console.log(`账号 ${cookie.id} 状态: enabled=${cookie.enabled}, isEnabled=${isEnabled}`); // 调试信息
+                    let keywordCount = 0;
+                    if (keywordsResponse.ok) {
+                        const keywordsData = await keywordsResponse.json();
+                        keywordCount = keywordsData.length;
+                    }
 
-        const tr = document.createElement('tr');
-        tr.className = `account-row ${isEnabled ? 'enabled' : 'disabled'}`;
-        // 默认回复状态标签
-        const defaultReplyBadge = cookie.defaultReply.enabled ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
+                    // 获取默认回复设置
+                    const defaultReplyResponse = await fetch(`${apiBase}/default-replies/${cookie.id}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
 
-        // AI回复状态标签
-        const aiReplyBadge = cookie.aiReply.ai_enabled ?
-        '<span class="badge bg-primary">AI启用</span>' :
-        '<span class="badge bg-secondary">AI禁用</span>';
+                    let defaultReply = { enabled: false, reply_content: '' };
+                    if (defaultReplyResponse.ok) {
+                        defaultReply = await defaultReplyResponse.json();
+                    }
 
-        // 自动确认发货状态（默认开启）
-        const autoConfirm = cookie.auto_confirm === undefined ? true : cookie.auto_confirm;
-        
-        // 自动好评状态（默认关闭）
-        const autoComment = cookie.auto_comment === undefined ? false : cookie.auto_comment;
+                    // 获取AI回复设置
+                    const aiReplyResponse = await fetch(`${apiBase}/ai-reply-settings/${cookie.id}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
 
-        tr.innerHTML = `
+                    let aiReply = { ai_enabled: false, model_name: 'qwen-plus' };
+                    if (aiReplyResponse.ok) {
+                        aiReply = await aiReplyResponse.json();
+                    }
+
+                    return {
+                        ...cookie,
+                        keywordCount: keywordCount,
+                        defaultReply: defaultReply,
+                        aiReply: aiReply
+                    };
+                } catch (error) {
+                    return {
+                        ...cookie,
+                        keywordCount: 0,
+                        defaultReply: { enabled: false, reply_content: '' },
+                        aiReply: { ai_enabled: false, model_name: 'qwen-plus' }
+                    };
+                }
+            })
+        );
+
+        accountsWithKeywords.forEach(cookie => {
+            // 使用数据库中的实际状态，默认为启用
+            const isEnabled = cookie.enabled === undefined ? true : cookie.enabled;
+
+            console.log(`账号 ${cookie.id} 状态: enabled=${cookie.enabled}, isEnabled=${isEnabled}`); // 调试信息
+
+            const tr = document.createElement('tr');
+            tr.className = `account-row ${isEnabled ? 'enabled' : 'disabled'}`;
+            // 默认回复状态标签
+            const defaultReplyBadge = cookie.defaultReply.enabled ?
+                '<span class="badge bg-success">启用</span>' :
+                '<span class="badge bg-secondary">禁用</span>';
+
+            // AI回复状态标签
+            const aiReplyBadge = cookie.aiReply.ai_enabled ?
+                '<span class="badge bg-primary">AI启用</span>' :
+                '<span class="badge bg-secondary">AI禁用</span>';
+
+            // 自动确认发货状态（默认开启）
+            const autoConfirm = cookie.auto_confirm === undefined ? true : cookie.auto_confirm;
+
+            // 自动好评状态（默认关闭）
+            const autoComment = cookie.auto_comment === undefined ? false : cookie.auto_comment;
+
+            tr.innerHTML = `
         <td class="align-middle">
             <div class="cookie-id">
             <strong class="text-primary">${cookie.id}</strong>
@@ -1832,56 +1833,56 @@ async function loadCookies() {
             </div>
         </td>
         `;
-        tbody.appendChild(tr);
-    });
-
-    // 为Cookie值添加点击复制功能
-    document.querySelectorAll('.cookie-value').forEach(element => {
-        element.style.cursor = 'pointer';
-        element.addEventListener('click', function() {
-        const cookieValue = this.textContent;
-        if (cookieValue && cookieValue !== '未设置') {
-            navigator.clipboard.writeText(cookieValue).then(() => {
-            showToast('Cookie已复制到剪贴板', 'success');
-            }).catch(() => {
-            showToast('复制失败，请手动复制', 'error');
-            });
-        }
+            tbody.appendChild(tr);
         });
-    });
 
-    // 重新初始化工具提示
-    initTooltips();
+        // 为Cookie值添加点击复制功能
+        document.querySelectorAll('.cookie-value').forEach(element => {
+            element.style.cursor = 'pointer';
+            element.addEventListener('click', function () {
+                const cookieValue = this.textContent;
+                if (cookieValue && cookieValue !== '未设置') {
+                    navigator.clipboard.writeText(cookieValue).then(() => {
+                        showToast('Cookie已复制到剪贴板', 'success');
+                    }).catch(() => {
+                        showToast('复制失败，请手动复制', 'error');
+                    });
+                }
+            });
+        });
+
+        // 重新初始化工具提示
+        initTooltips();
 
     } catch (err) {
-    // 错误已在fetchJSON中处理
+        // 错误已在fetchJSON中处理
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
 // 复制Cookie
 function copyCookie(id, value) {
     if (!value || value === '未设置') {
-    showToast('该账号暂无Cookie值', 'warning');
-    return;
+        showToast('该账号暂无Cookie值', 'warning');
+        return;
     }
 
     navigator.clipboard.writeText(value).then(() => {
-    showToast(`账号 "${id}" 的Cookie已复制到剪贴板`, 'success');
-    }).catch(() => {
-    // 降级方案：创建临时文本框
-    const textArea = document.createElement('textarea');
-    textArea.value = value;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-        document.execCommand('copy');
         showToast(`账号 "${id}" 的Cookie已复制到剪贴板`, 'success');
-    } catch (err) {
-        showToast('复制失败，请手动复制', 'error');
-    }
-    document.body.removeChild(textArea);
+    }).catch(() => {
+        // 降级方案：创建临时文本框
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast(`账号 "${id}" 的Cookie已复制到剪贴板`, 'success');
+        } catch (err) {
+            showToast('复制失败，请手动复制', 'error');
+        }
+        document.body.removeChild(textArea);
     });
 }
 
@@ -2041,11 +2042,11 @@ async function delCookie(id) {
     if (!confirm(`确定要删除账号 "${id}" 吗？此操作不可恢复。`)) return;
 
     try {
-    await fetchJSON(apiBase + `/cookies/${id}`, { method: 'DELETE' });
-    showToast(`账号 "${id}" 已删除`, 'success');
-    loadCookies();
+        await fetchJSON(apiBase + `/cookies/${id}`, { method: 'DELETE' });
+        showToast(`账号 "${id}" 已删除`, 'success');
+        loadCookies();
     } catch (err) {
-    // 错误已在fetchJSON中处理
+        // 错误已在fetchJSON中处理
     }
 }
 
@@ -2053,10 +2054,10 @@ async function delCookie(id) {
 async function editCookieInline(id, currentValue) {
     try {
         toggleLoading(true);
-        
+
         // 获取账号详细信息
         const details = await fetchJSON(apiBase + `/cookie/${id}/details`);
-        
+
         // 打开编辑模态框
         openAccountEditModal(details);
     } catch (err) {
@@ -2075,10 +2076,10 @@ async function openAccountEditModal(accountData) {
     document.getElementById('editAccountUsername').value = accountData.username || '';
     document.getElementById('editAccountPassword').value = accountData.password || '';
     document.getElementById('editAccountShowBrowser').checked = accountData.show_browser || false;
-    
+
     // 显示账号ID
     document.getElementById('editAccountIdDisplay').textContent = accountData.id;
-    
+
     // 加载代理配置
     try {
         const proxyData = await fetchJSON(apiBase + `/cookie/${accountData.id}/proxy`);
@@ -2104,11 +2105,11 @@ async function openAccountEditModal(accountData) {
         document.getElementById('editProxyType').value = 'none';
         toggleProxyFields();
     }
-    
+
     // 打开模态框
     const modal = new bootstrap.Modal(document.getElementById('accountEditModal'));
     modal.show();
-    
+
     // 初始化模态框中的 tooltips
     setTimeout(() => {
         initTooltips();
@@ -2119,7 +2120,7 @@ async function openAccountEditModal(accountData) {
 function toggleProxyFields() {
     const proxyType = document.getElementById('editProxyType').value;
     const showProxy = proxyType !== 'none';
-    
+
     document.getElementById('proxyHostGroup').style.display = showProxy ? 'block' : 'none';
     document.getElementById('proxyPortGroup').style.display = showProxy ? 'block' : 'none';
     document.getElementById('proxyAuthGroup').style.display = showProxy ? 'flex' : 'none';
@@ -2132,19 +2133,19 @@ async function saveAccountEdit() {
     const username = document.getElementById('editAccountUsername').value.trim();
     const password = document.getElementById('editAccountPassword').value.trim();
     const showBrowser = document.getElementById('editAccountShowBrowser').checked;
-    
+
     // 代理配置
     const proxyType = document.getElementById('editProxyType').value;
     const proxyHost = document.getElementById('editProxyHost').value.trim();
     const proxyPort = parseInt(document.getElementById('editProxyPort').value) || 0;
     const proxyUser = document.getElementById('editProxyUser').value.trim();
     const proxyPass = document.getElementById('editProxyPass').value.trim();
-    
+
     if (!cookie) {
         showToast('Cookie值不能为空', 'warning');
         return;
     }
-    
+
     // 如果选择了代理，验证必要字段
     if (proxyType !== 'none') {
         if (!proxyHost) {
@@ -2156,10 +2157,10 @@ async function saveAccountEdit() {
             return;
         }
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         // 保存账号基本信息
         await fetchJSON(apiBase + `/cookie/${id}/account-info`, {
             method: 'POST',
@@ -2171,7 +2172,7 @@ async function saveAccountEdit() {
                 show_browser: showBrowser
             })
         });
-        
+
         // 保存代理配置
         await fetchJSON(apiBase + `/cookie/${id}/proxy`, {
             method: 'POST',
@@ -2184,13 +2185,13 @@ async function saveAccountEdit() {
                 proxy_pass: proxyPass
             })
         });
-        
+
         showToast(`账号 "${id}" 信息已更新`, 'success');
-        
+
         // 关闭模态框
         const modal = bootstrap.Modal.getInstance(document.getElementById('accountEditModal'));
         modal.hide();
-        
+
         // 重新加载账号列表
         loadCookies();
     } catch (err) {
@@ -2207,40 +2208,40 @@ async function saveCookieInline(id) {
     const newValue = input.value.trim();
 
     if (!newValue) {
-    showToast('Cookie值不能为空', 'warning');
-    return;
+        showToast('Cookie值不能为空', 'warning');
+        return;
     }
 
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    await fetchJSON(apiBase + `/cookies/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-        id: id,
-        value: newValue
-        })
-    });
+        await fetchJSON(apiBase + `/cookies/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: id,
+                value: newValue
+            })
+        });
 
-    showToast(`账号 "${id}" Cookie已更新`, 'success');
-    loadCookies(); // 重新加载列表
+        showToast(`账号 "${id}" Cookie已更新`, 'success');
+        loadCookies(); // 重新加载列表
 
     } catch (err) {
-    console.error('Cookie更新失败:', err);
-    showToast(`Cookie更新失败: ${err.message || '未知错误'}`, 'danger');
-    // 恢复原内容
-    cancelCookieEdit(id);
+        console.error('Cookie更新失败:', err);
+        showToast(`Cookie更新失败: ${err.message || '未知错误'}`, 'danger');
+        // 恢复原内容
+        cancelCookieEdit(id);
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
 // 取消Cookie编辑
 function cancelCookieEdit(id) {
     if (!window.editingCookieData || window.editingCookieData.id !== id) {
-    console.error('编辑数据不存在');
-    return;
+        console.error('编辑数据不存在');
+        return;
     }
 
     const row = document.querySelector(`#edit-${id}`).closest('tr');
@@ -2262,68 +2263,68 @@ function cancelCookieEdit(id) {
 // 切换账号启用/禁用状态
 async function toggleAccountStatus(accountId, enabled) {
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    // 这里需要调用后端API来更新账号状态
-    // 由于当前后端可能没有enabled字段，我们先在前端模拟
-    // 实际项目中需要后端支持
+        // 这里需要调用后端API来更新账号状态
+        // 由于当前后端可能没有enabled字段，我们先在前端模拟
+        // 实际项目中需要后端支持
 
-    const response = await fetch(`${apiBase}/cookies/${accountId}/status`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ enabled: enabled })
-    });
+        const response = await fetch(`${apiBase}/cookies/${accountId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ enabled: enabled })
+        });
 
-    if (response.ok) {
-        showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'}`, 'success');
+        if (response.ok) {
+            showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'}`, 'success');
 
-        // 清除相关缓存，确保数据一致性
-        clearKeywordCache();
+            // 清除相关缓存，确保数据一致性
+            clearKeywordCache();
 
-        // 更新界面显示
-        updateAccountRowStatus(accountId, enabled);
+            // 更新界面显示
+            updateAccountRowStatus(accountId, enabled);
 
-        // 刷新自动回复页面的账号列表
-        refreshAccountList();
+            // 刷新自动回复页面的账号列表
+            refreshAccountList();
 
-        // 如果禁用的账号在自动回复页面被选中，更新显示
-        const accountSelect = document.getElementById('accountSelect');
-        if (accountSelect && accountSelect.value === accountId) {
-        if (!enabled) {
-            // 更新徽章显示禁用状态
-            updateAccountBadge(accountId, false);
-            showToast('账号已禁用，配置的关键词不会参与自动回复', 'warning');
+            // 如果禁用的账号在自动回复页面被选中，更新显示
+            const accountSelect = document.getElementById('accountSelect');
+            if (accountSelect && accountSelect.value === accountId) {
+                if (!enabled) {
+                    // 更新徽章显示禁用状态
+                    updateAccountBadge(accountId, false);
+                    showToast('账号已禁用，配置的关键词不会参与自动回复', 'warning');
+                } else {
+                    // 更新徽章显示启用状态
+                    updateAccountBadge(accountId, true);
+                    showToast('账号已启用，配置的关键词将参与自动回复', 'success');
+                }
+            }
+
         } else {
-            // 更新徽章显示启用状态
-            updateAccountBadge(accountId, true);
-            showToast('账号已启用，配置的关键词将参与自动回复', 'success');
+            // 如果后端不支持，先在前端模拟
+            console.warn('后端暂不支持账号状态切换，使用前端模拟');
+            showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'} (前端模拟)`, enabled ? 'success' : 'warning');
+            updateAccountRowStatus(accountId, enabled);
         }
-        }
-
-    } else {
-        // 如果后端不支持，先在前端模拟
-        console.warn('后端暂不支持账号状态切换，使用前端模拟');
-        showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'} (前端模拟)`, enabled ? 'success' : 'warning');
-        updateAccountRowStatus(accountId, enabled);
-    }
 
     } catch (error) {
-    console.error('切换账号状态失败:', error);
+        console.error('切换账号状态失败:', error);
 
-    // 后端不支持时的降级处理
-    showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'} (本地模拟)`, enabled ? 'success' : 'warning');
-    updateAccountRowStatus(accountId, enabled);
+        // 后端不支持时的降级处理
+        showToast(`账号 "${accountId}" 已${enabled ? '启用' : '禁用'} (本地模拟)`, enabled ? 'success' : 'warning');
+        updateAccountRowStatus(accountId, enabled);
 
-    // 恢复切换按钮状态
-    const toggle = document.querySelector(`input[onchange*="${accountId}"]`);
-    if (toggle) {
-        toggle.checked = enabled;
-    }
+        // 恢复切换按钮状态
+        const toggle = document.querySelector(`input[onchange*="${accountId}"]`);
+        if (toggle) {
+            toggle.checked = enabled;
+        }
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -2348,13 +2349,13 @@ function updateAccountRowStatus(accountId, enabled) {
 
     // 更新按钮状态（只禁用编辑Cookie按钮，其他按钮保持可用）
     actionButtons.forEach(btn => {
-    if (btn.onclick && btn.onclick.toString().includes('editCookieInline')) {
-        btn.disabled = !enabled;
-    }
-    // 设置自动回复按钮始终可用，但更新提示文本
-    if (btn.onclick && btn.onclick.toString().includes('goToAutoReply')) {
-        btn.title = enabled ? '设置自动回复' : '配置关键词 (账号已禁用)';
-    }
+        if (btn.onclick && btn.onclick.toString().includes('editCookieInline')) {
+            btn.disabled = !enabled;
+        }
+        // 设置自动回复按钮始终可用，但更新提示文本
+        if (btn.onclick && btn.onclick.toString().includes('goToAutoReply')) {
+            btn.title = enabled ? '设置自动回复' : '配置关键词 (账号已禁用)';
+        }
     });
 
     // 更新切换按钮的提示
@@ -2365,45 +2366,45 @@ function updateAccountRowStatus(accountId, enabled) {
 // 切换自动确认发货状态
 async function toggleAutoConfirm(accountId, enabled) {
     try {
-    toggleLoading(true);
+        toggleLoading(true);
 
-    const response = await fetch(`${apiBase}/cookies/${accountId}/auto-confirm`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ auto_confirm: enabled })
-    });
+        const response = await fetch(`${apiBase}/cookies/${accountId}/auto-confirm`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ auto_confirm: enabled })
+        });
 
-    if (response.ok) {
-        const result = await response.json();
-        showToast(result.message, 'success');
+        if (response.ok) {
+            const result = await response.json();
+            showToast(result.message, 'success');
 
-        // 更新界面显示
-        updateAutoConfirmRowStatus(accountId, enabled);
-    } else {
-        const error = await response.json();
-        showToast(error.detail || '更新自动确认发货设置失败', 'error');
+            // 更新界面显示
+            updateAutoConfirmRowStatus(accountId, enabled);
+        } else {
+            const error = await response.json();
+            showToast(error.detail || '更新自动确认发货设置失败', 'error');
+
+            // 恢复切换按钮状态
+            const toggle = document.querySelector(`input[onchange*="toggleAutoConfirm('${accountId}'"]`);
+            if (toggle) {
+                toggle.checked = !enabled;
+            }
+        }
+
+    } catch (error) {
+        console.error('切换自动确认发货状态失败:', error);
+        showToast('网络错误，请稍后重试', 'error');
 
         // 恢复切换按钮状态
         const toggle = document.querySelector(`input[onchange*="toggleAutoConfirm('${accountId}'"]`);
         if (toggle) {
-        toggle.checked = !enabled;
+            toggle.checked = !enabled;
         }
-    }
-
-    } catch (error) {
-    console.error('切换自动确认发货状态失败:', error);
-    showToast('网络错误，请稍后重试', 'error');
-
-    // 恢复切换按钮状态
-    const toggle = document.querySelector(`input[onchange*="toggleAutoConfirm('${accountId}'"]`);
-    if (toggle) {
-        toggle.checked = !enabled;
-    }
     } finally {
-    toggleLoading(false);
+        toggleLoading(false);
     }
 }
 
@@ -2416,16 +2417,16 @@ function updateAutoConfirmRowStatus(accountId, enabled) {
     const toggle = row.querySelector(`input[onchange*="toggleAutoConfirm('${accountId}'"]`);
 
     if (statusBadge && toggle) {
-    // 更新状态徽章
-    statusBadge.className = `status-badge ${enabled ? 'enabled' : 'disabled'}`;
-    statusBadge.title = enabled ? '自动确认发货已开启' : '自动确认发货已关闭';
-    statusBadge.innerHTML = `
+        // 更新状态徽章
+        statusBadge.className = `status-badge ${enabled ? 'enabled' : 'disabled'}`;
+        statusBadge.title = enabled ? '自动确认发货已开启' : '自动确认发货已关闭';
+        statusBadge.innerHTML = `
         <i class="bi bi-${enabled ? 'truck' : 'truck-flatbed'}"></i>
     `;
 
-    // 更新切换按钮的提示
-    const label = toggle.closest('.status-toggle');
-    label.title = enabled ? '点击关闭自动确认发货' : '点击开启自动确认发货';
+        // 更新切换按钮的提示
+        const label = toggle.closest('.status-toggle');
+        label.title = enabled ? '点击关闭自动确认发货' : '点击开启自动确认发货';
     }
 }
 
@@ -2502,24 +2503,24 @@ let currentCommentTemplateAccountId = null;
 // 显示好评模板管理弹窗
 async function showCommentTemplates(accountId) {
     currentCommentTemplateAccountId = accountId;
-    
+
     try {
         toggleLoading(true);
-        
+
         // 获取好评模板列表
         const response = await fetch(`${apiBase}/cookies/${accountId}/comment-templates`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (!response.ok) {
             throw new Error('获取好评模板列表失败');
         }
-        
+
         const data = await response.json();
         const templates = data.templates || [];
-        
+
         // 生成模板列表HTML
         let templatesHtml = '';
         if (templates.length === 0) {
@@ -2546,7 +2547,7 @@ async function showCommentTemplates(accountId) {
                 </div>
             `).join('');
         }
-        
+
         // 显示模态框
         const modalHtml = `
             <div class="modal fade" id="commentTemplatesModal" tabindex="-1" aria-labelledby="commentTemplatesModalLabel" aria-hidden="true">
@@ -2614,7 +2615,7 @@ async function showCommentTemplates(accountId) {
                 </div>
             </div>
         `;
-        
+
         // 检查模态框是否已存在
         const existingModalEl = document.getElementById('commentTemplatesModal');
         if (existingModalEl) {
@@ -2632,15 +2633,15 @@ async function showCommentTemplates(accountId) {
             // 模态框不存在，创建新的
             // 先清理可能残留的遮罩层
             document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-            
+
             // 添加新模态框
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
+
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('commentTemplatesModal'));
             modal.show();
         }
-        
+
     } catch (error) {
         console.error('获取好评模板失败:', error);
         showToast('获取好评模板失败: ' + error.message, 'error');
@@ -2668,7 +2669,7 @@ async function addCommentTemplate() {
     const name = document.getElementById('newTemplateName').value.trim();
     const content = document.getElementById('newTemplateContent').value.trim();
     const isActive = document.getElementById('newTemplateActive').checked;
-    
+
     if (!name) {
         showToast('请输入模板名称', 'warning');
         return;
@@ -2677,10 +2678,10 @@ async function addCommentTemplate() {
         showToast('请输入好评内容', 'warning');
         return;
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         const response = await fetch(`${apiBase}/cookies/${currentCommentTemplateAccountId}/comment-templates`, {
             method: 'POST',
             headers: {
@@ -2693,7 +2694,7 @@ async function addCommentTemplate() {
                 is_active: isActive
             })
         });
-        
+
         if (response.ok) {
             showToast('添加好评模板成功', 'success');
             toggleLoading(false);
@@ -2730,7 +2731,7 @@ async function saveEditCommentTemplate() {
     const templateId = document.getElementById('editTemplateId').value;
     const name = document.getElementById('editTemplateName').value.trim();
     const content = document.getElementById('editTemplateContent').value.trim();
-    
+
     if (!name) {
         showToast('请输入模板名称', 'warning');
         return;
@@ -2739,10 +2740,10 @@ async function saveEditCommentTemplate() {
         showToast('请输入好评内容', 'warning');
         return;
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         const response = await fetch(`${apiBase}/cookies/${currentCommentTemplateAccountId}/comment-templates/${templateId}`, {
             method: 'PUT',
             headers: {
@@ -2754,7 +2755,7 @@ async function saveEditCommentTemplate() {
                 content: content
             })
         });
-        
+
         if (response.ok) {
             showToast('更新好评模板成功', 'success');
             toggleLoading(false);
@@ -2777,17 +2778,17 @@ async function deleteCommentTemplate(accountId, templateId) {
     if (!confirm('确定要删除此好评模板吗？')) {
         return;
     }
-    
+
     try {
         toggleLoading(true);
-        
+
         const response = await fetch(`${apiBase}/cookies/${accountId}/comment-templates/${templateId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (response.ok) {
             showToast('删除好评模板成功', 'success');
             toggleLoading(false);
@@ -2809,14 +2810,14 @@ async function deleteCommentTemplate(accountId, templateId) {
 async function activateCommentTemplate(accountId, templateId) {
     try {
         toggleLoading(true);
-        
+
         const response = await fetch(`${apiBase}/cookies/${accountId}/comment-templates/${templateId}/activate`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (response.ok) {
             showToast('已切换使用此模板', 'success');
             toggleLoading(false);
@@ -2849,12 +2850,12 @@ function goToAutoReply(accountId) {
 
     // 设置账号选择器的值
     setTimeout(() => {
-    const accountSelect = document.getElementById('accountSelect');
-    if (accountSelect) {
-        accountSelect.value = accountId;
-        // 触发change事件来加载关键词
-        loadAccountKeywords();
-    }
+        const accountSelect = document.getElementById('accountSelect');
+        if (accountSelect) {
+            accountSelect.value = accountId;
+            // 触发change事件来加载关键词
+            loadAccountKeywords();
+        }
     }, 100);
 
     showToast(`已切换到自动回复页面，账号 "${accountId}" 已选中`, 'info');
@@ -2867,75 +2868,75 @@ function goToAutoReply(accountId) {
 // 登出功能
 async function logout() {
     try {
-    if (authToken) {
-        await fetch('/logout', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${authToken}`
+        if (authToken) {
+            await fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
         }
-        });
-    }
-    localStorage.removeItem('auth_token');
-    window.location.href = '/';
+        localStorage.removeItem('auth_token');
+        window.location.href = '/';
     } catch (err) {
-    console.error('登出失败:', err);
-    localStorage.removeItem('auth_token');
-    window.location.href = '/';
+        console.error('登出失败:', err);
+        localStorage.removeItem('auth_token');
+        window.location.href = '/';
     }
 }
 
 // 检查认证状态
 async function checkAuth() {
     if (!authToken) {
-    window.location.href = '/';
-    return false;
-    }
-
-    try {
-    const response = await fetch('/verify', {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-    const result = await response.json();
-
-    if (!result.authenticated) {
-        localStorage.removeItem('auth_token');
         window.location.href = '/';
         return false;
     }
 
-    // 检查是否为管理员，显示管理员菜单和功能
-    if (result.is_admin === true) {
-        const adminMenuSection = document.getElementById('adminMenuSection');
-        if (adminMenuSection) {
-        adminMenuSection.style.display = 'block';
+    try {
+        const response = await fetch('/verify', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        const result = await response.json();
+
+        if (!result.authenticated) {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/';
+            return false;
         }
 
-        // 显示备份管理功能
-        const backupManagement = document.getElementById('backup-management');
-        if (backupManagement) {
-        backupManagement.style.display = 'block';
+        // 检查是否为管理员，显示管理员菜单和功能
+        if (result.is_admin === true) {
+            const adminMenuSection = document.getElementById('adminMenuSection');
+            if (adminMenuSection) {
+                adminMenuSection.style.display = 'block';
+            }
+
+            // 显示备份管理功能
+            const backupManagement = document.getElementById('backup-management');
+            if (backupManagement) {
+                backupManagement.style.display = 'block';
+            }
+
+            // 显示系统重启功能
+            const systemRestartBtn = document.getElementById('system-restart-btn');
+            if (systemRestartBtn) {
+                systemRestartBtn.style.display = 'inline-block';
+            }
+
+            // 显示登录与注册设置
+            const loginInfoSettings = document.getElementById('login-info-settings');
+            if (loginInfoSettings) {
+                loginInfoSettings.style.display = 'flex';
+            }
         }
 
-        // 显示系统重启功能
-        const systemRestartBtn = document.getElementById('system-restart-btn');
-        if (systemRestartBtn) {
-        systemRestartBtn.style.display = 'inline-block';
-        }
-
-        // 显示登录与注册设置
-        const loginInfoSettings = document.getElementById('login-info-settings');
-        if (loginInfoSettings) {
-        loginInfoSettings.style.display = 'flex';
-        }
-    }
-
-    return true;
+        return true;
     } catch (err) {
-    localStorage.removeItem('auth_token');
-    window.location.href = '/';
-    return false;
+        localStorage.removeItem('auth_token');
+        window.location.href = '/';
+        return false;
     }
 }
 
@@ -2955,26 +2956,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     startCaptchaSessionMonitor();
     // 添加Cookie表单提交
     document.getElementById('addForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('cookieId').value.trim();
-    const value = document.getElementById('cookieValue').value.trim();
+        e.preventDefault();
+        const id = document.getElementById('cookieId').value.trim();
+        const value = document.getElementById('cookieValue').value.trim();
 
-    if (!id || !value) return;
+        if (!id || !value) return;
 
-    try {
-        await fetchJSON(apiBase + '/cookies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, value })
-        });
+        try {
+            await fetchJSON(apiBase + '/cookies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, value })
+            });
 
-        document.getElementById('cookieId').value = '';
-        document.getElementById('cookieValue').value = '';
-        showToast(`账号 "${id}" 添加成功`);
-        loadCookies();
-    } catch (err) {
-        // 错误已在fetchJSON中处理
-    }
+            document.getElementById('cookieId').value = '';
+            document.getElementById('cookieValue').value = '';
+            showToast(`账号 "${id}" 添加成功`);
+            loadCookies();
+        } catch (err) {
+            // 错误已在fetchJSON中处理
+        }
     });
 
     // 添加账号密码登录表单提交
@@ -2985,66 +2986,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 增强的键盘快捷键和用户体验
     // textarea 中 Enter 允许换行，Ctrl+Enter 提交
-    document.getElementById('newKeyword')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-        e.preventDefault();
-        addKeyword();
-    }
+    document.getElementById('newKeyword')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            addKeyword();
+        }
     });
 
-    document.getElementById('newReply')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-        e.preventDefault();
-        addKeyword();
-    }
+    document.getElementById('newReply')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            addKeyword();
+        }
     });
 
     // ESC键取消编辑
-    document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && typeof window.editingIndex !== 'undefined') {
-        e.preventDefault();
-        cancelEdit();
-    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && typeof window.editingIndex !== 'undefined') {
+            e.preventDefault();
+            cancelEdit();
+        }
     });
 
     // 输入框实时验证和提示
-    document.getElementById('newKeyword')?.addEventListener('input', function(e) {
-    const value = e.target.value.trim();
-    const addBtn = document.querySelector('.add-btn');
-    const replyInput = document.getElementById('newReply');
+    document.getElementById('newKeyword')?.addEventListener('input', function (e) {
+        const value = e.target.value.trim();
+        const addBtn = document.querySelector('.add-btn');
+        const replyInput = document.getElementById('newReply');
 
-    if (value.length > 0) {
-        e.target.style.borderColor = '#10b981';
-        // 只要关键词有内容就可以添加，不需要回复内容
-        addBtn.style.opacity = '1';
-        addBtn.style.transform = 'scale(1)';
-    } else {
-        e.target.style.borderColor = '#e5e7eb';
-        addBtn.style.opacity = '0.7';
-        addBtn.style.transform = 'scale(0.95)';
-    }
+        if (value.length > 0) {
+            e.target.style.borderColor = '#10b981';
+            // 只要关键词有内容就可以添加，不需要回复内容
+            addBtn.style.opacity = '1';
+            addBtn.style.transform = 'scale(1)';
+        } else {
+            e.target.style.borderColor = '#e5e7eb';
+            addBtn.style.opacity = '0.7';
+            addBtn.style.transform = 'scale(0.95)';
+        }
     });
 
-    document.getElementById('newReply')?.addEventListener('input', function(e) {
-    const value = e.target.value.trim();
-    const keywordInput = document.getElementById('newKeyword');
+    document.getElementById('newReply')?.addEventListener('input', function (e) {
+        const value = e.target.value.trim();
+        const keywordInput = document.getElementById('newKeyword');
 
-    // 回复内容可以为空，只需要关键词有内容即可
-    if (value.length > 0) {
-        e.target.style.borderColor = '#10b981';
-    } else {
-        e.target.style.borderColor = '#e5e7eb';
-    }
+        // 回复内容可以为空，只需要关键词有内容即可
+        if (value.length > 0) {
+            e.target.style.borderColor = '#10b981';
+        } else {
+            e.target.style.borderColor = '#e5e7eb';
+        }
 
-    // 按钮状态只依赖关键词是否有内容
-    const addBtn = document.querySelector('.add-btn');
-    if (keywordInput.value.trim().length > 0) {
-        addBtn.style.opacity = '1';
-        addBtn.style.transform = 'scale(1)';
-    } else {
-        addBtn.style.opacity = '0.7';
-        addBtn.style.transform = 'scale(0.95)';
-    }
+        // 按钮状态只依赖关键词是否有内容
+        const addBtn = document.querySelector('.add-btn');
+        if (keywordInput.value.trim().length > 0) {
+            addBtn.style.opacity = '1';
+            addBtn.style.transform = 'scale(1)';
+        } else {
+            addBtn.style.opacity = '0.7';
+            addBtn.style.transform = 'scale(0.95)';
+        }
     });
 
     // 初始加载仪表盘
@@ -3072,16 +3073,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     initItemSearch();
 
     // 点击侧边栏外部关闭移动端菜单
-    document.addEventListener('click', function(e) {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.querySelector('.mobile-toggle');
+    document.addEventListener('click', function (e) {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.querySelector('.mobile-toggle');
 
-    if (window.innerWidth <= 768 &&
-        !sidebar.contains(e.target) &&
-        !toggle.contains(e.target) &&
-        sidebar.classList.contains('show')) {
-        sidebar.classList.remove('show');
-    }
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(e.target) &&
+            !toggle.contains(e.target) &&
+            sidebar.classList.contains('show')) {
+            sidebar.classList.remove('show');
+        }
     });
 });
 
@@ -3090,47 +3091,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 打开默认回复管理器
 async function openDefaultReplyManager() {
     try {
-    await loadDefaultReplies();
-    const modal = new bootstrap.Modal(document.getElementById('defaultReplyModal'));
-    modal.show();
+        await loadDefaultReplies();
+        const modal = new bootstrap.Modal(document.getElementById('defaultReplyModal'));
+        modal.show();
     } catch (error) {
-    console.error('打开默认回复管理器失败:', error);
-    showToast('打开默认回复管理器失败', 'danger');
+        console.error('打开默认回复管理器失败:', error);
+        showToast('打开默认回复管理器失败', 'danger');
     }
 }
 
 // 加载默认回复列表
 async function loadDefaultReplies() {
     try {
-    // 获取所有账号
-    const accountsResponse = await fetch(`${apiBase}/cookies`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取所有账号
+        const accountsResponse = await fetch(`${apiBase}/cookies`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!accountsResponse.ok) {
+            throw new Error('获取账号列表失败');
         }
-    });
 
-    if (!accountsResponse.ok) {
-        throw new Error('获取账号列表失败');
-    }
+        const accounts = await accountsResponse.json();
 
-    const accounts = await accountsResponse.json();
+        // 获取所有默认回复设置
+        const repliesResponse = await fetch(`${apiBase}/default-replies`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    // 获取所有默认回复设置
-    const repliesResponse = await fetch(`${apiBase}/default-replies`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        let defaultReplies = {};
+        if (repliesResponse.ok) {
+            defaultReplies = await repliesResponse.json();
         }
-    });
 
-    let defaultReplies = {};
-    if (repliesResponse.ok) {
-        defaultReplies = await repliesResponse.json();
-    }
-
-    renderDefaultRepliesList(accounts, defaultReplies);
+        renderDefaultRepliesList(accounts, defaultReplies);
     } catch (error) {
-    console.error('加载默认回复列表失败:', error);
-    showToast('加载默认回复列表失败', 'danger');
+        console.error('加载默认回复列表失败:', error);
+        showToast('加载默认回复列表失败', 'danger');
     }
 }
 
@@ -3140,7 +3141,7 @@ function renderDefaultRepliesList(accounts, defaultReplies) {
     tbody.innerHTML = '';
 
     if (accounts.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="5" class="text-center py-4 text-muted">
             <i class="bi bi-chat-text fs-1 d-block mb-3"></i>
@@ -3149,30 +3150,30 @@ function renderDefaultRepliesList(accounts, defaultReplies) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     accounts.forEach(accountId => {
-    const replySettings = defaultReplies[accountId] || { enabled: false, reply_content: '', reply_once: false };
-    const tr = document.createElement('tr');
+        const replySettings = defaultReplies[accountId] || { enabled: false, reply_content: '', reply_once: false };
+        const tr = document.createElement('tr');
 
-    // 状态标签
-    const statusBadge = replySettings.enabled ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
+        // 状态标签
+        const statusBadge = replySettings.enabled ?
+            '<span class="badge bg-success">启用</span>' :
+            '<span class="badge bg-secondary">禁用</span>';
 
-    // 只回复一次标签
-    const replyOnceBadge = replySettings.reply_once ?
-        '<span class="badge bg-warning">是</span>' :
-        '<span class="badge bg-light text-dark">否</span>';
+        // 只回复一次标签
+        const replyOnceBadge = replySettings.reply_once ?
+            '<span class="badge bg-warning">是</span>' :
+            '<span class="badge bg-light text-dark">否</span>';
 
-    // 回复内容预览
-    let contentPreview = replySettings.reply_content || '未设置';
-    if (contentPreview.length > 50) {
-        contentPreview = contentPreview.substring(0, 50) + '...';
-    }
+        // 回复内容预览
+        let contentPreview = replySettings.reply_content || '未设置';
+        if (contentPreview.length > 50) {
+            contentPreview = contentPreview.substring(0, 50) + '...';
+        }
 
-    tr.innerHTML = `
+        tr.innerHTML = `
         <td>
         <strong class="text-primary">${accountId}</strong>
         </td>
@@ -3200,41 +3201,41 @@ function renderDefaultRepliesList(accounts, defaultReplies) {
         </td>
     `;
 
-    tbody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
 // 编辑默认回复
 async function editDefaultReply(accountId) {
     try {
-    // 获取当前设置
-    const response = await fetch(`${apiBase}/default-replies/${accountId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取当前设置
+        const response = await fetch(`${apiBase}/default-replies/${accountId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        let settings = { enabled: false, reply_content: '', reply_once: false };
+        if (response.ok) {
+            settings = await response.json();
         }
-    });
 
-    let settings = { enabled: false, reply_content: '', reply_once: false };
-    if (response.ok) {
-        settings = await response.json();
-    }
+        // 填充编辑表单
+        document.getElementById('editAccountId').value = accountId;
+        document.getElementById('editAccountIdDisplay').value = accountId;
+        document.getElementById('editDefaultReplyEnabled').checked = settings.enabled;
+        document.getElementById('editReplyContent').value = settings.reply_content || '';
+        document.getElementById('editReplyOnce').checked = settings.reply_once || false;
 
-    // 填充编辑表单
-    document.getElementById('editAccountId').value = accountId;
-    document.getElementById('editAccountIdDisplay').value = accountId;
-    document.getElementById('editDefaultReplyEnabled').checked = settings.enabled;
-    document.getElementById('editReplyContent').value = settings.reply_content || '';
-    document.getElementById('editReplyOnce').checked = settings.reply_once || false;
+        // 根据启用状态显示/隐藏内容输入框
+        toggleReplyContentVisibility();
 
-    // 根据启用状态显示/隐藏内容输入框
-    toggleReplyContentVisibility();
-
-    // 显示编辑模态框
-    const modal = new bootstrap.Modal(document.getElementById('editDefaultReplyModal'));
-    modal.show();
+        // 显示编辑模态框
+        const modal = new bootstrap.Modal(document.getElementById('editDefaultReplyModal'));
+        modal.show();
     } catch (error) {
-    console.error('获取默认回复设置失败:', error);
-    showToast('获取默认回复设置失败', 'danger');
+        console.error('获取默认回复设置失败:', error);
+        showToast('获取默认回复设置失败', 'danger');
     }
 }
 
@@ -3248,43 +3249,43 @@ function toggleReplyContentVisibility() {
 // 保存默认回复设置
 async function saveDefaultReply() {
     try {
-    const accountId = document.getElementById('editAccountId').value;
-    const enabled = document.getElementById('editDefaultReplyEnabled').checked;
-    const replyContent = document.getElementById('editReplyContent').value;
-    const replyOnce = document.getElementById('editReplyOnce').checked;
+        const accountId = document.getElementById('editAccountId').value;
+        const enabled = document.getElementById('editDefaultReplyEnabled').checked;
+        const replyContent = document.getElementById('editReplyContent').value;
+        const replyOnce = document.getElementById('editReplyOnce').checked;
 
-    if (enabled && !replyContent.trim()) {
-        showToast('启用默认回复时必须设置回复内容', 'warning');
-        return;
-    }
+        if (enabled && !replyContent.trim()) {
+            showToast('启用默认回复时必须设置回复内容', 'warning');
+            return;
+        }
 
-    const data = {
-        enabled: enabled,
-        reply_content: enabled ? replyContent : null,
-        reply_once: replyOnce
-    };
+        const data = {
+            enabled: enabled,
+            reply_content: enabled ? replyContent : null,
+            reply_once: replyOnce
+        };
 
-    const response = await fetch(`${apiBase}/default-replies/${accountId}`, {
-        method: 'PUT',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    });
+        const response = await fetch(`${apiBase}/default-replies/${accountId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
 
-    if (response.ok) {
-        showToast('默认回复设置保存成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('editDefaultReplyModal')).hide();
-        loadDefaultReplies(); // 刷新列表
-        loadCookies(); // 刷新账号列表以更新默认回复状态显示
-    } else {
-        const error = await response.text();
-        showToast(`保存失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('默认回复设置保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editDefaultReplyModal')).hide();
+            loadDefaultReplies(); // 刷新列表
+            loadCookies(); // 刷新账号列表以更新默认回复状态显示
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('保存默认回复设置失败:', error);
-    showToast('保存默认回复设置失败', 'danger');
+        console.error('保存默认回复设置失败:', error);
+        showToast('保存默认回复设置失败', 'danger');
     }
 }
 
@@ -3326,55 +3327,55 @@ async function clearDefaultReplyRecords(accountId) {
 // 配置AI回复
 async function configAIReply(accountId) {
     try {
-    // 获取当前AI回复设置
-    const settings = await fetchJSON(`${apiBase}/ai-reply-settings/${accountId}`);
+        // 获取当前AI回复设置
+        const settings = await fetchJSON(`${apiBase}/ai-reply-settings/${accountId}`);
 
-    // 填充表单
-    document.getElementById('aiConfigAccountId').value = accountId;
-    document.getElementById('aiConfigAccountIdDisplay').value = accountId;
-    document.getElementById('aiReplyEnabled').checked = settings.ai_enabled;
-    // 处理模型名称
-    const modelSelect = document.getElementById('aiModelName');
-    const customModelInput = document.getElementById('customModelName');
-    const modelName = settings.model_name;
-    // 检查是否是预设模型
-    const presetModels = ['deepseek-v3.2', 'kimi-k2.5', 'qwen3-max-2026-01-23', 'qwen3.5-plus', 'gpt-4o-mini', 'gpt-4o'];
-    if (presetModels.includes(modelName)) {
-        modelSelect.value = modelName;
-        customModelInput.style.display = 'none';
-        customModelInput.value = '';
-    } else {
-        // 自定义模型
-        modelSelect.value = 'custom';
-        customModelInput.style.display = 'block';
-        customModelInput.value = modelName;
-    }
-    document.getElementById('aiBaseUrl').value = settings.base_url;
-    document.getElementById('aiApiKey').value = settings.api_key;
-    document.getElementById('maxDiscountPercent').value = settings.max_discount_percent;
-    document.getElementById('maxDiscountAmount').value = settings.max_discount_amount;
-    document.getElementById('maxBargainRounds').value = settings.max_bargain_rounds;
-    // 解析自定义提示词 JSON，填入三个独立文本框
-    let prompts = {};
-    if (settings.custom_prompts) {
-        try { prompts = JSON.parse(settings.custom_prompts); } catch (e) { prompts = {}; }
-    }
-    document.getElementById('promptPrice').value = prompts.price || '';
-    document.getElementById('promptTech').value = prompts.tech || '';
-    document.getElementById('promptDefault').value = prompts.default || '';
-    document.getElementById('promptKnowledgeBase').value = prompts.knowledge_base || '';
+        // 填充表单
+        document.getElementById('aiConfigAccountId').value = accountId;
+        document.getElementById('aiConfigAccountIdDisplay').value = accountId;
+        document.getElementById('aiReplyEnabled').checked = settings.ai_enabled;
+        // 处理模型名称
+        const modelSelect = document.getElementById('aiModelName');
+        const customModelInput = document.getElementById('customModelName');
+        const modelName = settings.model_name;
+        // 检查是否是预设模型
+        const presetModels = ['deepseek-v3.2', 'kimi-k2.5', 'qwen3-max-2026-01-23', 'qwen3.5-plus', 'gpt-4o-mini', 'gpt-4o'];
+        if (presetModels.includes(modelName)) {
+            modelSelect.value = modelName;
+            customModelInput.style.display = 'none';
+            customModelInput.value = '';
+        } else {
+            // 自定义模型
+            modelSelect.value = 'custom';
+            customModelInput.style.display = 'block';
+            customModelInput.value = modelName;
+        }
+        document.getElementById('aiBaseUrl').value = settings.base_url;
+        document.getElementById('aiApiKey').value = settings.api_key;
+        document.getElementById('maxDiscountPercent').value = settings.max_discount_percent;
+        document.getElementById('maxDiscountAmount').value = settings.max_discount_amount;
+        document.getElementById('maxBargainRounds').value = settings.max_bargain_rounds;
+        // 解析自定义提示词 JSON，填入三个独立文本框
+        let prompts = {};
+        if (settings.custom_prompts) {
+            try { prompts = JSON.parse(settings.custom_prompts); } catch (e) { prompts = {}; }
+        }
+        document.getElementById('promptPrice').value = prompts.price || '';
+        document.getElementById('promptTech').value = prompts.tech || '';
+        document.getElementById('promptDefault').value = prompts.default || '';
+        document.getElementById('promptKnowledgeBase').value = prompts.knowledge_base || '';
 
-    // 切换设置显示状态
-    toggleAIReplySettings();
-    await loadAIPresets();
+        // 切换设置显示状态
+        toggleAIReplySettings();
+        await loadAIPresets();
 
-    // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('aiReplyConfigModal'));
-    modal.show();
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('aiReplyConfigModal'));
+        modal.show();
 
     } catch (error) {
-    console.error('获取AI回复设置失败:', error);
-    showToast('获取AI回复设置失败', 'danger');
+        console.error('获取AI回复设置失败:', error);
+        showToast('获取AI回复设置失败', 'danger');
     }
 }
 
@@ -3387,88 +3388,88 @@ function toggleAIReplySettings() {
     const testArea = document.getElementById('testArea');
 
     if (enabled) {
-    settingsDiv.style.display = 'block';
-    bargainSettings.style.display = 'block';
-    promptSettings.style.display = 'block';
-    testArea.style.display = 'block';
+        settingsDiv.style.display = 'block';
+        bargainSettings.style.display = 'block';
+        promptSettings.style.display = 'block';
+        testArea.style.display = 'block';
     } else {
-    settingsDiv.style.display = 'none';
-    bargainSettings.style.display = 'none';
-    promptSettings.style.display = 'none';
-    testArea.style.display = 'none';
+        settingsDiv.style.display = 'none';
+        bargainSettings.style.display = 'none';
+        promptSettings.style.display = 'none';
+        testArea.style.display = 'none';
     }
 }
 
 // 保存AI回复配置
 async function saveAIReplyConfig() {
     try {
-    const accountId = document.getElementById('aiConfigAccountId').value;
-    const enabled = document.getElementById('aiReplyEnabled').checked;
+        const accountId = document.getElementById('aiConfigAccountId').value;
+        const enabled = document.getElementById('aiReplyEnabled').checked;
 
-    // 如果启用AI回复，验证必填字段
-    if (enabled) {
-        const apiKey = document.getElementById('aiApiKey').value.trim();
-        if (!apiKey) {
-        showToast('请输入API密钥', 'warning');
-        return;
+        // 如果启用AI回复，验证必填字段
+        if (enabled) {
+            const apiKey = document.getElementById('aiApiKey').value.trim();
+            if (!apiKey) {
+                showToast('请输入API密钥', 'warning');
+                return;
+            }
         }
-    }
-// 获取模型名称
-    let modelName = document.getElementById('aiModelName').value;
-    if (modelName === 'custom') {
-        const customModelName = document.getElementById('customModelName').value.trim();
-        if (!customModelName) {
-        showToast('请输入自定义模型名称', 'warning');
-        return;
+        // 获取模型名称
+        let modelName = document.getElementById('aiModelName').value;
+        if (modelName === 'custom') {
+            const customModelName = document.getElementById('customModelName').value.trim();
+            if (!customModelName) {
+                showToast('请输入自定义模型名称', 'warning');
+                return;
+            }
+            modelName = customModelName;
         }
-        modelName = customModelName;
-    }
-    // 从文本框组装自定义提示词 JSON
-    const promptsObj = {};
-    const priceVal = document.getElementById('promptPrice').value.trim();
-    const techVal = document.getElementById('promptTech').value.trim();
-    const defaultVal = document.getElementById('promptDefault').value.trim();
-    const knowledgeBaseVal = document.getElementById('promptKnowledgeBase').value.trim();
-    if (priceVal) promptsObj.price = priceVal;
-    if (techVal) promptsObj.tech = techVal;
-    if (defaultVal) promptsObj.default = defaultVal;
-    if (knowledgeBaseVal) promptsObj.knowledge_base = knowledgeBaseVal;
-    const customPromptsJson = Object.keys(promptsObj).length > 0 ? JSON.stringify(promptsObj) : '';
+        // 从文本框组装自定义提示词 JSON
+        const promptsObj = {};
+        const priceVal = document.getElementById('promptPrice').value.trim();
+        const techVal = document.getElementById('promptTech').value.trim();
+        const defaultVal = document.getElementById('promptDefault').value.trim();
+        const knowledgeBaseVal = document.getElementById('promptKnowledgeBase').value.trim();
+        if (priceVal) promptsObj.price = priceVal;
+        if (techVal) promptsObj.tech = techVal;
+        if (defaultVal) promptsObj.default = defaultVal;
+        if (knowledgeBaseVal) promptsObj.knowledge_base = knowledgeBaseVal;
+        const customPromptsJson = Object.keys(promptsObj).length > 0 ? JSON.stringify(promptsObj) : '';
 
-    // 构建设置对象
-    const settings = {
-        ai_enabled: enabled,
-        model_name: modelName,
-        api_key: document.getElementById('aiApiKey').value,
-        base_url: document.getElementById('aiBaseUrl').value,
-        max_discount_percent: parseInt(document.getElementById('maxDiscountPercent').value),
-        max_discount_amount: parseInt(document.getElementById('maxDiscountAmount').value),
-        max_bargain_rounds: parseInt(document.getElementById('maxBargainRounds').value),
-        custom_prompts: customPromptsJson
-    };
+        // 构建设置对象
+        const settings = {
+            ai_enabled: enabled,
+            model_name: modelName,
+            api_key: document.getElementById('aiApiKey').value,
+            base_url: document.getElementById('aiBaseUrl').value,
+            max_discount_percent: parseInt(document.getElementById('maxDiscountPercent').value),
+            max_discount_amount: parseInt(document.getElementById('maxDiscountAmount').value),
+            max_bargain_rounds: parseInt(document.getElementById('maxBargainRounds').value),
+            custom_prompts: customPromptsJson
+        };
 
-    // 保存设置
-    const response = await fetch(`${apiBase}/ai-reply-settings/${accountId}`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(settings)
-    });
+        // 保存设置
+        const response = await fetch(`${apiBase}/ai-reply-settings/${accountId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(settings)
+        });
 
-    if (response.ok) {
-        showToast('AI回复配置保存成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('aiReplyConfigModal')).hide();
-        loadCookies(); // 刷新账号列表以更新AI回复状态显示
-    } else {
-        const error = await response.text();
-        showToast(`保存失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('AI回复配置保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('aiReplyConfigModal')).hide();
+            loadCookies(); // 刷新账号列表以更新AI回复状态显示
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
 
     } catch (error) {
-    console.error('保存AI回复配置失败:', error);
-    showToast('保存AI回复配置失败', 'danger');
+        console.error('保存AI回复配置失败:', error);
+        showToast('保存AI回复配置失败', 'danger');
     }
 }
 
@@ -3479,56 +3480,56 @@ async function testAIReply() {
     if (testBtn) { testBtn.disabled = true; testBtn.textContent = '测试中...'; }
 
     try {
-    const accountId = document.getElementById('aiConfigAccountId').value;
-    const testMessage = document.getElementById('testMessage').value.trim();
-    const testItemPrice = document.getElementById('testItemPrice').value;
+        const accountId = document.getElementById('aiConfigAccountId').value;
+        const testMessage = document.getElementById('testMessage').value.trim();
+        const testItemPrice = document.getElementById('testItemPrice').value;
 
-    if (!testMessage) {
-        showToast('请输入测试消息', 'warning');
-        return;
-    }
+        if (!testMessage) {
+            showToast('请输入测试消息', 'warning');
+            return;
+        }
 
-    // 构建测试数据
-    const testData = {
-        message: testMessage,
-        item_title: '测试商品',
-        item_price: parseFloat(testItemPrice) || 100,
-        item_desc: '这是一个用于测试AI回复功能的商品'
-    };
+        // 构建测试数据
+        const testData = {
+            message: testMessage,
+            item_title: '测试商品',
+            item_price: parseFloat(testItemPrice) || 100,
+            item_desc: '这是一个用于测试AI回复功能的商品'
+        };
 
-    // 显示加载状态
-    const testResult = document.getElementById('testResult');
-    const testReplyContent = document.getElementById('testReplyContent');
-    testResult.style.display = 'block';
-    testReplyContent.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在生成AI回复...';
+        // 显示加载状态
+        const testResult = document.getElementById('testResult');
+        const testReplyContent = document.getElementById('testReplyContent');
+        testResult.style.display = 'block';
+        testReplyContent.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在生成AI回复...';
 
-    // 调用测试API
-    const response = await fetch(`${apiBase}/ai-reply-test/${accountId}`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(testData)
-    });
+        // 调用测试API
+        const response = await fetch(`${apiBase}/ai-reply-test/${accountId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(testData)
+        });
 
-    if (response.ok) {
-        const result = await response.json();
-        testReplyContent.innerHTML = result.reply;
-        showToast('AI回复测试成功', 'success');
-    } else {
-        const error = await response.text();
-        testReplyContent.innerHTML = `<span class="text-danger">测试失败: ${error}</span>`;
-        showToast(`测试失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            const result = await response.json();
+            testReplyContent.innerHTML = result.reply;
+            showToast('AI回复测试成功', 'success');
+        } else {
+            const error = await response.text();
+            testReplyContent.innerHTML = `<span class="text-danger">测试失败: ${error}</span>`;
+            showToast(`测试失败: ${error}`, 'danger');
+        }
 
     } catch (error) {
-    console.error('测试AI回复失败:', error);
-    const testReplyContent = document.getElementById('testReplyContent');
-    testReplyContent.innerHTML = `<span class="text-danger">测试失败: ${error.message}</span>`;
-    showToast('测试AI回复失败', 'danger');
+        console.error('测试AI回复失败:', error);
+        const testReplyContent = document.getElementById('testReplyContent');
+        testReplyContent.innerHTML = `<span class="text-danger">测试失败: ${error.message}</span>`;
+        showToast('测试AI回复失败', 'danger');
     } finally {
-    if (testBtn) { testBtn.disabled = false; testBtn.textContent = '测试回复'; }
+        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '测试回复'; }
     }
 }
 
@@ -3537,11 +3538,11 @@ function toggleCustomModelInput() {
     const modelSelect = document.getElementById('aiModelName');
     const customModelInput = document.getElementById('customModelName');
     if (modelSelect.value === 'custom') {
-    customModelInput.style.display = 'block';
-    customModelInput.focus();
+        customModelInput.style.display = 'block';
+        customModelInput.focus();
     } else {
-    customModelInput.style.display = 'none';
-    customModelInput.value = '';
+        customModelInput.style.display = 'none';
+        customModelInput.value = '';
     }
 }
 
@@ -3681,10 +3682,10 @@ async function deleteSelectedPreset() {
 }
 
 // 监听默认回复启用状态变化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const enabledCheckbox = document.getElementById('editDefaultReplyEnabled');
     if (enabledCheckbox) {
-    enabledCheckbox.addEventListener('change', toggleReplyContentVisibility);
+        enabledCheckbox.addEventListener('change', toggleReplyContentVisibility);
     }
 });
 
@@ -3773,239 +3774,239 @@ const outgoingConfigs = {
 // 通知渠道类型配置
 const channelTypeConfigs = {
     qq: {
-    title: 'QQ通知',
-    description: '需要添加QQ号 <code>3607695896</code> 为好友才能正常接收消息通知',
-    icon: 'bi-chat-dots-fill',
-    color: 'primary',
-    fields: [
-        {
-        id: 'qq_number',
-        label: '接收QQ号码',
-        type: 'text',
-        placeholder: '输入QQ号码',
-        required: true,
-        help: '用于接收通知消息的QQ号码'
-        }
-    ]
+        title: 'QQ通知',
+        description: '需要添加QQ号 <code>3607695896</code> 为好友才能正常接收消息通知',
+        icon: 'bi-chat-dots-fill',
+        color: 'primary',
+        fields: [
+            {
+                id: 'qq_number',
+                label: '接收QQ号码',
+                type: 'text',
+                placeholder: '输入QQ号码',
+                required: true,
+                help: '用于接收通知消息的QQ号码'
+            }
+        ]
     },
     dingtalk: {
-    title: '钉钉通知',
-    description: '请设置钉钉机器人Webhook URL，支持自定义机器人和群机器人',
-    icon: 'bi-bell-fill',
-    color: 'info',
-    fields: [
-        {
-        id: 'webhook_url',
-        label: '钉钉机器人Webhook URL',
-        type: 'url',
-        placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...',
-        required: true,
-        help: '钉钉机器人的Webhook地址'
-        },
-        {
-        id: 'secret',
-        label: '加签密钥（可选）',
-        type: 'text',
-        placeholder: '输入加签密钥',
-        required: false,
-        help: '如果机器人开启了加签验证，请填写密钥'
-        }
-    ]
+        title: '钉钉通知',
+        description: '请设置钉钉机器人Webhook URL，支持自定义机器人和群机器人',
+        icon: 'bi-bell-fill',
+        color: 'info',
+        fields: [
+            {
+                id: 'webhook_url',
+                label: '钉钉机器人Webhook URL',
+                type: 'url',
+                placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...',
+                required: true,
+                help: '钉钉机器人的Webhook地址'
+            },
+            {
+                id: 'secret',
+                label: '加签密钥（可选）',
+                type: 'text',
+                placeholder: '输入加签密钥',
+                required: false,
+                help: '如果机器人开启了加签验证，请填写密钥'
+            }
+        ]
     },
     feishu: {
-    title: '飞书通知',
-    description: '请设置飞书机器人Webhook URL，支持自定义机器人和群机器人',
-    icon: 'bi-chat-square-text-fill',
-    color: 'warning',
-    fields: [
-        {
-        id: 'webhook_url',
-        label: '飞书机器人Webhook URL',
-        type: 'url',
-        placeholder: 'https://open.feishu.cn/open-apis/bot/v2/hook/...',
-        required: true,
-        help: '飞书机器人的Webhook地址'
-        },
-        {
-        id: 'secret',
-        label: '签名密钥（可选）',
-        type: 'text',
-        placeholder: '输入签名密钥',
-        required: false,
-        help: '如果机器人开启了签名验证，请填写密钥'
-        }
-    ]
+        title: '飞书通知',
+        description: '请设置飞书机器人Webhook URL，支持自定义机器人和群机器人',
+        icon: 'bi-chat-square-text-fill',
+        color: 'warning',
+        fields: [
+            {
+                id: 'webhook_url',
+                label: '飞书机器人Webhook URL',
+                type: 'url',
+                placeholder: 'https://open.feishu.cn/open-apis/bot/v2/hook/...',
+                required: true,
+                help: '飞书机器人的Webhook地址'
+            },
+            {
+                id: 'secret',
+                label: '签名密钥（可选）',
+                type: 'text',
+                placeholder: '输入签名密钥',
+                required: false,
+                help: '如果机器人开启了签名验证，请填写密钥'
+            }
+        ]
     },
     bark: {
-    title: 'Bark通知',
-    description: 'iOS推送通知服务，支持自建服务器和官方服务器',
-    icon: 'bi-phone-fill',
-    color: 'dark',
-    fields: [
-        {
-        id: 'device_key',
-        label: '设备密钥',
-        type: 'text',
-        placeholder: '输入Bark设备密钥',
-        required: true,
-        help: 'Bark应用中显示的设备密钥'
-        },
-        {
-        id: 'server_url',
-        label: '服务器地址（可选）',
-        type: 'url',
-        placeholder: 'https://api.day.app',
-        required: false,
-        help: '自建Bark服务器地址，留空使用官方服务器'
-        },
-        {
-        id: 'title',
-        label: '通知标题（可选）',
-        type: 'text',
-        placeholder: '自动回复通知',
-        required: false,
-        help: '推送通知的标题'
-        },
-        {
-        id: 'sound',
-        label: '提示音（可选）',
-        type: 'text',
-        placeholder: 'default',
-        required: false,
-        help: '通知提示音，如：alarm, anticipate, bell等'
-        },
-        {
-        id: 'group',
-        label: '分组（可选）',
-        type: 'text',
-        placeholder: 'xianyu',
-        required: false,
-        help: '通知分组名称，用于归类消息'
-        }
-    ]
+        title: 'Bark通知',
+        description: 'iOS推送通知服务，支持自建服务器和官方服务器',
+        icon: 'bi-phone-fill',
+        color: 'dark',
+        fields: [
+            {
+                id: 'device_key',
+                label: '设备密钥',
+                type: 'text',
+                placeholder: '输入Bark设备密钥',
+                required: true,
+                help: 'Bark应用中显示的设备密钥'
+            },
+            {
+                id: 'server_url',
+                label: '服务器地址（可选）',
+                type: 'url',
+                placeholder: 'https://api.day.app',
+                required: false,
+                help: '自建Bark服务器地址，留空使用官方服务器'
+            },
+            {
+                id: 'title',
+                label: '通知标题（可选）',
+                type: 'text',
+                placeholder: '自动回复通知',
+                required: false,
+                help: '推送通知的标题'
+            },
+            {
+                id: 'sound',
+                label: '提示音（可选）',
+                type: 'text',
+                placeholder: 'default',
+                required: false,
+                help: '通知提示音，如：alarm, anticipate, bell等'
+            },
+            {
+                id: 'group',
+                label: '分组（可选）',
+                type: 'text',
+                placeholder: 'xianyu',
+                required: false,
+                help: '通知分组名称，用于归类消息'
+            }
+        ]
     },
     email: {
-    title: '邮件通知',
-    description: '通过SMTP服务器发送邮件通知，支持各种邮箱服务商',
-    icon: 'bi-envelope-fill',
-    color: 'success',
-    fields: [
-        {
-        id: 'smtp_server',
-        label: 'SMTP服务器',
-        type: 'text',
-        placeholder: 'smtp.gmail.com',
-        required: true,
-        help: '邮箱服务商的SMTP服务器地址'
-        },
-        {
-        id: 'smtp_port',
-        label: 'SMTP端口',
-        type: 'number',
-        placeholder: '587',
-        required: true,
-        help: '通常为587（TLS）或465（SSL）'
-        },
-        {
-        id: 'email_user',
-        label: '发送邮箱',
-        type: 'email',
-        placeholder: 'your-email@gmail.com',
-        required: true,
-        help: '用于发送通知的邮箱地址'
-        },
-        {
-        id: 'email_password',
-        label: '邮箱密码/授权码',
-        type: 'password',
-        placeholder: '输入密码或授权码',
-        required: true,
-        help: '邮箱密码或应用专用密码'
-        },
-        {
-        id: 'recipient_email',
-        label: '接收邮箱',
-        type: 'email',
-        placeholder: 'recipient@example.com',
-        required: true,
-        help: '用于接收通知的邮箱地址'
-        }
-    ]
+        title: '邮件通知',
+        description: '通过SMTP服务器发送邮件通知，支持各种邮箱服务商',
+        icon: 'bi-envelope-fill',
+        color: 'success',
+        fields: [
+            {
+                id: 'smtp_server',
+                label: 'SMTP服务器',
+                type: 'text',
+                placeholder: 'smtp.gmail.com',
+                required: true,
+                help: '邮箱服务商的SMTP服务器地址'
+            },
+            {
+                id: 'smtp_port',
+                label: 'SMTP端口',
+                type: 'number',
+                placeholder: '587',
+                required: true,
+                help: '通常为587（TLS）或465（SSL）'
+            },
+            {
+                id: 'email_user',
+                label: '发送邮箱',
+                type: 'email',
+                placeholder: 'your-email@gmail.com',
+                required: true,
+                help: '用于发送通知的邮箱地址'
+            },
+            {
+                id: 'email_password',
+                label: '邮箱密码/授权码',
+                type: 'password',
+                placeholder: '输入密码或授权码',
+                required: true,
+                help: '邮箱密码或应用专用密码'
+            },
+            {
+                id: 'recipient_email',
+                label: '接收邮箱',
+                type: 'email',
+                placeholder: 'recipient@example.com',
+                required: true,
+                help: '用于接收通知的邮箱地址'
+            }
+        ]
     },
     webhook: {
-    title: 'Webhook通知',
-    description: '通过HTTP POST请求发送通知到自定义的Webhook地址',
-    icon: 'bi-link-45deg',
-    color: 'warning',
-    fields: [
-        {
-        id: 'webhook_url',
-        label: 'Webhook URL',
-        type: 'url',
-        placeholder: 'https://your-server.com/webhook',
-        required: true,
-        help: '接收通知的Webhook地址'
-        },
-        {
-        id: 'http_method',
-        label: 'HTTP方法',
-        type: 'select',
-        options: [
-            { value: 'POST', text: 'POST' },
-            { value: 'PUT', text: 'PUT' }
-        ],
-        required: true,
-        help: '发送请求使用的HTTP方法'
-        },
-        {
-        id: 'headers',
-        label: '自定义请求头（可选）',
-        type: 'textarea',
-        placeholder: '{"Authorization": "Bearer token", "Content-Type": "application/json"}',
-        required: false,
-        help: 'JSON格式的自定义请求头'
-        }
-    ]
+        title: 'Webhook通知',
+        description: '通过HTTP POST请求发送通知到自定义的Webhook地址',
+        icon: 'bi-link-45deg',
+        color: 'warning',
+        fields: [
+            {
+                id: 'webhook_url',
+                label: 'Webhook URL',
+                type: 'url',
+                placeholder: 'https://your-server.com/webhook',
+                required: true,
+                help: '接收通知的Webhook地址'
+            },
+            {
+                id: 'http_method',
+                label: 'HTTP方法',
+                type: 'select',
+                options: [
+                    { value: 'POST', text: 'POST' },
+                    { value: 'PUT', text: 'PUT' }
+                ],
+                required: true,
+                help: '发送请求使用的HTTP方法'
+            },
+            {
+                id: 'headers',
+                label: '自定义请求头（可选）',
+                type: 'textarea',
+                placeholder: '{"Authorization": "Bearer token", "Content-Type": "application/json"}',
+                required: false,
+                help: 'JSON格式的自定义请求头'
+            }
+        ]
     },
     wechat: {
-    title: '微信通知',
-    description: '通过企业微信机器人发送通知消息',
-    icon: 'bi-wechat',
-    color: 'success',
-    fields: [
-        {
-        id: 'webhook_url',
-        label: '企业微信机器人Webhook URL',
-        type: 'url',
-        placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...',
-        required: true,
-        help: '企业微信群机器人的Webhook地址'
-        }
-    ]
+        title: '微信通知',
+        description: '通过企业微信机器人发送通知消息',
+        icon: 'bi-wechat',
+        color: 'success',
+        fields: [
+            {
+                id: 'webhook_url',
+                label: '企业微信机器人Webhook URL',
+                type: 'url',
+                placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...',
+                required: true,
+                help: '企业微信群机器人的Webhook地址'
+            }
+        ]
     },
     telegram: {
-    title: 'Telegram通知',
-    description: '通过Telegram机器人发送通知消息（需要海外服务器）',
-    icon: 'bi-telegram',
-    color: 'primary',
-    fields: [
-        {
-        id: 'bot_token',
-        label: 'Bot Token',
-        type: 'text',
-        placeholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz',
-        required: true,
-        help: '从@BotFather获取的机器人Token'
-        },
-        {
-        id: 'chat_id',
-        label: 'Chat ID',
-        type: 'text',
-        placeholder: '123456789 或 @channel_name',
-        required: true,
-        help: '接收消息的用户ID或频道名'
-        }
-    ]
+        title: 'Telegram通知',
+        description: '通过Telegram机器人发送通知消息（需要海外服务器）',
+        icon: 'bi-telegram',
+        color: 'primary',
+        fields: [
+            {
+                id: 'bot_token',
+                label: 'Bot Token',
+                type: 'text',
+                placeholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz',
+                required: true,
+                help: '从@BotFather获取的机器人Token'
+            },
+            {
+                id: 'chat_id',
+                label: 'Chat ID',
+                type: 'text',
+                placeholder: '123456789 或 @channel_name',
+                required: true,
+                help: '接收消息的用户ID或频道名'
+            }
+        ]
     }
 };
 
@@ -4013,8 +4014,8 @@ const channelTypeConfigs = {
 function showAddChannelModal(type) {
     const config = channelTypeConfigs[type];
     if (!config) {
-    showToast('不支持的通知渠道类型', 'danger');
-    return;
+        showToast('不支持的通知渠道类型', 'danger');
+        return;
     }
 
     // 设置模态框标题和描述
@@ -4027,8 +4028,8 @@ function showAddChannelModal(type) {
     fieldsContainer.innerHTML = '';
 
     config.fields.forEach(field => {
-    const fieldHtml = generateFieldHtml(field, '');
-    fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+        const fieldHtml = generateFieldHtml(field, '');
+        fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
     });
 
     // 显示模态框
@@ -4042,20 +4043,20 @@ function generateFieldHtml(field, prefix) {
     let inputHtml = '';
 
     switch (field.type) {
-    case 'select':
-        inputHtml = `<select class="form-select" id="${fieldId}" ${field.required ? 'required' : ''}>`;
-        if (field.options) {
-        field.options.forEach(option => {
-            inputHtml += `<option value="${option.value}">${option.text}</option>`;
-        });
-        }
-        inputHtml += '</select>';
-        break;
-    case 'textarea':
-        inputHtml = `<textarea class="form-control" id="${fieldId}" placeholder="${field.placeholder}" rows="3" ${field.required ? 'required' : ''}></textarea>`;
-        break;
-    default:
-        inputHtml = `<input type="${field.type}" class="form-control" id="${fieldId}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
+        case 'select':
+            inputHtml = `<select class="form-select" id="${fieldId}" ${field.required ? 'required' : ''}>`;
+            if (field.options) {
+                field.options.forEach(option => {
+                    inputHtml += `<option value="${option.value}">${option.text}</option>`;
+                });
+            }
+            inputHtml += '</select>';
+            break;
+        case 'textarea':
+            inputHtml = `<textarea class="form-control" id="${fieldId}" placeholder="${field.placeholder}" rows="3" ${field.required ? 'required' : ''}></textarea>`;
+            break;
+        default:
+            inputHtml = `<input type="${field.type}" class="form-control" id="${fieldId}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
     }
 
     return `
@@ -4076,14 +4077,14 @@ async function saveNotificationChannel() {
     const enabled = document.getElementById('channelEnabled').checked;
 
     if (!name.trim()) {
-    showToast('请输入渠道名称', 'warning');
-    return;
+        showToast('请输入渠道名称', 'warning');
+        return;
     }
 
     const config = channelTypeConfigs[type];
     if (!config) {
-    showToast('无效的渠道类型', 'danger');
-    return;
+        showToast('无效的渠道类型', 'danger');
+        return;
     }
 
     // 收集配置数据
@@ -4091,70 +4092,70 @@ async function saveNotificationChannel() {
     let hasError = false;
 
     config.fields.forEach(field => {
-    const element = document.getElementById(field.id);
-    const value = element.value.trim();
+        const element = document.getElementById(field.id);
+        const value = element.value.trim();
 
-    if (field.required && !value) {
-        showToast(`请填写${field.label}`, 'warning');
-        hasError = true;
-        return;
-    }
+        if (field.required && !value) {
+            showToast(`请填写${field.label}`, 'warning');
+            hasError = true;
+            return;
+        }
 
-    if (value) {
-        configData[field.id] = value;
-    }
+        if (value) {
+            configData[field.id] = value;
+        }
     });
 
     if (hasError) return;
 
     try {
-    const response = await fetch(`${apiBase}/notification-channels`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-        name: name,
-        type: type,
-        config: JSON.stringify(configData),
-        enabled: enabled
-        })
-    });
+        const response = await fetch(`${apiBase}/notification-channels`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                type: type,
+                config: JSON.stringify(configData),
+                enabled: enabled
+            })
+        });
 
-    if (response.ok) {
-        showToast('通知渠道添加成功', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addChannelModal'));
-        modal.hide();
-        loadNotificationChannels();
-    } else {
-        const error = await response.text();
-        showToast(`添加失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('通知渠道添加成功', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addChannelModal'));
+            modal.hide();
+            loadNotificationChannels();
+        } else {
+            const error = await response.text();
+            showToast(`添加失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('添加通知渠道失败:', error);
-    showToast('添加通知渠道失败', 'danger');
+        console.error('添加通知渠道失败:', error);
+        showToast('添加通知渠道失败', 'danger');
     }
 }
 
 // 加载通知渠道列表
 async function loadNotificationChannels() {
     try {
-    const response = await fetch(`${apiBase}/notification-channels`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/notification-channels`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('获取通知渠道失败');
         }
-    });
 
-    if (!response.ok) {
-        throw new Error('获取通知渠道失败');
-    }
-
-    const channels = await response.json();
-    renderNotificationChannels(channels);
+        const channels = await response.json();
+        renderNotificationChannels(channels);
     } catch (error) {
-    console.error('加载通知渠道失败:', error);
-    showToast('加载通知渠道失败', 'danger');
+        console.error('加载通知渠道失败:', error);
+        showToast('加载通知渠道失败', 'danger');
     }
 }
 
@@ -4164,7 +4165,7 @@ function renderNotificationChannels(channels) {
     tbody.innerHTML = '';
 
     if (channels.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="6" class="text-center py-4 text-muted">
             <i class="bi bi-bell fs-1 d-block mb-3"></i>
@@ -4173,55 +4174,55 @@ function renderNotificationChannels(channels) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     channels.forEach(channel => {
-    const tr = document.createElement('tr');
+        const tr = document.createElement('tr');
 
-    const statusBadge = channel.enabled ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
+        const statusBadge = channel.enabled ?
+            '<span class="badge bg-success">启用</span>' :
+            '<span class="badge bg-secondary">禁用</span>';
 
-    // 获取渠道类型配置（处理类型映射）
-    let channelType = channel.type;
-    if (channelType === 'ding_talk') {
-        channelType = 'dingtalk';  // 兼容旧的类型名
-    } else if (channelType === 'lark') {
-        channelType = 'feishu';  // 兼容lark类型名
-    }
-    const typeConfig = channelTypeConfigs[channelType];
-    const typeDisplay = typeConfig ? typeConfig.title : channel.type;
-    const typeColor = typeConfig ? typeConfig.color : 'secondary';
+        // 获取渠道类型配置（处理类型映射）
+        let channelType = channel.type;
+        if (channelType === 'ding_talk') {
+            channelType = 'dingtalk';  // 兼容旧的类型名
+        } else if (channelType === 'lark') {
+            channelType = 'feishu';  // 兼容lark类型名
+        }
+        const typeConfig = channelTypeConfigs[channelType];
+        const typeDisplay = typeConfig ? typeConfig.title : channel.type;
+        const typeColor = typeConfig ? typeConfig.color : 'secondary';
 
-    // 解析并显示配置信息
-    let configDisplay = '';
-    try {
-        const configData = JSON.parse(channel.config || '{}');
-        const configEntries = Object.entries(configData);
+        // 解析并显示配置信息
+        let configDisplay = '';
+        try {
+            const configData = JSON.parse(channel.config || '{}');
+            const configEntries = Object.entries(configData);
 
-        if (configEntries.length > 0) {
-        configDisplay = configEntries.map(([key, value]) => {
-            // 隐藏敏感信息
-            if (key.includes('password') || key.includes('token') || key.includes('secret')) {
-            return `${key}: ****`;
+            if (configEntries.length > 0) {
+                configDisplay = configEntries.map(([key, value]) => {
+                    // 隐藏敏感信息
+                    if (key.includes('password') || key.includes('token') || key.includes('secret')) {
+                        return `${key}: ****`;
+                    }
+                    // 截断过长的值
+                    const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value;
+                    return `${key}: ${displayValue}`;
+                }).join('<br>');
+            } else {
+                configDisplay = channel.config || '无配置';
             }
-            // 截断过长的值
-            const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value;
-            return `${key}: ${displayValue}`;
-        }).join('<br>');
-        } else {
-        configDisplay = channel.config || '无配置';
+        } catch (e) {
+            // 兼容旧格式
+            configDisplay = channel.config || '无配置';
+            if (configDisplay.length > 30) {
+                configDisplay = configDisplay.substring(0, 30) + '...';
+            }
         }
-    } catch (e) {
-        // 兼容旧格式
-        configDisplay = channel.config || '无配置';
-        if (configDisplay.length > 30) {
-        configDisplay = configDisplay.substring(0, 30) + '...';
-        }
-    }
 
-    tr.innerHTML = `
+        tr.innerHTML = `
         <td><strong class="text-primary">${channel.id}</strong></td>
         <td>
         <div class="d-flex align-items-center">
@@ -4244,7 +4245,7 @@ function renderNotificationChannels(channels) {
         </td>
     `;
 
-    tbody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
@@ -4253,112 +4254,112 @@ function renderNotificationChannels(channels) {
 // 删除通知渠道
 async function deleteNotificationChannel(channelId) {
     if (!confirm('确定要删除这个通知渠道吗？')) {
-    return;
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/notification-channels/${channelId}`, {
-        method: 'DELETE',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/notification-channels/${channelId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        showToast('通知渠道删除成功', 'success');
-        loadNotificationChannels();
-    } else {
-        const error = await response.text();
-        showToast(`删除失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('通知渠道删除成功', 'success');
+            loadNotificationChannels();
+        } else {
+            const error = await response.text();
+            showToast(`删除失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('删除通知渠道失败:', error);
-    showToast('删除通知渠道失败', 'danger');
+        console.error('删除通知渠道失败:', error);
+        showToast('删除通知渠道失败', 'danger');
     }
 }
 
 // 编辑通知渠道
 async function editNotificationChannel(channelId) {
     try {
-    // 获取渠道详情
-    const response = await fetch(`${apiBase}/notification-channels`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取渠道详情
+        const response = await fetch(`${apiBase}/notification-channels`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('获取通知渠道失败');
         }
-    });
 
-    if (!response.ok) {
-        throw new Error('获取通知渠道失败');
-    }
+        const channels = await response.json();
+        const channel = channels.find(c => c.id === channelId);
 
-    const channels = await response.json();
-    const channel = channels.find(c => c.id === channelId);
-
-    if (!channel) {
-        showToast('通知渠道不存在', 'danger');
-        return;
-    }
-
-    // 处理类型映射
-    let channelType = channel.type;
-    if (channelType === 'ding_talk') {
-        channelType = 'dingtalk';  // 兼容旧的类型名
-    } else if (channelType === 'lark') {
-        channelType = 'feishu';  // 兼容lark类型名
-    }
-
-    const config = channelTypeConfigs[channelType];
-    if (!config) {
-        showToast('不支持的渠道类型', 'danger');
-        return;
-    }
-
-    // 填充基本信息
-    document.getElementById('editChannelId').value = channel.id;
-    document.getElementById('editChannelType').value = channelType;  // 使用映射后的类型
-    document.getElementById('editChannelName').value = channel.name;
-    document.getElementById('editChannelEnabled').checked = channel.enabled;
-
-    // 解析配置数据
-    let configData = {};
-    try {
-        configData = JSON.parse(channel.config || '{}');
-    } catch (e) {
-        // 兼容旧格式（直接字符串）
-        if (channel.type === 'qq') {
-        configData = { qq_number: channel.config };
-        } else if (channel.type === 'dingtalk' || channel.type === 'ding_talk') {
-        configData = { webhook_url: channel.config };
-        } else if (channel.type === 'feishu' || channel.type === 'lark') {
-        configData = { webhook_url: channel.config };
-        } else if (channel.type === 'bark') {
-        configData = { device_key: channel.config };
-        } else {
-        configData = { config: channel.config };
+        if (!channel) {
+            showToast('通知渠道不存在', 'danger');
+            return;
         }
-    }
 
-    // 生成编辑字段
-    const fieldsContainer = document.getElementById('editChannelConfigFields');
-    fieldsContainer.innerHTML = '';
-
-    config.fields.forEach(field => {
-        const fieldHtml = generateFieldHtml(field, 'edit_');
-        fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
-
-        // 填充现有值
-        const element = document.getElementById('edit_' + field.id);
-        if (element && configData[field.id]) {
-        element.value = configData[field.id];
+        // 处理类型映射
+        let channelType = channel.type;
+        if (channelType === 'ding_talk') {
+            channelType = 'dingtalk';  // 兼容旧的类型名
+        } else if (channelType === 'lark') {
+            channelType = 'feishu';  // 兼容lark类型名
         }
-    });
 
-    // 显示编辑模态框
-    const modal = new bootstrap.Modal(document.getElementById('editChannelModal'));
-    modal.show();
+        const config = channelTypeConfigs[channelType];
+        if (!config) {
+            showToast('不支持的渠道类型', 'danger');
+            return;
+        }
+
+        // 填充基本信息
+        document.getElementById('editChannelId').value = channel.id;
+        document.getElementById('editChannelType').value = channelType;  // 使用映射后的类型
+        document.getElementById('editChannelName').value = channel.name;
+        document.getElementById('editChannelEnabled').checked = channel.enabled;
+
+        // 解析配置数据
+        let configData = {};
+        try {
+            configData = JSON.parse(channel.config || '{}');
+        } catch (e) {
+            // 兼容旧格式（直接字符串）
+            if (channel.type === 'qq') {
+                configData = { qq_number: channel.config };
+            } else if (channel.type === 'dingtalk' || channel.type === 'ding_talk') {
+                configData = { webhook_url: channel.config };
+            } else if (channel.type === 'feishu' || channel.type === 'lark') {
+                configData = { webhook_url: channel.config };
+            } else if (channel.type === 'bark') {
+                configData = { device_key: channel.config };
+            } else {
+                configData = { config: channel.config };
+            }
+        }
+
+        // 生成编辑字段
+        const fieldsContainer = document.getElementById('editChannelConfigFields');
+        fieldsContainer.innerHTML = '';
+
+        config.fields.forEach(field => {
+            const fieldHtml = generateFieldHtml(field, 'edit_');
+            fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+
+            // 填充现有值
+            const element = document.getElementById('edit_' + field.id);
+            if (element && configData[field.id]) {
+                element.value = configData[field.id];
+            }
+        });
+
+        // 显示编辑模态框
+        const modal = new bootstrap.Modal(document.getElementById('editChannelModal'));
+        modal.show();
     } catch (error) {
-    console.error('编辑通知渠道失败:', error);
-    showToast('编辑通知渠道失败', 'danger');
+        console.error('编辑通知渠道失败:', error);
+        showToast('编辑通知渠道失败', 'danger');
     }
 }
 
@@ -4370,14 +4371,14 @@ async function updateNotificationChannel() {
     const enabled = document.getElementById('editChannelEnabled').checked;
 
     if (!name.trim()) {
-    showToast('请输入渠道名称', 'warning');
-    return;
+        showToast('请输入渠道名称', 'warning');
+        return;
     }
 
     const config = channelTypeConfigs[type];
     if (!config) {
-    showToast('无效的渠道类型', 'danger');
-    return;
+        showToast('无效的渠道类型', 'danger');
+        return;
     }
 
     // 收集配置数据
@@ -4385,49 +4386,210 @@ async function updateNotificationChannel() {
     let hasError = false;
 
     config.fields.forEach(field => {
-    const element = document.getElementById('edit_' + field.id);
-    const value = element.value.trim();
+        const element = document.getElementById('edit_' + field.id);
+        const value = element.value.trim();
 
-    if (field.required && !value) {
-        showToast(`请填写${field.label}`, 'warning');
-        hasError = true;
-        return;
-    }
+        if (field.required && !value) {
+            showToast(`请填写${field.label}`, 'warning');
+            hasError = true;
+            return;
+        }
 
-    if (value) {
-        configData[field.id] = value;
-    }
+        if (value) {
+            configData[field.id] = value;
+        }
     });
 
     if (hasError) return;
 
     try {
-    const response = await fetch(`${apiBase}/notification-channels/${channelId}`, {
-        method: 'PUT',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-        name: name,
-        config: JSON.stringify(configData),
-        enabled: enabled
-        })
+        const response = await fetch(`${apiBase}/notification-channels/${channelId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                config: JSON.stringify(configData),
+                enabled: enabled
+            })
+        });
+
+        if (response.ok) {
+            showToast('通知渠道更新成功', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editChannelModal'));
+            modal.hide();
+            loadNotificationChannels();
+        } else {
+            const error = await response.text();
+            showToast(`更新失败: ${error}`, 'danger');
+        }
+    } catch (error) {
+        console.error('更新通知渠道失败:', error);
+        showToast('更新通知渠道失败', 'danger');
+    }
+}
+
+// ================================
+// 【账号通知渠道绑定】相关功能
+// ================================
+
+// 加载绑定面板的账号列表
+async function loadNotifBindAccountList() {
+    try {
+        const response = await fetch(`${apiBase}/cookies`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) throw new Error('获取账号列表失败');
+        const accounts = await response.json();
+        const select = document.getElementById('notifBindAccountSelect');
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">🔍 请选择要配置通知的账号...</option>';
+        accounts.forEach(accountId => {
+            const opt = document.createElement('option');
+            opt.value = accountId;
+            opt.textContent = accountId;
+            if (accountId === currentValue) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('加载账号列表失败:', error);
+        showToast('加载账号列表失败', 'danger');
+    }
+}
+
+// 账号选择变更时
+async function onNotifBindAccountChange() {
+    const accountId = document.getElementById('notifBindAccountSelect').value;
+    const container = document.getElementById('notifChannelCheckboxes');
+    const saveBtn = document.getElementById('saveNotifBindingsBtn');
+
+    if (!accountId) {
+        container.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-arrow-up-circle fs-4 d-block mb-2"></i>请先选择账号</div>';
+        saveBtn.disabled = true;
+        return;
+    }
+
+    try {
+        // 并行获取所有渠道 + 当前账号绑定
+        const [channelsRes, bindingsRes] = await Promise.all([
+            fetch(`${apiBase}/notification-channels`, { headers: { 'Authorization': `Bearer ${authToken}` } }),
+            fetch(`${apiBase}/message-notifications/${encodeURIComponent(accountId)}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+        ]);
+
+        if (!channelsRes.ok) throw new Error('获取渠道失败');
+        const channels = await channelsRes.json();
+        const enabledChannels = channels.filter(c => c.enabled);
+
+        let currentBindings = [];
+        if (bindingsRes.ok) {
+            currentBindings = await bindingsRes.json();
+        }
+        const boundChannelIds = new Set(currentBindings.filter(b => b.enabled).map(b => b.channel_id));
+
+        if (enabledChannels.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>暂无已启用的通知渠道，请先到"通知渠道管理"页面添加渠道</div>';
+            saveBtn.disabled = true;
+            return;
+        }
+
+        // 渲染渠道复选框列表
+        let html = '<div class="list-group">';
+        enabledChannels.forEach(channel => {
+            const checked = boundChannelIds.has(channel.id) ? 'checked' : '';
+            // 解析渠道类型图标
+            let channelType = channel.type;
+            if (channelType === 'ding_talk') channelType = 'dingtalk';
+            if (channelType === 'lark') channelType = 'feishu';
+            const typeConfig = channelTypeConfigs[channelType];
+            const icon = typeConfig ? typeConfig.icon : 'bi-bell';
+            const color = typeConfig ? typeConfig.color : 'secondary';
+            const typeLabel = typeConfig ? typeConfig.title : channel.type;
+
+            html += `
+            <label class="list-group-item d-flex align-items-center gap-3" style="cursor:pointer;">
+                <input class="form-check-input flex-shrink-0" type="checkbox" value="${channel.id}" ${checked}
+                       id="notifBind_ch_${channel.id}" style="font-size:1.2em;">
+                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <i class="bi ${icon} text-${color}" style="font-size:1.3em;"></i>
+                    <div>
+                        <strong>${channel.name}</strong>
+                        <span class="badge bg-${color} ms-2">${typeLabel}</span>
+                    </div>
+                </div>
+                <span class="badge ${checked ? 'bg-success' : 'bg-secondary'}" id="notifBind_badge_${channel.id}">${checked ? '已绑定' : '未绑定'}</span>
+            </label>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+        // 实时更新 badge 状态
+        enabledChannels.forEach(channel => {
+            const cb = document.getElementById(`notifBind_ch_${channel.id}`);
+            if (cb) {
+                cb.addEventListener('change', () => {
+                    const badge = document.getElementById(`notifBind_badge_${channel.id}`);
+                    if (cb.checked) {
+                        badge.className = 'badge bg-success';
+                        badge.textContent = '已绑定';
+                    } else {
+                        badge.className = 'badge bg-secondary';
+                        badge.textContent = '未绑定';
+                    }
+                });
+            }
+        });
+
+        saveBtn.disabled = false;
+    } catch (error) {
+        console.error('加载渠道绑定状态失败:', error);
+        container.innerHTML = '<div class="alert alert-danger mb-0">加载失败，请重试</div>';
+        saveBtn.disabled = true;
+    }
+}
+
+// 保存通知绑定
+async function saveNotificationBindings() {
+    const accountId = document.getElementById('notifBindAccountSelect').value;
+    if (!accountId) {
+        showToast('请先选择账号', 'warning');
+        return;
+    }
+
+    // 收集所有选中的渠道 ID
+    const checkboxes = document.querySelectorAll('#notifChannelCheckboxes input[type="checkbox"]');
+    const channelIds = [];
+    checkboxes.forEach(cb => {
+        if (cb.checked) channelIds.push(parseInt(cb.value));
     });
 
-    if (response.ok) {
-        showToast('通知渠道更新成功', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editChannelModal'));
-        modal.hide();
-        loadNotificationChannels();
-    } else {
-        const error = await response.text();
-        showToast(`更新失败: ${error}`, 'danger');
-    }
+    try {
+        const response = await fetch(`${apiBase}/message-notifications/account/${encodeURIComponent(accountId)}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ channel_ids: channelIds })
+        });
+
+        if (response.ok) {
+            showToast(`账号 ${accountId} 通知绑定保存成功（${channelIds.length}个渠道）`, 'success');
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('更新通知渠道失败:', error);
-    showToast('更新通知渠道失败', 'danger');
+        console.error('保存通知绑定失败:', error);
+        showToast('保存通知绑定失败', 'danger');
     }
+}
+
+// 刷新通知绑定（入口函数）
+async function loadNotificationBindings() {
+    await loadNotifBindAccountList();
+    onNotifBindAccountChange();
 }
 
 // ================================
@@ -4726,35 +4888,35 @@ async function testNotificationTemplate(templateType) {
 // 加载消息通知配置
 async function loadMessageNotifications() {
     try {
-    // 获取所有账号
-    const accountsResponse = await fetch(`${apiBase}/cookies`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取所有账号
+        const accountsResponse = await fetch(`${apiBase}/cookies`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!accountsResponse.ok) {
+            throw new Error('获取账号列表失败');
         }
-    });
 
-    if (!accountsResponse.ok) {
-        throw new Error('获取账号列表失败');
-    }
+        const accounts = await accountsResponse.json();
 
-    const accounts = await accountsResponse.json();
+        // 获取所有通知配置
+        const notificationsResponse = await fetch(`${apiBase}/message-notifications`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    // 获取所有通知配置
-    const notificationsResponse = await fetch(`${apiBase}/message-notifications`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        let notifications = {};
+        if (notificationsResponse.ok) {
+            notifications = await notificationsResponse.json();
         }
-    });
 
-    let notifications = {};
-    if (notificationsResponse.ok) {
-        notifications = await notificationsResponse.json();
-    }
-
-    renderMessageNotifications(accounts, notifications);
+        renderMessageNotifications(accounts, notifications);
     } catch (error) {
-    console.error('加载消息通知配置失败:', error);
-    showToast('加载消息通知配置失败', 'danger');
+        console.error('加载消息通知配置失败:', error);
+        showToast('加载消息通知配置失败', 'danger');
     }
 }
 
@@ -4764,7 +4926,7 @@ function renderMessageNotifications(accounts, notifications) {
     tbody.innerHTML = '';
 
     if (accounts.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="4" class="text-center py-4 text-muted">
             <i class="bi bi-chat-dots fs-1 d-block mb-3"></i>
@@ -4773,27 +4935,27 @@ function renderMessageNotifications(accounts, notifications) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     accounts.forEach(accountId => {
-    const accountNotifications = notifications[accountId] || [];
-    const tr = document.createElement('tr');
+        const accountNotifications = notifications[accountId] || [];
+        const tr = document.createElement('tr');
 
-    let channelsList = '';
-    if (accountNotifications.length > 0) {
-        channelsList = accountNotifications.map(n =>
-        `<span class="badge bg-${n.enabled ? 'success' : 'secondary'} me-1">${n.channel_name}</span>`
-        ).join('');
-    } else {
-        channelsList = '<span class="text-muted">未配置</span>';
-    }
+        let channelsList = '';
+        if (accountNotifications.length > 0) {
+            channelsList = accountNotifications.map(n =>
+                `<span class="badge bg-${n.enabled ? 'success' : 'secondary'} me-1">${n.channel_name}</span>`
+            ).join('');
+        } else {
+            channelsList = '<span class="text-muted">未配置</span>';
+        }
 
-    const status = accountNotifications.some(n => n.enabled) ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
+        const status = accountNotifications.some(n => n.enabled) ?
+            '<span class="badge bg-success">启用</span>' :
+            '<span class="badge bg-secondary">禁用</span>';
 
-    tr.innerHTML = `
+        tr.innerHTML = `
         <td><strong class="text-primary">${accountId}</strong></td>
         <td>${channelsList}</td>
         <td>${status}</td>
@@ -4811,103 +4973,103 @@ function renderMessageNotifications(accounts, notifications) {
         </td>
     `;
 
-    tbody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
 // 配置账号通知
 async function configAccountNotification(accountId) {
     try {
-    // 获取所有通知渠道
-    const channelsResponse = await fetch(`${apiBase}/notification-channels`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取所有通知渠道
+        const channelsResponse = await fetch(`${apiBase}/notification-channels`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!channelsResponse.ok) {
+            throw new Error('获取通知渠道失败');
         }
-    });
 
-    if (!channelsResponse.ok) {
-        throw new Error('获取通知渠道失败');
-    }
+        const channels = await channelsResponse.json();
 
-    const channels = await channelsResponse.json();
-
-    if (channels.length === 0) {
-        showToast('请先添加通知渠道', 'warning');
-        return;
-    }
-
-    // 获取当前账号的通知配置
-    const notificationResponse = await fetch(`${apiBase}/message-notifications/${accountId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        if (channels.length === 0) {
+            showToast('请先添加通知渠道', 'warning');
+            return;
         }
-    });
 
-    let currentNotifications = [];
-    if (notificationResponse.ok) {
-        currentNotifications = await notificationResponse.json();
-    }
+        // 获取当前账号的通知配置
+        const notificationResponse = await fetch(`${apiBase}/message-notifications/${accountId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    // 填充表单
-    document.getElementById('configAccountId').value = accountId;
-    document.getElementById('displayAccountId').value = accountId;
-
-    // 填充通知渠道选项
-    const channelSelect = document.getElementById('notificationChannel');
-    channelSelect.innerHTML = '<option value="">请选择通知渠道</option>';
-
-    // 获取当前配置的第一个通知渠道（如果存在）
-    const currentNotification = currentNotifications.length > 0 ? currentNotifications[0] : null;
-
-    channels.forEach(channel => {
-        if (channel.enabled) {
-        const option = document.createElement('option');
-        option.value = channel.id;
-        option.textContent = `${channel.name} (${channel.config})`;
-        if (currentNotification && currentNotification.channel_id === channel.id) {
-            option.selected = true;
+        let currentNotifications = [];
+        if (notificationResponse.ok) {
+            currentNotifications = await notificationResponse.json();
         }
-        channelSelect.appendChild(option);
-        }
-    });
 
-    // 设置启用状态
-    document.getElementById('notificationEnabled').checked =
-        currentNotification ? currentNotification.enabled : true;
+        // 填充表单
+        document.getElementById('configAccountId').value = accountId;
+        document.getElementById('displayAccountId').value = accountId;
 
-    // 显示配置模态框
-    const modal = new bootstrap.Modal(document.getElementById('configNotificationModal'));
-    modal.show();
+        // 填充通知渠道选项
+        const channelSelect = document.getElementById('notificationChannel');
+        channelSelect.innerHTML = '<option value="">请选择通知渠道</option>';
+
+        // 获取当前配置的第一个通知渠道（如果存在）
+        const currentNotification = currentNotifications.length > 0 ? currentNotifications[0] : null;
+
+        channels.forEach(channel => {
+            if (channel.enabled) {
+                const option = document.createElement('option');
+                option.value = channel.id;
+                option.textContent = `${channel.name} (${channel.config})`;
+                if (currentNotification && currentNotification.channel_id === channel.id) {
+                    option.selected = true;
+                }
+                channelSelect.appendChild(option);
+            }
+        });
+
+        // 设置启用状态
+        document.getElementById('notificationEnabled').checked =
+            currentNotification ? currentNotification.enabled : true;
+
+        // 显示配置模态框
+        const modal = new bootstrap.Modal(document.getElementById('configNotificationModal'));
+        modal.show();
     } catch (error) {
-    console.error('配置账号通知失败:', error);
-    showToast('配置账号通知失败', 'danger');
+        console.error('配置账号通知失败:', error);
+        showToast('配置账号通知失败', 'danger');
     }
 }
 
 // 删除账号通知配置
 async function deleteAccountNotification(accountId) {
     if (!confirm(`确定要删除账号 ${accountId} 的通知配置吗？`)) {
-    return;
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/message-notifications/account/${accountId}`, {
-        method: 'DELETE',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/message-notifications/account/${accountId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        showToast('通知配置删除成功', 'success');
-        loadMessageNotifications();
-    } else {
-        const error = await response.text();
-        showToast(`删除失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('通知配置删除成功', 'success');
+            loadMessageNotifications();
+        } else {
+            const error = await response.text();
+            showToast(`删除失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('删除通知配置失败:', error);
-    showToast('删除通知配置失败', 'danger');
+        console.error('删除通知配置失败:', error);
+        showToast('删除通知配置失败', 'danger');
     }
 }
 
@@ -4918,35 +5080,35 @@ async function saveAccountNotification() {
     const enabled = document.getElementById('notificationEnabled').checked;
 
     if (!channelId) {
-    showToast('请选择通知渠道', 'warning');
-    return;
+        showToast('请选择通知渠道', 'warning');
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/message-notifications/${accountId}`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-        channel_id: parseInt(channelId),
-        enabled: enabled
-        })
-    });
+        const response = await fetch(`${apiBase}/message-notifications/${accountId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                channel_id: parseInt(channelId),
+                enabled: enabled
+            })
+        });
 
-    if (response.ok) {
-        showToast('通知配置保存成功', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('configNotificationModal'));
-        modal.hide();
-        loadMessageNotifications();
-    } else {
-        const error = await response.text();
-        showToast(`保存失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('通知配置保存成功', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('configNotificationModal'));
+            modal.hide();
+            loadMessageNotifications();
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('保存通知配置失败:', error);
-    showToast('保存通知配置失败', 'danger');
+        console.error('保存通知配置失败:', error);
+        showToast('保存通知配置失败', 'danger');
     }
 }
 
@@ -4957,22 +5119,22 @@ async function saveAccountNotification() {
 // 加载卡券列表
 async function loadCards() {
     try {
-    const response = await fetch(`${apiBase}/cards`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/cards`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const cards = await response.json();
-        renderCardsList(cards);
-        updateCardsStats(cards);
-    } else {
-        showToast('加载卡券列表失败', 'danger');
-    }
+        if (response.ok) {
+            const cards = await response.json();
+            renderCardsList(cards);
+            updateCardsStats(cards);
+        } else {
+            showToast('加载卡券列表失败', 'danger');
+        }
     } catch (error) {
-    console.error('加载卡券列表失败:', error);
-    showToast('加载卡券列表失败', 'danger');
+        console.error('加载卡券列表失败:', error);
+        showToast('加载卡券列表失败', 'danger');
     }
 }
 
@@ -4981,7 +5143,7 @@ function renderCardsList(cards) {
     const tbody = document.getElementById('cardsTableBody');
 
     if (cards.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="8" class="text-center py-4 text-muted">
             <i class="bi bi-credit-card fs-1 d-block mb-3"></i>
@@ -4990,68 +5152,68 @@ function renderCardsList(cards) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     tbody.innerHTML = '';
 
     cards.forEach(card => {
-    const tr = document.createElement('tr');
+        const tr = document.createElement('tr');
 
-    // 类型标签
-    let typeBadge = '';
-    switch(card.type) {
-        case 'api':
-        typeBadge = '<span class="badge bg-info">API接口</span>';
-        break;
-        case 'yifan_api':
-        typeBadge = '<span class="badge bg-purple">亦凡卡劵API</span>';
-        break;
-        case 'text':
-        typeBadge = '<span class="badge bg-success">固定文字</span>';
-        break;
-        case 'data':
-        typeBadge = '<span class="badge bg-warning">批量数据</span>';
-        break;
-        case 'image':
-        typeBadge = '<span class="badge bg-primary">图片</span>';
-        break;
-    }
-
-    // 状态标签
-    const statusBadge = card.enabled ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
-
-    // 数据量显示
-    let dataCount = '-';
-    if (card.type === 'data' && card.data_content) {
-        const lines = card.data_content.split('\n').filter(line => line.trim());
-        dataCount = lines.length;
-    } else if (card.type === 'api') {
-        dataCount = '∞';
-    } else if (card.type === 'text') {
-        dataCount = '1';
-    } else if (card.type === 'image') {
-        dataCount = '1';
-    }
-
-    // 延时时间显示
-    const delayDisplay = card.delay_seconds > 0 ?
-        `${card.delay_seconds}秒` :
-        '<span class="text-muted">立即</span>';
-
-    // 规格信息显示
-    let specDisplay = '<span class="text-muted">普通卡券</span>';
-    if (card.is_multi_spec && card.spec_name && card.spec_value) {
-        let specInfo = `${card.spec_name}: ${card.spec_value}`;
-        if (card.spec_name_2 && card.spec_value_2) {
-            specInfo += `<br>${card.spec_name_2}: ${card.spec_value_2}`;
+        // 类型标签
+        let typeBadge = '';
+        switch (card.type) {
+            case 'api':
+                typeBadge = '<span class="badge bg-info">API接口</span>';
+                break;
+            case 'yifan_api':
+                typeBadge = '<span class="badge bg-purple">亦凡卡劵API</span>';
+                break;
+            case 'text':
+                typeBadge = '<span class="badge bg-success">固定文字</span>';
+                break;
+            case 'data':
+                typeBadge = '<span class="badge bg-warning">批量数据</span>';
+                break;
+            case 'image':
+                typeBadge = '<span class="badge bg-primary">图片</span>';
+                break;
         }
-        specDisplay = `<span class="badge bg-primary">${specInfo}</span>`;
-    }
 
-    tr.innerHTML = `
+        // 状态标签
+        const statusBadge = card.enabled ?
+            '<span class="badge bg-success">启用</span>' :
+            '<span class="badge bg-secondary">禁用</span>';
+
+        // 数据量显示
+        let dataCount = '-';
+        if (card.type === 'data' && card.data_content) {
+            const lines = card.data_content.split('\n').filter(line => line.trim());
+            dataCount = lines.length;
+        } else if (card.type === 'api') {
+            dataCount = '∞';
+        } else if (card.type === 'text') {
+            dataCount = '1';
+        } else if (card.type === 'image') {
+            dataCount = '1';
+        }
+
+        // 延时时间显示
+        const delayDisplay = card.delay_seconds > 0 ?
+            `${card.delay_seconds}秒` :
+            '<span class="text-muted">立即</span>';
+
+        // 规格信息显示
+        let specDisplay = '<span class="text-muted">普通卡券</span>';
+        if (card.is_multi_spec && card.spec_name && card.spec_value) {
+            let specInfo = `${card.spec_name}: ${card.spec_value}`;
+            if (card.spec_name_2 && card.spec_value_2) {
+                specInfo += `<br>${card.spec_name_2}: ${card.spec_value_2}`;
+            }
+            specDisplay = `<span class="badge bg-primary">${specInfo}</span>`;
+        }
+
+        tr.innerHTML = `
         <td>
         <div class="fw-bold">${card.name}</div>
         ${card.description ? `<small class="text-muted">${card.description}</small>` : ''}
@@ -5079,7 +5241,7 @@ function renderCardsList(cards) {
         </td>
     `;
 
-    tbody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
@@ -5138,7 +5300,7 @@ function toggleCardTypeFields() {
 function toggleApiParamsHelp() {
     const apiMethodElement = document.getElementById('apiMethod');
     if (!apiMethodElement) return;
-    
+
     const apiMethod = apiMethodElement.value;
     const postParamsHelp = document.getElementById('postParamsHelp');
 
@@ -5167,7 +5329,7 @@ function initParamClickHandlers(textareaId, containerId) {
 
     // 添加新的点击事件监听器
     paramNames.forEach(paramName => {
-        paramName.addEventListener('click', function() {
+        paramName.addEventListener('click', function () {
             handleParamClick(this, textarea);
         });
     });
@@ -5226,7 +5388,7 @@ function toggleMultiSpecFields() {
 function initCardImageFileSelector() {
     const fileInput = document.getElementById('cardImageFile');
     if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 // 验证文件类型
@@ -5259,7 +5421,7 @@ function validateCardImageDimensions(file, inputElement) {
     const img = new Image();
     const url = URL.createObjectURL(file);
 
-    img.onload = function() {
+    img.onload = function () {
         const width = this.naturalWidth;
         const height = this.naturalHeight;
 
@@ -5296,7 +5458,7 @@ function validateCardImageDimensions(file, inputElement) {
         }
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
         URL.revokeObjectURL(url);
         showToast('❌ 无法读取图片文件，请选择有效的图片', 'warning');
         inputElement.value = '';
@@ -5309,7 +5471,7 @@ function validateCardImageDimensions(file, inputElement) {
 // 显示卡券图片预览
 function showCardImagePreview(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const previewContainer = document.getElementById('cardImagePreview');
         const previewImg = document.getElementById('cardPreviewImg');
 
@@ -5331,7 +5493,7 @@ function hideCardImagePreview() {
 function initEditCardImageFileSelector() {
     const fileInput = document.getElementById('editCardImageFile');
     if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 // 验证文件类型
@@ -5364,7 +5526,7 @@ function validateEditCardImageDimensions(file, inputElement) {
     const img = new Image();
     const url = URL.createObjectURL(file);
 
-    img.onload = function() {
+    img.onload = function () {
         const width = this.naturalWidth;
         const height = this.naturalHeight;
 
@@ -5389,7 +5551,7 @@ function validateEditCardImageDimensions(file, inputElement) {
         }
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
         URL.revokeObjectURL(url);
         showToast('❌ 无法读取图片文件，请选择有效的图片', 'warning');
         inputElement.value = '';
@@ -5402,7 +5564,7 @@ function validateEditCardImageDimensions(file, inputElement) {
 // 显示编辑卡券图片预览
 function showEditCardImagePreview(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const previewImg = document.getElementById('editCardPreviewImg');
         const previewContainer = document.getElementById('editCardImagePreview');
 
@@ -5428,13 +5590,13 @@ function toggleEditMultiSpecFields() {
     const fieldsDiv = document.getElementById('editMultiSpecFields');
 
     if (!checkbox) {
-    console.error('编辑多规格开关元素未找到');
-    return;
+        console.error('编辑多规格开关元素未找到');
+        return;
     }
 
     if (!fieldsDiv) {
-    console.error('编辑多规格字段容器未找到');
-    return;
+        console.error('编辑多规格字段容器未找到');
+        return;
     }
 
     const isMultiSpec = checkbox.checked;
@@ -5452,241 +5614,241 @@ function toggleEditMultiSpecFields() {
 // 清空添加卡券表单
 function clearAddCardForm() {
     try {
-    // 安全地清空表单字段
-    const setElementValue = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) {
-        if (element.type === 'checkbox') {
-            element.checked = value;
-        } else {
-            element.value = value;
-        }
-        } else {
-        console.warn(`Element with id '${id}' not found`);
-        }
-    };
+        // 安全地清空表单字段
+        const setElementValue = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value;
+                }
+            } else {
+                console.warn(`Element with id '${id}' not found`);
+            }
+        };
 
-    const setElementDisplay = (id, display) => {
-        const element = document.getElementById(id);
-        if (element) {
-        element.style.display = display;
-        } else {
-        console.warn(`Element with id '${id}' not found`);
-        }
-    };
+        const setElementDisplay = (id, display) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = display;
+            } else {
+                console.warn(`Element with id '${id}' not found`);
+            }
+        };
 
-    // 清空基本字段
-    setElementValue('cardName', '');
-    setElementValue('cardType', 'text');
-    setElementValue('cardDescription', '');
-    setElementValue('cardDelaySeconds', '0');
-    setElementValue('isMultiSpec', false);
-    setElementValue('specName', '');
-    setElementValue('specValue', '');
-    setElementValue('specName2', '');
-    setElementValue('specValue2', '');
+        // 清空基本字段
+        setElementValue('cardName', '');
+        setElementValue('cardType', 'text');
+        setElementValue('cardDescription', '');
+        setElementValue('cardDelaySeconds', '0');
+        setElementValue('isMultiSpec', false);
+        setElementValue('specName', '');
+        setElementValue('specValue', '');
+        setElementValue('specName2', '');
+        setElementValue('specValue2', '');
 
-    // 隐藏多规格字段
-    setElementDisplay('multiSpecFields', 'none');
+        // 隐藏多规格字段
+        setElementDisplay('multiSpecFields', 'none');
 
-    // 清空类型相关字段
-    setElementValue('textContent', '');
-    setElementValue('dataContent', '');
-    setElementValue('apiUrl', '');
-    setElementValue('apiMethod', 'GET');
-    setElementValue('apiHeaders', '');
-    setElementValue('apiParams', '');
-    setElementValue('apiTimeout', '10');
-    setElementValue('yifanUserId', '');
-    setElementValue('yifanUserKey', '');
-    setElementValue('yifanGoodsId', '');
-    setElementValue('yifanCallbackUrl', '');
-    setElementValue('yifanRequireAccount', false);
+        // 清空类型相关字段
+        setElementValue('textContent', '');
+        setElementValue('dataContent', '');
+        setElementValue('apiUrl', '');
+        setElementValue('apiMethod', 'GET');
+        setElementValue('apiHeaders', '');
+        setElementValue('apiParams', '');
+        setElementValue('apiTimeout', '10');
+        setElementValue('yifanUserId', '');
+        setElementValue('yifanUserKey', '');
+        setElementValue('yifanGoodsId', '');
+        setElementValue('yifanCallbackUrl', '');
+        setElementValue('yifanRequireAccount', false);
 
-    // 重置字段显示
-    toggleCardTypeFields();
+        // 重置字段显示
+        toggleCardTypeFields();
     } catch (error) {
-    console.error('清空表单时出错:', error);
+        console.error('清空表单时出错:', error);
     }
 }
 
 // 保存卡券
 async function saveCard() {
     try {
-    const cardType = document.getElementById('cardType').value;
-    const cardName = document.getElementById('cardName').value;
+        const cardType = document.getElementById('cardType').value;
+        const cardName = document.getElementById('cardName').value;
 
-    if (!cardType || !cardName) {
-        showToast('请填写必填字段', 'warning');
-        return;
-    }
-
-    // 检查多规格设置
-    const isMultiSpec = document.getElementById('isMultiSpec').checked;
-    const specName = document.getElementById('specName').value;
-    const specValue = document.getElementById('specValue').value;
-    const specName2 = document.getElementById('specName2').value;
-    const specValue2 = document.getElementById('specValue2').value;
-
-    // 调试日志
-    console.log('[DEBUG] 创建卡券 - isMultiSpec:', isMultiSpec);
-    console.log('[DEBUG] 创建卡券 - specName:', specName);
-    console.log('[DEBUG] 创建卡券 - specValue:', specValue);
-    console.log('[DEBUG] 创建卡券 - specName2:', specName2);
-    console.log('[DEBUG] 创建卡券 - specValue2:', specValue2);
-
-    // 验证多规格字段
-    if (isMultiSpec && (!specName || !specValue)) {
-        showToast('多规格卡券必须填写规格1名称和规格1值', 'warning');
-        return;
-    }
-
-    const cardData = {
-        name: cardName,
-        type: cardType,
-        description: document.getElementById('cardDescription').value,
-        delay_seconds: parseInt(document.getElementById('cardDelaySeconds').value) || 0,
-        enabled: true,
-        is_multi_spec: isMultiSpec,
-        spec_name: isMultiSpec ? specName : null,
-        spec_value: isMultiSpec ? specValue : null,
-        spec_name_2: isMultiSpec ? specName2 : null,
-        spec_value_2: isMultiSpec ? specValue2 : null
-    };
-
-    // 调试日志 - 显示完整的 cardData
-    console.log('[DEBUG] 创建卡券 - 发送的 cardData:', JSON.stringify(cardData, null, 2));
-
-    // 根据类型添加特定配置
-    switch(cardType) {
-        case 'api':
-        // 验证和解析JSON字段
-        let headers = '{}';
-        let params = '{}';
-
-        try {
-            const headersInput = document.getElementById('apiHeaders').value.trim();
-            if (headersInput) {
-            JSON.parse(headersInput); // 验证JSON格式
-            headers = headersInput;
-            }
-        } catch (e) {
-            showToast('请求头格式错误，请输入有效的JSON', 'warning');
+        if (!cardType || !cardName) {
+            showToast('请填写必填字段', 'warning');
             return;
         }
 
-        try {
-            const paramsInput = document.getElementById('apiParams').value.trim();
-            if (paramsInput) {
-            JSON.parse(paramsInput); // 验证JSON格式
-            params = paramsInput;
-            }
-        } catch (e) {
-            showToast('请求参数格式错误，请输入有效的JSON', 'warning');
+        // 检查多规格设置
+        const isMultiSpec = document.getElementById('isMultiSpec').checked;
+        const specName = document.getElementById('specName').value;
+        const specValue = document.getElementById('specValue').value;
+        const specName2 = document.getElementById('specName2').value;
+        const specValue2 = document.getElementById('specValue2').value;
+
+        // 调试日志
+        console.log('[DEBUG] 创建卡券 - isMultiSpec:', isMultiSpec);
+        console.log('[DEBUG] 创建卡券 - specName:', specName);
+        console.log('[DEBUG] 创建卡券 - specValue:', specValue);
+        console.log('[DEBUG] 创建卡券 - specName2:', specName2);
+        console.log('[DEBUG] 创建卡券 - specValue2:', specValue2);
+
+        // 验证多规格字段
+        if (isMultiSpec && (!specName || !specValue)) {
+            showToast('多规格卡券必须填写规格1名称和规格1值', 'warning');
             return;
         }
 
-        const responseTemplate = document.getElementById('apiResponseTemplate').value.trim();
-        cardData.api_config = {
-            url: document.getElementById('apiUrl').value,
-            method: document.getElementById('apiMethod').value,
-            timeout: parseInt(document.getElementById('apiTimeout').value),
-            headers: headers,
-            params: params,
-            response_template: responseTemplate
+        const cardData = {
+            name: cardName,
+            type: cardType,
+            description: document.getElementById('cardDescription').value,
+            delay_seconds: parseInt(document.getElementById('cardDelaySeconds').value) || 0,
+            enabled: true,
+            is_multi_spec: isMultiSpec,
+            spec_name: isMultiSpec ? specName : null,
+            spec_value: isMultiSpec ? specValue : null,
+            spec_name_2: isMultiSpec ? specName2 : null,
+            spec_value_2: isMultiSpec ? specValue2 : null
         };
-        break;
-        case 'yifan_api':
-        // 验证必填字段
-        const yifanUserId = document.getElementById('yifanUserId').value.trim();
-        const yifanUserKey = document.getElementById('yifanUserKey').value.trim();
-        const yifanGoodsId = document.getElementById('yifanGoodsId').value.trim();
 
-        if (!yifanUserId || !yifanUserKey || !yifanGoodsId) {
-            showToast('请填写商户ID、商户KEY和商品ID', 'warning');
-            return;
+        // 调试日志 - 显示完整的 cardData
+        console.log('[DEBUG] 创建卡券 - 发送的 cardData:', JSON.stringify(cardData, null, 2));
+
+        // 根据类型添加特定配置
+        switch (cardType) {
+            case 'api':
+                // 验证和解析JSON字段
+                let headers = '{}';
+                let params = '{}';
+
+                try {
+                    const headersInput = document.getElementById('apiHeaders').value.trim();
+                    if (headersInput) {
+                        JSON.parse(headersInput); // 验证JSON格式
+                        headers = headersInput;
+                    }
+                } catch (e) {
+                    showToast('请求头格式错误，请输入有效的JSON', 'warning');
+                    return;
+                }
+
+                try {
+                    const paramsInput = document.getElementById('apiParams').value.trim();
+                    if (paramsInput) {
+                        JSON.parse(paramsInput); // 验证JSON格式
+                        params = paramsInput;
+                    }
+                } catch (e) {
+                    showToast('请求参数格式错误，请输入有效的JSON', 'warning');
+                    return;
+                }
+
+                const responseTemplate = document.getElementById('apiResponseTemplate').value.trim();
+                cardData.api_config = {
+                    url: document.getElementById('apiUrl').value,
+                    method: document.getElementById('apiMethod').value,
+                    timeout: parseInt(document.getElementById('apiTimeout').value),
+                    headers: headers,
+                    params: params,
+                    response_template: responseTemplate
+                };
+                break;
+            case 'yifan_api':
+                // 验证必填字段
+                const yifanUserId = document.getElementById('yifanUserId').value.trim();
+                const yifanUserKey = document.getElementById('yifanUserKey').value.trim();
+                const yifanGoodsId = document.getElementById('yifanGoodsId').value.trim();
+
+                if (!yifanUserId || !yifanUserKey || !yifanGoodsId) {
+                    showToast('请填写商户ID、商户KEY和商品ID', 'warning');
+                    return;
+                }
+
+                // 亦凡API配置也存储在api_config字段中
+                cardData.api_config = {
+                    user_id: yifanUserId,
+                    user_key: yifanUserKey,
+                    goods_id: yifanGoodsId,
+                    callback_url: document.getElementById('yifanCallbackUrl').value.trim(),
+                    require_account: document.getElementById('yifanRequireAccount').checked
+                };
+                break;
+            case 'text':
+                cardData.text_content = document.getElementById('textContent').value;
+                break;
+            case 'data':
+                cardData.data_content = document.getElementById('dataContent').value;
+                break;
+            case 'image':
+                // 处理图片上传
+                const imageFile = document.getElementById('cardImageFile').files[0];
+                if (!imageFile) {
+                    showToast('请选择图片文件', 'warning');
+                    return;
+                }
+
+                // 上传图片
+                const formData = new FormData();
+                formData.append('image', imageFile);
+
+                const uploadResponse = await fetch(`${apiBase}/upload-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json();
+                    showToast(`图片上传失败: ${errorData.detail || '未知错误'}`, 'danger');
+                    return;
+                }
+
+                const uploadResult = await uploadResponse.json();
+                cardData.image_url = uploadResult.image_url;
+                break;
         }
 
-        // 亦凡API配置也存储在api_config字段中
-        cardData.api_config = {
-            user_id: yifanUserId,
-            user_key: yifanUserKey,
-            goods_id: yifanGoodsId,
-            callback_url: document.getElementById('yifanCallbackUrl').value.trim(),
-            require_account: document.getElementById('yifanRequireAccount').checked
-        };
-        break;
-        case 'text':
-        cardData.text_content = document.getElementById('textContent').value;
-        break;
-        case 'data':
-        cardData.data_content = document.getElementById('dataContent').value;
-        break;
-        case 'image':
-        // 处理图片上传
-        const imageFile = document.getElementById('cardImageFile').files[0];
-        if (!imageFile) {
-            showToast('请选择图片文件', 'warning');
-            return;
-        }
-
-        // 上传图片
-        const formData = new FormData();
-        formData.append('image', imageFile);
-
-        const uploadResponse = await fetch(`${apiBase}/upload-image`, {
+        const response = await fetch(`${apiBase}/cards`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
             },
-            body: formData
+            body: JSON.stringify(cardData)
         });
 
-        if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            showToast(`图片上传失败: ${errorData.detail || '未知错误'}`, 'danger');
-            return;
+        if (response.ok) {
+            showToast('卡券保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addCardModal')).hide();
+            // 清空表单
+            clearAddCardForm();
+            loadCards();
+        } else {
+            let errorMessage = '保存失败';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.detail || errorMessage;
+            } catch (e) {
+                // 如果不是JSON格式，尝试获取文本
+                try {
+                    const errorText = await response.text();
+                    errorMessage = errorText || errorMessage;
+                } catch (e2) {
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+            }
+            showToast(`保存失败: ${errorMessage}`, 'danger');
         }
-
-        const uploadResult = await uploadResponse.json();
-        cardData.image_url = uploadResult.image_url;
-        break;
-    }
-
-    const response = await fetch(`${apiBase}/cards`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(cardData)
-    });
-
-    if (response.ok) {
-        showToast('卡券保存成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('addCardModal')).hide();
-        // 清空表单
-        clearAddCardForm();
-        loadCards();
-    } else {
-        let errorMessage = '保存失败';
-        try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorData.detail || errorMessage;
-        } catch (e) {
-        // 如果不是JSON格式，尝试获取文本
-        try {
-            const errorText = await response.text();
-            errorMessage = errorText || errorMessage;
-        } catch (e2) {
-            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        }
-        }
-        showToast(`保存失败: ${errorMessage}`, 'danger');
-    }
     } catch (error) {
-    console.error('保存卡券失败:', error);
-    showToast(`网络错误: ${error.message}`, 'danger');
+        console.error('保存卡券失败:', error);
+        showToast(`网络错误: ${error.message}`, 'danger');
     }
 }
 // ================================
@@ -5696,25 +5858,25 @@ async function saveCard() {
 // 加载发货规则列表
 async function loadDeliveryRules() {
     try {
-    const response = await fetch(`${apiBase}/delivery-rules`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/delivery-rules`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const rules = await response.json();
+            renderDeliveryRulesList(rules);
+            updateDeliveryStats(rules);
+
+            // 同时加载卡券列表用于下拉选择
+            loadCardsForSelect();
+        } else {
+            showToast('加载发货规则失败', 'danger');
         }
-    });
-
-    if (response.ok) {
-        const rules = await response.json();
-        renderDeliveryRulesList(rules);
-        updateDeliveryStats(rules);
-
-        // 同时加载卡券列表用于下拉选择
-        loadCardsForSelect();
-    } else {
-        showToast('加载发货规则失败', 'danger');
-    }
     } catch (error) {
-    console.error('加载发货规则失败:', error);
-    showToast('加载发货规则失败', 'danger');
+        console.error('加载发货规则失败:', error);
+        showToast('加载发货规则失败', 'danger');
     }
 }
 
@@ -5723,7 +5885,7 @@ function renderDeliveryRulesList(rules) {
     const tbody = document.getElementById('deliveryRulesTableBody');
 
     if (rules.length === 0) {
-    tbody.innerHTML = `
+        tbody.innerHTML = `
         <tr>
         <td colspan="7" class="text-center py-4 text-muted">
             <i class="bi bi-truck fs-1 d-block mb-3"></i>
@@ -5732,42 +5894,42 @@ function renderDeliveryRulesList(rules) {
         </td>
         </tr>
     `;
-    return;
+        return;
     }
 
     tbody.innerHTML = '';
 
     rules.forEach(rule => {
-    const tr = document.createElement('tr');
+        const tr = document.createElement('tr');
 
-    // 状态标签
-    const statusBadge = rule.enabled ?
-        '<span class="badge bg-success">启用</span>' :
-        '<span class="badge bg-secondary">禁用</span>';
+        // 状态标签
+        const statusBadge = rule.enabled ?
+            '<span class="badge bg-success">启用</span>' :
+            '<span class="badge bg-secondary">禁用</span>';
 
-    // 卡券类型标签
-    let cardTypeBadge = '<span class="badge bg-secondary">未知</span>';
-    if (rule.card_type) {
-        switch(rule.card_type) {
-        case 'api':
-            cardTypeBadge = '<span class="badge bg-info">API接口</span>';
-            break;
-        case 'yifan_api':
-            cardTypeBadge = '<span class="badge bg-purple">亦凡卡劵API</span>';
-            break;
-        case 'text':
-            cardTypeBadge = '<span class="badge bg-success">固定文字</span>';
-            break;
-        case 'data':
-            cardTypeBadge = '<span class="badge bg-warning">批量数据</span>';
-            break;
-        case 'image':
-            cardTypeBadge = '<span class="badge bg-primary">图片</span>';
-            break;
+        // 卡券类型标签
+        let cardTypeBadge = '<span class="badge bg-secondary">未知</span>';
+        if (rule.card_type) {
+            switch (rule.card_type) {
+                case 'api':
+                    cardTypeBadge = '<span class="badge bg-info">API接口</span>';
+                    break;
+                case 'yifan_api':
+                    cardTypeBadge = '<span class="badge bg-purple">亦凡卡劵API</span>';
+                    break;
+                case 'text':
+                    cardTypeBadge = '<span class="badge bg-success">固定文字</span>';
+                    break;
+                case 'data':
+                    cardTypeBadge = '<span class="badge bg-warning">批量数据</span>';
+                    break;
+                case 'image':
+                    cardTypeBadge = '<span class="badge bg-primary">图片</span>';
+                    break;
+            }
         }
-    }
 
-    tr.innerHTML = `
+        tr.innerHTML = `
         <td>
         <div class="fw-bold">${rule.keyword}</div>
         ${rule.description ? `<small class="text-muted">${rule.description}</small>` : ''}
@@ -5776,8 +5938,8 @@ function renderDeliveryRulesList(rules) {
         <div>
             <span class="badge bg-primary">${rule.card_name || '未知卡券'}</span>
             ${rule.is_multi_spec && rule.spec_name && rule.spec_value ?
-            `<br><small class="text-muted mt-1 d-block"><i class="bi bi-tags"></i> ${rule.spec_name}: ${rule.spec_value}${rule.spec_name_2 && rule.spec_value_2 ? `<br><i class="bi bi-tags"></i> ${rule.spec_name_2}: ${rule.spec_value_2}` : ''}</small>` :
-            ''}
+                `<br><small class="text-muted mt-1 d-block"><i class="bi bi-tags"></i> ${rule.spec_name}: ${rule.spec_value}${rule.spec_name_2 && rule.spec_value_2 ? `<br><i class="bi bi-tags"></i> ${rule.spec_name_2}: ${rule.spec_value_2}` : ''}</small>` :
+                ''}
         </div>
         </td>
         <td>${cardTypeBadge}</td>
@@ -5802,7 +5964,7 @@ function renderDeliveryRulesList(rules) {
         </td>
     `;
 
-    tbody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 }
 
@@ -5888,221 +6050,221 @@ async function loadItemsForRuleSelect(containerId, selectedIds = []) {
 // 加载卡券列表用于下拉选择
 async function loadCardsForSelect() {
     try {
-    const response = await fetch(`${apiBase}/cards`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const cards = await response.json();
-        const select = document.getElementById('selectedCard');
-
-        // 清空现有选项
-        select.innerHTML = '<option value="">请选择卡券</option>';
-
-        cards.forEach(card => {
-        if (card.enabled) { // 只显示启用的卡券
-            const option = document.createElement('option');
-            option.value = card.id;
-
-            // 构建显示文本
-            let displayText = card.name;
-
-            // 添加类型信息
-            let typeText;
-            switch(card.type) {
-                case 'api':
-                    typeText = 'API';
-                    break;
-                case 'text':
-                    typeText = '固定文字';
-                    break;
-                case 'data':
-                    typeText = '批量数据';
-                    break;
-                case 'image':
-                    typeText = '图片';
-                    break;
-                default:
-                    typeText = '未知类型';
+        const response = await fetch(`${apiBase}/cards`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
             }
-            displayText += ` (${typeText})`;
-
-            // 添加规格信息
-            if (card.is_multi_spec && card.spec_name && card.spec_value) {
-            let specInfo = `${card.spec_name}:${card.spec_value}`;
-            if (card.spec_name_2 && card.spec_value_2) {
-                specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
-            }
-            displayText += ` [${specInfo}]`;
-            }
-
-            option.textContent = displayText;
-            select.appendChild(option);
-        }
         });
-    }
+
+        if (response.ok) {
+            const cards = await response.json();
+            const select = document.getElementById('selectedCard');
+
+            // 清空现有选项
+            select.innerHTML = '<option value="">请选择卡券</option>';
+
+            cards.forEach(card => {
+                if (card.enabled) { // 只显示启用的卡券
+                    const option = document.createElement('option');
+                    option.value = card.id;
+
+                    // 构建显示文本
+                    let displayText = card.name;
+
+                    // 添加类型信息
+                    let typeText;
+                    switch (card.type) {
+                        case 'api':
+                            typeText = 'API';
+                            break;
+                        case 'text':
+                            typeText = '固定文字';
+                            break;
+                        case 'data':
+                            typeText = '批量数据';
+                            break;
+                        case 'image':
+                            typeText = '图片';
+                            break;
+                        default:
+                            typeText = '未知类型';
+                    }
+                    displayText += ` (${typeText})`;
+
+                    // 添加规格信息
+                    if (card.is_multi_spec && card.spec_name && card.spec_value) {
+                        let specInfo = `${card.spec_name}:${card.spec_value}`;
+                        if (card.spec_name_2 && card.spec_value_2) {
+                            specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
+                        }
+                        displayText += ` [${specInfo}]`;
+                    }
+
+                    option.textContent = displayText;
+                    select.appendChild(option);
+                }
+            });
+        }
     } catch (error) {
-    console.error('加载卡券选项失败:', error);
+        console.error('加载卡券选项失败:', error);
     }
 }
 
 // 保存发货规则
 async function saveDeliveryRule() {
     try {
-    const keyword = document.getElementById('productKeyword').value;
-    const cardId = document.getElementById('selectedCard').value;
-    const deliveryCount = document.getElementById('deliveryCount').value || 1;
-    const enabled = document.getElementById('ruleEnabled').checked;
-    const description = document.getElementById('ruleDescription').value;
+        const keyword = document.getElementById('productKeyword').value;
+        const cardId = document.getElementById('selectedCard').value;
+        const deliveryCount = document.getElementById('deliveryCount').value || 1;
+        const enabled = document.getElementById('ruleEnabled').checked;
+        const description = document.getElementById('ruleDescription').value;
 
-    // 收集选中的商品ID
-    const checkedItems = document.querySelectorAll('#ruleItemsContainer .rule-item-check:checked');
-    const itemIds = Array.from(checkedItems).map(cb => cb.value);
+        // 收集选中的商品ID
+        const checkedItems = document.querySelectorAll('#ruleItemsContainer .rule-item-check:checked');
+        const itemIds = Array.from(checkedItems).map(cb => cb.value);
 
-    if (!cardId) {
-        showToast('请选择卡券', 'warning');
-        return;
-    }
-    if (itemIds.length === 0 && !keyword) {
-        showToast('请至少选择商品或填写关键字', 'warning');
-        return;
-    }
+        if (!cardId) {
+            showToast('请选择卡券', 'warning');
+            return;
+        }
+        if (itemIds.length === 0 && !keyword) {
+            showToast('请至少选择商品或填写关键字', 'warning');
+            return;
+        }
 
-    const ruleData = {
-        keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
-        card_id: parseInt(cardId),
-        delivery_count: parseInt(deliveryCount),
-        enabled: enabled,
-        description: description,
-        item_ids: JSON.stringify(itemIds)
-    };
+        const ruleData = {
+            keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
+            card_id: parseInt(cardId),
+            delivery_count: parseInt(deliveryCount),
+            enabled: enabled,
+            description: description,
+            item_ids: JSON.stringify(itemIds)
+        };
 
-    const response = await fetch(`${apiBase}/delivery-rules`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(ruleData)
-    });
+        const response = await fetch(`${apiBase}/delivery-rules`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ruleData)
+        });
 
-    if (response.ok) {
-        showToast('发货规则保存成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('addDeliveryRuleModal')).hide();
-        loadDeliveryRules();
-    } else {
-        const error = await response.text();
-        showToast(`保存失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('发货规则保存成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addDeliveryRuleModal')).hide();
+            loadDeliveryRules();
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('保存发货规则失败:', error);
-    showToast('保存发货规则失败', 'danger');
+        console.error('保存发货规则失败:', error);
+        showToast('保存发货规则失败', 'danger');
     }
 }
 
 // 编辑卡券
 async function editCard(cardId) {
     try {
-    // 获取卡券详情
-    const response = await fetch(`${apiBase}/cards/${cardId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        // 获取卡券详情
+        const response = await fetch(`${apiBase}/cards/${cardId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const card = await response.json();
+        if (response.ok) {
+            const card = await response.json();
 
-        // 填充编辑表单
-        document.getElementById('editCardId').value = card.id;
-        document.getElementById('editCardName').value = card.name;
-        document.getElementById('editCardType').value = card.type;
-        document.getElementById('editCardDescription').value = card.description || '';
-        document.getElementById('editCardDelaySeconds').value = card.delay_seconds || 0;
-        document.getElementById('editCardEnabled').checked = card.enabled;
+            // 填充编辑表单
+            document.getElementById('editCardId').value = card.id;
+            document.getElementById('editCardName').value = card.name;
+            document.getElementById('editCardType').value = card.type;
+            document.getElementById('editCardDescription').value = card.description || '';
+            document.getElementById('editCardDelaySeconds').value = card.delay_seconds || 0;
+            document.getElementById('editCardEnabled').checked = card.enabled;
 
-        // 填充多规格字段
-        const isMultiSpec = card.is_multi_spec || false;
-        document.getElementById('editIsMultiSpec').checked = isMultiSpec;
-        document.getElementById('editSpecName').value = card.spec_name || '';
-        document.getElementById('editSpecValue').value = card.spec_value || '';
-        document.getElementById('editSpecName2').value = card.spec_name_2 || '';
-        document.getElementById('editSpecValue2').value = card.spec_value_2 || '';
+            // 填充多规格字段
+            const isMultiSpec = card.is_multi_spec || false;
+            document.getElementById('editIsMultiSpec').checked = isMultiSpec;
+            document.getElementById('editSpecName').value = card.spec_name || '';
+            document.getElementById('editSpecValue').value = card.spec_value || '';
+            document.getElementById('editSpecName2').value = card.spec_name_2 || '';
+            document.getElementById('editSpecValue2').value = card.spec_value_2 || '';
 
-        // 添加调试日志
-        console.log('编辑卡券 - 多规格状态:', isMultiSpec);
-        console.log('编辑卡券 - 规格1名称:', card.spec_name);
-        console.log('编辑卡券 - 规格1值:', card.spec_value);
-        console.log('编辑卡券 - 规格2名称:', card.spec_name_2);
-        console.log('编辑卡券 - 规格2值:', card.spec_value_2);
+            // 添加调试日志
+            console.log('编辑卡券 - 多规格状态:', isMultiSpec);
+            console.log('编辑卡券 - 规格1名称:', card.spec_name);
+            console.log('编辑卡券 - 规格1值:', card.spec_value);
+            console.log('编辑卡券 - 规格2名称:', card.spec_name_2);
+            console.log('编辑卡券 - 规格2值:', card.spec_value_2);
 
-        // 根据类型填充特定字段
-        if (card.type === 'api' && card.api_config) {
-        document.getElementById('editApiUrl').value = card.api_config.url || '';
-        document.getElementById('editApiMethod').value = card.api_config.method || 'GET';
-        document.getElementById('editApiTimeout').value = card.api_config.timeout || 10;
-        document.getElementById('editApiHeaders').value = card.api_config.headers || '{}';
-        document.getElementById('editApiParams').value = card.api_config.params || '{}';
-        document.getElementById('editApiResponseTemplate').value = card.api_config.response_template || '';
-        } else if (card.type === 'yifan_api' && card.api_config) {
-        document.getElementById('editYifanUserId').value = card.api_config.user_id || '';
-        document.getElementById('editYifanUserKey').value = card.api_config.user_key || '';
-        document.getElementById('editYifanGoodsId').value = card.api_config.goods_id || '';
-        document.getElementById('editYifanCallbackUrl').value = card.api_config.callback_url || '';
-        document.getElementById('editYifanRequireAccount').checked = card.api_config.require_account || false;
-        } else if (card.type === 'text') {
-        document.getElementById('editTextContent').value = card.text_content || '';
-        } else if (card.type === 'data') {
-        document.getElementById('editDataContent').value = card.data_content || '';
-        } else if (card.type === 'image') {
-        // 处理图片类型
-        const currentImagePreview = document.getElementById('editCurrentImagePreview');
-        const currentImg = document.getElementById('editCurrentImg');
-        const noImageText = document.getElementById('editNoImageText');
+            // 根据类型填充特定字段
+            if (card.type === 'api' && card.api_config) {
+                document.getElementById('editApiUrl').value = card.api_config.url || '';
+                document.getElementById('editApiMethod').value = card.api_config.method || 'GET';
+                document.getElementById('editApiTimeout').value = card.api_config.timeout || 10;
+                document.getElementById('editApiHeaders').value = card.api_config.headers || '{}';
+                document.getElementById('editApiParams').value = card.api_config.params || '{}';
+                document.getElementById('editApiResponseTemplate').value = card.api_config.response_template || '';
+            } else if (card.type === 'yifan_api' && card.api_config) {
+                document.getElementById('editYifanUserId').value = card.api_config.user_id || '';
+                document.getElementById('editYifanUserKey').value = card.api_config.user_key || '';
+                document.getElementById('editYifanGoodsId').value = card.api_config.goods_id || '';
+                document.getElementById('editYifanCallbackUrl').value = card.api_config.callback_url || '';
+                document.getElementById('editYifanRequireAccount').checked = card.api_config.require_account || false;
+            } else if (card.type === 'text') {
+                document.getElementById('editTextContent').value = card.text_content || '';
+            } else if (card.type === 'data') {
+                document.getElementById('editDataContent').value = card.data_content || '';
+            } else if (card.type === 'image') {
+                // 处理图片类型
+                const currentImagePreview = document.getElementById('editCurrentImagePreview');
+                const currentImg = document.getElementById('editCurrentImg');
+                const noImageText = document.getElementById('editNoImageText');
 
-        if (card.image_url) {
-            // 显示当前图片
-            currentImg.src = card.image_url;
-            currentImagePreview.style.display = 'block';
-            noImageText.style.display = 'none';
+                if (card.image_url) {
+                    // 显示当前图片
+                    currentImg.src = card.image_url;
+                    currentImagePreview.style.display = 'block';
+                    noImageText.style.display = 'none';
+                } else {
+                    // 没有图片
+                    currentImagePreview.style.display = 'none';
+                    noImageText.style.display = 'block';
+                }
+
+                // 清空文件选择器和预览
+                document.getElementById('editCardImageFile').value = '';
+                document.getElementById('editCardImagePreview').style.display = 'none';
+            }
+
+            // 显示对应的字段
+            toggleEditCardTypeFields();
+
+            // 使用延迟调用确保DOM更新完成后再显示多规格字段
+            setTimeout(() => {
+                console.log('延迟调用 toggleEditMultiSpecFields');
+                toggleEditMultiSpecFields();
+
+                // 验证多规格字段是否正确显示
+                const multiSpecElement = document.getElementById('editMultiSpecFields');
+                const isChecked = document.getElementById('editIsMultiSpec').checked;
+                console.log('多规格元素存在:', !!multiSpecElement);
+                console.log('多规格开关状态:', isChecked);
+                console.log('多规格字段显示状态:', multiSpecElement ? multiSpecElement.style.display : 'element not found');
+            }, 100);
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('editCardModal'));
+            modal.show();
         } else {
-            // 没有图片
-            currentImagePreview.style.display = 'none';
-            noImageText.style.display = 'block';
+            showToast('获取卡券详情失败', 'danger');
         }
-
-        // 清空文件选择器和预览
-        document.getElementById('editCardImageFile').value = '';
-        document.getElementById('editCardImagePreview').style.display = 'none';
-        }
-
-        // 显示对应的字段
-        toggleEditCardTypeFields();
-
-        // 使用延迟调用确保DOM更新完成后再显示多规格字段
-        setTimeout(() => {
-        console.log('延迟调用 toggleEditMultiSpecFields');
-        toggleEditMultiSpecFields();
-
-        // 验证多规格字段是否正确显示
-        const multiSpecElement = document.getElementById('editMultiSpecFields');
-        const isChecked = document.getElementById('editIsMultiSpec').checked;
-        console.log('多规格元素存在:', !!multiSpecElement);
-        console.log('多规格开关状态:', isChecked);
-        console.log('多规格字段显示状态:', multiSpecElement ? multiSpecElement.style.display : 'element not found');
-        }, 100);
-
-        // 显示模态框
-        const modal = new bootstrap.Modal(document.getElementById('editCardModal'));
-        modal.show();
-    } else {
-        showToast('获取卡券详情失败', 'danger');
-    }
     } catch (error) {
-    console.error('获取卡券详情失败:', error);
-    showToast('获取卡券详情失败', 'danger');
+        console.error('获取卡券详情失败:', error);
+        showToast('获取卡券详情失败', 'danger');
     }
 }
 
@@ -6146,148 +6308,148 @@ function toggleEditApiParamsHelp() {
 // 更新卡券
 async function updateCard() {
     try {
-    const cardId = document.getElementById('editCardId').value;
-    const cardType = document.getElementById('editCardType').value;
-    const cardName = document.getElementById('editCardName').value;
+        const cardId = document.getElementById('editCardId').value;
+        const cardType = document.getElementById('editCardType').value;
+        const cardName = document.getElementById('editCardName').value;
 
-    if (!cardType || !cardName) {
-        showToast('请填写必填字段', 'warning');
-        return;
-    }
-
-    // 检查多规格设置
-    const isMultiSpec = document.getElementById('editIsMultiSpec').checked;
-    const specName = document.getElementById('editSpecName').value;
-    const specValue = document.getElementById('editSpecValue').value;
-    const specName2 = document.getElementById('editSpecName2').value;
-    const specValue2 = document.getElementById('editSpecValue2').value;
-
-    // 调试日志
-    console.log('[DEBUG] 更新卡券 - isMultiSpec:', isMultiSpec);
-    console.log('[DEBUG] 更新卡券 - specName:', specName);
-    console.log('[DEBUG] 更新卡券 - specValue:', specValue);
-    console.log('[DEBUG] 更新卡券 - specName2:', specName2);
-    console.log('[DEBUG] 更新卡券 - specValue2:', specValue2);
-
-    // 验证多规格字段
-    if (isMultiSpec && (!specName || !specValue)) {
-        showToast('多规格卡券必须填写规格1名称和规格1值', 'warning');
-        return;
-    }
-
-    const cardData = {
-        name: cardName,
-        type: cardType,
-        description: document.getElementById('editCardDescription').value,
-        delay_seconds: parseInt(document.getElementById('editCardDelaySeconds').value) || 0,
-        enabled: document.getElementById('editCardEnabled').checked,
-        is_multi_spec: isMultiSpec,
-        spec_name: isMultiSpec ? specName : null,
-        spec_value: isMultiSpec ? specValue : null,
-        spec_name_2: isMultiSpec ? specName2 : null,
-        spec_value_2: isMultiSpec ? specValue2 : null
-    };
-
-    // 调试日志 - 显示完整的 cardData
-    console.log('[DEBUG] 发送的 cardData:', JSON.stringify(cardData, null, 2));
-
-    // 根据类型添加特定配置
-    switch(cardType) {
-        case 'api':
-        // 验证和解析JSON字段
-        let headers = '{}';
-        let params = '{}';
-
-        try {
-            const headersInput = document.getElementById('editApiHeaders').value.trim();
-            if (headersInput) {
-            JSON.parse(headersInput);
-            headers = headersInput;
-            }
-        } catch (e) {
-            showToast('请求头格式错误，请输入有效的JSON', 'warning');
+        if (!cardType || !cardName) {
+            showToast('请填写必填字段', 'warning');
             return;
         }
 
-        try {
-            const paramsInput = document.getElementById('editApiParams').value.trim();
-            if (paramsInput) {
-            JSON.parse(paramsInput);
-            params = paramsInput;
-            }
-        } catch (e) {
-            showToast('请求参数格式错误，请输入有效的JSON', 'warning');
+        // 检查多规格设置
+        const isMultiSpec = document.getElementById('editIsMultiSpec').checked;
+        const specName = document.getElementById('editSpecName').value;
+        const specValue = document.getElementById('editSpecValue').value;
+        const specName2 = document.getElementById('editSpecName2').value;
+        const specValue2 = document.getElementById('editSpecValue2').value;
+
+        // 调试日志
+        console.log('[DEBUG] 更新卡券 - isMultiSpec:', isMultiSpec);
+        console.log('[DEBUG] 更新卡券 - specName:', specName);
+        console.log('[DEBUG] 更新卡券 - specValue:', specValue);
+        console.log('[DEBUG] 更新卡券 - specName2:', specName2);
+        console.log('[DEBUG] 更新卡券 - specValue2:', specValue2);
+
+        // 验证多规格字段
+        if (isMultiSpec && (!specName || !specValue)) {
+            showToast('多规格卡券必须填写规格1名称和规格1值', 'warning');
             return;
         }
 
-        const editResponseTemplate = document.getElementById('editApiResponseTemplate').value.trim();
-        cardData.api_config = {
-            url: document.getElementById('editApiUrl').value,
-            method: document.getElementById('editApiMethod').value,
-            timeout: parseInt(document.getElementById('editApiTimeout').value),
-            headers: headers,
-            params: params,
-            response_template: editResponseTemplate
+        const cardData = {
+            name: cardName,
+            type: cardType,
+            description: document.getElementById('editCardDescription').value,
+            delay_seconds: parseInt(document.getElementById('editCardDelaySeconds').value) || 0,
+            enabled: document.getElementById('editCardEnabled').checked,
+            is_multi_spec: isMultiSpec,
+            spec_name: isMultiSpec ? specName : null,
+            spec_value: isMultiSpec ? specValue : null,
+            spec_name_2: isMultiSpec ? specName2 : null,
+            spec_value_2: isMultiSpec ? specValue2 : null
         };
-        break;
-        case 'yifan_api':
-        // 验证必填字段
-        const editYifanUserId = document.getElementById('editYifanUserId').value.trim();
-        const editYifanUserKey = document.getElementById('editYifanUserKey').value.trim();
-        const editYifanGoodsId = document.getElementById('editYifanGoodsId').value.trim();
 
-        if (!editYifanUserId || !editYifanUserKey || !editYifanGoodsId) {
-            showToast('请填写商户ID、商户KEY和商品ID', 'warning');
-            return;
+        // 调试日志 - 显示完整的 cardData
+        console.log('[DEBUG] 发送的 cardData:', JSON.stringify(cardData, null, 2));
+
+        // 根据类型添加特定配置
+        switch (cardType) {
+            case 'api':
+                // 验证和解析JSON字段
+                let headers = '{}';
+                let params = '{}';
+
+                try {
+                    const headersInput = document.getElementById('editApiHeaders').value.trim();
+                    if (headersInput) {
+                        JSON.parse(headersInput);
+                        headers = headersInput;
+                    }
+                } catch (e) {
+                    showToast('请求头格式错误，请输入有效的JSON', 'warning');
+                    return;
+                }
+
+                try {
+                    const paramsInput = document.getElementById('editApiParams').value.trim();
+                    if (paramsInput) {
+                        JSON.parse(paramsInput);
+                        params = paramsInput;
+                    }
+                } catch (e) {
+                    showToast('请求参数格式错误，请输入有效的JSON', 'warning');
+                    return;
+                }
+
+                const editResponseTemplate = document.getElementById('editApiResponseTemplate').value.trim();
+                cardData.api_config = {
+                    url: document.getElementById('editApiUrl').value,
+                    method: document.getElementById('editApiMethod').value,
+                    timeout: parseInt(document.getElementById('editApiTimeout').value),
+                    headers: headers,
+                    params: params,
+                    response_template: editResponseTemplate
+                };
+                break;
+            case 'yifan_api':
+                // 验证必填字段
+                const editYifanUserId = document.getElementById('editYifanUserId').value.trim();
+                const editYifanUserKey = document.getElementById('editYifanUserKey').value.trim();
+                const editYifanGoodsId = document.getElementById('editYifanGoodsId').value.trim();
+
+                if (!editYifanUserId || !editYifanUserKey || !editYifanGoodsId) {
+                    showToast('请填写商户ID、商户KEY和商品ID', 'warning');
+                    return;
+                }
+
+                // 亦凡API配置也存储在api_config字段中
+                cardData.api_config = {
+                    user_id: editYifanUserId,
+                    user_key: editYifanUserKey,
+                    goods_id: editYifanGoodsId,
+                    callback_url: document.getElementById('editYifanCallbackUrl').value.trim(),
+                    require_account: document.getElementById('editYifanRequireAccount').checked
+                };
+                break;
+            case 'text':
+                cardData.text_content = document.getElementById('editTextContent').value;
+                break;
+            case 'data':
+                cardData.data_content = document.getElementById('editDataContent').value;
+                break;
+            case 'image':
+                // 处理图片类型 - 如果有新图片则上传，否则保持原有图片
+                const imageFile = document.getElementById('editCardImageFile').files[0];
+                if (imageFile) {
+                    // 有新图片，需要上传
+                    await updateCardWithImage(cardId, cardData, imageFile);
+                    return; // 提前返回，因为上传图片是异步的
+                }
+                // 没有新图片，保持原有配置，继续正常更新流程
+                break;
         }
 
-        // 亦凡API配置也存储在api_config字段中
-        cardData.api_config = {
-            user_id: editYifanUserId,
-            user_key: editYifanUserKey,
-            goods_id: editYifanGoodsId,
-            callback_url: document.getElementById('editYifanCallbackUrl').value.trim(),
-            require_account: document.getElementById('editYifanRequireAccount').checked
-        };
-        break;
-        case 'text':
-        cardData.text_content = document.getElementById('editTextContent').value;
-        break;
-        case 'data':
-        cardData.data_content = document.getElementById('editDataContent').value;
-        break;
-        case 'image':
-        // 处理图片类型 - 如果有新图片则上传，否则保持原有图片
-        const imageFile = document.getElementById('editCardImageFile').files[0];
-        if (imageFile) {
-            // 有新图片，需要上传
-            await updateCardWithImage(cardId, cardData, imageFile);
-            return; // 提前返回，因为上传图片是异步的
+        const response = await fetch(`${apiBase}/cards/${cardId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(cardData)
+        });
+
+        if (response.ok) {
+            showToast('卡券更新成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editCardModal')).hide();
+            loadCards();
+        } else {
+            const error = await response.text();
+            showToast(`更新失败: ${error}`, 'danger');
         }
-        // 没有新图片，保持原有配置，继续正常更新流程
-        break;
-    }
-
-    const response = await fetch(`${apiBase}/cards/${cardId}`, {
-        method: 'PUT',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(cardData)
-    });
-
-    if (response.ok) {
-        showToast('卡券更新成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('editCardModal')).hide();
-        loadCards();
-    } else {
-        const error = await response.text();
-        showToast(`更新失败: ${error}`, 'danger');
-    }
     } catch (error) {
-    console.error('更新卡券失败:', error);
-    showToast('更新卡券失败', 'danger');
+        console.error('更新卡券失败:', error);
+        showToast('更新卡券失败', 'danger');
     }
 }
 
@@ -6399,184 +6561,184 @@ async function testCard(cardId) {
 // 删除卡券
 async function deleteCard(cardId) {
     if (confirm('确定要删除这个卡券吗？删除后无法恢复！')) {
-    try {
-        const response = await fetch(`${apiBase}/cards/${cardId}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${authToken}`
-        }
-        });
+        try {
+            const response = await fetch(`${apiBase}/cards/${cardId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
 
-        if (response.ok) {
-        showToast('卡券删除成功', 'success');
-        loadCards();
-        } else {
-        const error = await response.text();
-        showToast(`删除失败: ${error}`, 'danger');
+            if (response.ok) {
+                showToast('卡券删除成功', 'success');
+                loadCards();
+            } else {
+                const error = await response.text();
+                showToast(`删除失败: ${error}`, 'danger');
+            }
+        } catch (error) {
+            console.error('删除卡券失败:', error);
+            showToast('删除卡券失败', 'danger');
         }
-    } catch (error) {
-        console.error('删除卡券失败:', error);
-        showToast('删除卡券失败', 'danger');
-    }
     }
 }
 
 // 编辑发货规则
 async function editDeliveryRule(ruleId) {
     try {
-    // 获取发货规则详情
-    const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 获取发货规则详情
+        const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const rule = await response.json();
+
+            // 填充编辑表单
+            document.getElementById('editRuleId').value = rule.id;
+            document.getElementById('editProductKeyword').value = rule.keyword === '(商品绑定)' ? '' : (rule.keyword || '');
+            document.getElementById('editDeliveryCount').value = rule.delivery_count || 1;
+            document.getElementById('editRuleEnabled').checked = rule.enabled;
+            document.getElementById('editRuleDescription').value = rule.description || '';
+
+            // 解析已绑定的商品ID
+            let selectedItemIds = [];
+            try { selectedItemIds = rule.item_ids ? JSON.parse(rule.item_ids) : []; } catch (e) { }
+            await loadItemsForRuleSelect('editRuleItemsContainer', selectedItemIds);
+
+            // 加载卡券选项并设置当前选中的卡券
+            await loadCardsForEditSelect();
+            document.getElementById('editSelectedCard').value = rule.card_id;
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('editDeliveryRuleModal'));
+            modal.show();
+        } else {
+            showToast('获取发货规则详情失败', 'danger');
         }
-    });
-
-    if (response.ok) {
-        const rule = await response.json();
-
-        // 填充编辑表单
-        document.getElementById('editRuleId').value = rule.id;
-        document.getElementById('editProductKeyword').value = rule.keyword === '(商品绑定)' ? '' : (rule.keyword || '');
-        document.getElementById('editDeliveryCount').value = rule.delivery_count || 1;
-        document.getElementById('editRuleEnabled').checked = rule.enabled;
-        document.getElementById('editRuleDescription').value = rule.description || '';
-
-        // 解析已绑定的商品ID
-        let selectedItemIds = [];
-        try { selectedItemIds = rule.item_ids ? JSON.parse(rule.item_ids) : []; } catch(e) {}
-        await loadItemsForRuleSelect('editRuleItemsContainer', selectedItemIds);
-
-        // 加载卡券选项并设置当前选中的卡券
-        await loadCardsForEditSelect();
-        document.getElementById('editSelectedCard').value = rule.card_id;
-
-        // 显示模态框
-        const modal = new bootstrap.Modal(document.getElementById('editDeliveryRuleModal'));
-        modal.show();
-    } else {
-        showToast('获取发货规则详情失败', 'danger');
-    }
     } catch (error) {
-    console.error('获取发货规则详情失败:', error);
-    showToast('获取发货规则详情失败', 'danger');
+        console.error('获取发货规则详情失败:', error);
+        showToast('获取发货规则详情失败', 'danger');
     }
 }
 
 // 加载卡券列表用于编辑时的下拉选择
 async function loadCardsForEditSelect() {
     try {
-    const response = await fetch(`${apiBase}/cards`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const cards = await response.json();
-        const select = document.getElementById('editSelectedCard');
-
-        // 清空现有选项
-        select.innerHTML = '<option value="">请选择卡券</option>';
-
-        cards.forEach(card => {
-        if (card.enabled) { // 只显示启用的卡券
-            const option = document.createElement('option');
-            option.value = card.id;
-
-            // 构建显示文本
-            let displayText = card.name;
-
-            // 添加类型信息
-            let typeText;
-            switch(card.type) {
-                case 'api':
-                    typeText = 'API';
-                    break;
-                case 'text':
-                    typeText = '固定文字';
-                    break;
-                case 'data':
-                    typeText = '批量数据';
-                    break;
-                case 'image':
-                    typeText = '图片';
-                    break;
-                default:
-                    typeText = '未知类型';
+        const response = await fetch(`${apiBase}/cards`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
             }
-            displayText += ` (${typeText})`;
-
-            // 添加规格信息
-            if (card.is_multi_spec && card.spec_name && card.spec_value) {
-            let specInfo = `${card.spec_name}:${card.spec_value}`;
-            if (card.spec_name_2 && card.spec_value_2) {
-                specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
-            }
-            displayText += ` [${specInfo}]`;
-            }
-
-            option.textContent = displayText;
-            select.appendChild(option);
-        }
         });
-    }
+
+        if (response.ok) {
+            const cards = await response.json();
+            const select = document.getElementById('editSelectedCard');
+
+            // 清空现有选项
+            select.innerHTML = '<option value="">请选择卡券</option>';
+
+            cards.forEach(card => {
+                if (card.enabled) { // 只显示启用的卡券
+                    const option = document.createElement('option');
+                    option.value = card.id;
+
+                    // 构建显示文本
+                    let displayText = card.name;
+
+                    // 添加类型信息
+                    let typeText;
+                    switch (card.type) {
+                        case 'api':
+                            typeText = 'API';
+                            break;
+                        case 'text':
+                            typeText = '固定文字';
+                            break;
+                        case 'data':
+                            typeText = '批量数据';
+                            break;
+                        case 'image':
+                            typeText = '图片';
+                            break;
+                        default:
+                            typeText = '未知类型';
+                    }
+                    displayText += ` (${typeText})`;
+
+                    // 添加规格信息
+                    if (card.is_multi_spec && card.spec_name && card.spec_value) {
+                        let specInfo = `${card.spec_name}:${card.spec_value}`;
+                        if (card.spec_name_2 && card.spec_value_2) {
+                            specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
+                        }
+                        displayText += ` [${specInfo}]`;
+                    }
+
+                    option.textContent = displayText;
+                    select.appendChild(option);
+                }
+            });
+        }
     } catch (error) {
-    console.error('加载卡券选项失败:', error);
+        console.error('加载卡券选项失败:', error);
     }
 }
 
 // 更新发货规则
 async function updateDeliveryRule() {
     try {
-    const ruleId = document.getElementById('editRuleId').value;
-    const keyword = document.getElementById('editProductKeyword').value;
-    const cardId = document.getElementById('editSelectedCard').value;
-    const deliveryCount = document.getElementById('editDeliveryCount').value || 1;
-    const enabled = document.getElementById('editRuleEnabled').checked;
-    const description = document.getElementById('editRuleDescription').value;
+        const ruleId = document.getElementById('editRuleId').value;
+        const keyword = document.getElementById('editProductKeyword').value;
+        const cardId = document.getElementById('editSelectedCard').value;
+        const deliveryCount = document.getElementById('editDeliveryCount').value || 1;
+        const enabled = document.getElementById('editRuleEnabled').checked;
+        const description = document.getElementById('editRuleDescription').value;
 
-    // 收集选中的商品ID
-    const checkedItems = document.querySelectorAll('#editRuleItemsContainer .rule-item-check:checked');
-    const itemIds = Array.from(checkedItems).map(cb => cb.value);
+        // 收集选中的商品ID
+        const checkedItems = document.querySelectorAll('#editRuleItemsContainer .rule-item-check:checked');
+        const itemIds = Array.from(checkedItems).map(cb => cb.value);
 
-    if (!cardId) {
-        showToast('请选择卡券', 'warning');
-        return;
-    }
-    if (itemIds.length === 0 && !keyword) {
-        showToast('请至少选择商品或填写关键字', 'warning');
-        return;
-    }
+        if (!cardId) {
+            showToast('请选择卡券', 'warning');
+            return;
+        }
+        if (itemIds.length === 0 && !keyword) {
+            showToast('请至少选择商品或填写关键字', 'warning');
+            return;
+        }
 
-    const ruleData = {
-        keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
-        card_id: parseInt(cardId),
-        delivery_count: parseInt(deliveryCount),
-        enabled: enabled,
-        description: description,
-        item_ids: JSON.stringify(itemIds)
-    };
+        const ruleData = {
+            keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
+            card_id: parseInt(cardId),
+            delivery_count: parseInt(deliveryCount),
+            enabled: enabled,
+            description: description,
+            item_ids: JSON.stringify(itemIds)
+        };
 
-    const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
-        method: 'PUT',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(ruleData)
-    });
+        const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ruleData)
+        });
 
-    if (response.ok) {
-        showToast('发货规则更新成功', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('editDeliveryRuleModal')).hide();
-        loadDeliveryRules();
-    } else {
-        const error = await response.text();
-        showToast(`更新失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            showToast('发货规则更新成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editDeliveryRuleModal')).hide();
+            loadDeliveryRules();
+        } else {
+            const error = await response.text();
+            showToast(`更新失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('更新发货规则失败:', error);
-    showToast('更新发货规则失败', 'danger');
+        console.error('更新发货规则失败:', error);
+        showToast('更新发货规则失败', 'danger');
     }
 }
 
@@ -6588,25 +6750,25 @@ function testDeliveryRule(ruleId) {
 // 删除发货规则
 async function deleteDeliveryRule(ruleId) {
     if (confirm('确定要删除这个发货规则吗？删除后无法恢复！')) {
-    try {
-        const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${authToken}`
-        }
-        });
+        try {
+            const response = await fetch(`${apiBase}/delivery-rules/${ruleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
 
-        if (response.ok) {
-        showToast('发货规则删除成功', 'success');
-        loadDeliveryRules();
-        } else {
-        const error = await response.text();
-        showToast(`删除失败: ${error}`, 'danger');
+            if (response.ok) {
+                showToast('发货规则删除成功', 'success');
+                loadDeliveryRules();
+            } else {
+                const error = await response.text();
+                showToast(`删除失败: ${error}`, 'danger');
+            }
+        } catch (error) {
+            console.error('删除发货规则失败:', error);
+            showToast('删除发货规则失败', 'danger');
         }
-    } catch (error) {
-        console.error('删除发货规则失败:', error);
-        showToast('删除发货规则失败', 'danger');
-    }
     }
 }
 
@@ -7020,19 +7182,19 @@ async function loadMenuSettings() {
 }
 
 // 主题表单提交处理
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // 颜色选择器同步
     const themeColorPicker = document.getElementById('themeColorPicker');
     const themeColorHex = document.getElementById('themeColorHex');
 
     if (themeColorPicker && themeColorHex) {
-        themeColorPicker.addEventListener('input', function() {
+        themeColorPicker.addEventListener('input', function () {
             themeColorHex.value = this.value;
             applyThemeColor(this.value);
             updatePresetSelection(this.value);
         });
 
-        themeColorHex.addEventListener('input', function() {
+        themeColorHex.addEventListener('input', function () {
             if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
                 themeColorPicker.value = this.value;
                 applyThemeColor(this.value);
@@ -7043,7 +7205,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 预设颜色按钮点击
     document.querySelectorAll('.color-preset').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const color = this.dataset.color;
             if (themeColorPicker) themeColorPicker.value = color;
             if (themeColorHex) themeColorHex.value = color;
@@ -7054,7 +7216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const themeForm = document.getElementById('themeForm');
     if (themeForm) {
-        themeForm.addEventListener('submit', async function(e) {
+        themeForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const themeColor = document.getElementById('themeColorHex')?.value || '#4f46e5';
@@ -7084,58 +7246,58 @@ document.addEventListener('DOMContentLoaded', function() {
     // 密码表单提交处理
     const passwordForm = document.getElementById('passwordForm');
     if (passwordForm) {
-    passwordForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+        passwordForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
-        if (newPassword !== confirmPassword) {
-        showToast('新密码和确认密码不匹配', 'warning');
-        return;
-        }
-
-        if (newPassword.length < 6) {
-        showToast('新密码长度至少6位', 'warning');
-        return;
-        }
-
-        try {
-        const response = await fetch(`${apiBase}/change-admin-password`, {
-            method: 'POST',
-            headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-            current_password: currentPassword,
-            new_password: newPassword
-            })
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            if (result.success) {
-            showToast('密码更新成功，请重新登录', 'success');
-            passwordForm.reset();
-            // 3秒后跳转到登录页面
-            setTimeout(() => {
-                localStorage.removeItem('auth_token');
-                window.location.href = '/login.html';
-            }, 3000);
-            } else {
-            showToast(`密码更新失败: ${result.message}`, 'danger');
+            if (newPassword !== confirmPassword) {
+                showToast('新密码和确认密码不匹配', 'warning');
+                return;
             }
-        } else {
-            const error = await response.text();
-            showToast(`密码更新失败: ${error}`, 'danger');
-        }
-        } catch (error) {
-        console.error('密码更新失败:', error);
-        showToast('密码更新失败', 'danger');
-        }
-    });
+
+            if (newPassword.length < 6) {
+                showToast('新密码长度至少6位', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiBase}/change-admin-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast('密码更新成功，请重新登录', 'success');
+                        passwordForm.reset();
+                        // 3秒后跳转到登录页面
+                        setTimeout(() => {
+                            localStorage.removeItem('auth_token');
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    } else {
+                        showToast(`密码更新失败: ${result.message}`, 'danger');
+                    }
+                } else {
+                    const error = await response.text();
+                    showToast(`密码更新失败: ${error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('密码更新失败:', error);
+                showToast('密码更新失败', 'danger');
+            }
+        });
     }
 
     // 页面加载时加载用户设置（仅在已登录时）
@@ -7149,44 +7311,44 @@ document.addEventListener('DOMContentLoaded', function() {
 // 下载数据库备份
 async function downloadDatabaseBackup() {
     try {
-    showToast('正在准备数据库备份，请稍候...', 'info');
+        showToast('正在准备数据库备份，请稍候...', 'info');
 
-    const response = await fetch(`${apiBase}/admin/backup/download`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/admin/backup/download`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            // 获取文件名
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = 'xianyu_backup.db';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            // 下载文件
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('数据库备份下载成功', 'success');
+        } else {
+            const error = await response.text();
+            showToast(`下载失败: ${error}`, 'danger');
         }
-    });
-
-    if (response.ok) {
-        // 获取文件名
-        const contentDisposition = response.headers.get('content-disposition');
-        let filename = 'xianyu_backup.db';
-        if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-            filename = filenameMatch[1];
-        }
-        }
-
-        // 下载文件
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        showToast('数据库备份下载成功', 'success');
-    } else {
-        const error = await response.text();
-        showToast(`下载失败: ${error}`, 'danger');
-    }
     } catch (error) {
-    console.error('下载数据库备份失败:', error);
-    showToast('下载数据库备份失败', 'danger');
+        console.error('下载数据库备份失败:', error);
+        showToast('下载数据库备份失败', 'danger');
     }
 }
 
@@ -7196,106 +7358,106 @@ async function uploadDatabaseBackup() {
     const file = fileInput.files[0];
 
     if (!file) {
-    showToast('请选择数据库文件', 'warning');
-    return;
+        showToast('请选择数据库文件', 'warning');
+        return;
     }
 
     if (!file.name.endsWith('.db')) {
-    showToast('只支持.db格式的数据库文件', 'warning');
-    return;
+        showToast('只支持.db格式的数据库文件', 'warning');
+        return;
     }
 
     // 文件大小检查（限制100MB）
     if (file.size > 100 * 1024 * 1024) {
-    showToast('数据库文件大小不能超过100MB', 'warning');
-    return;
+        showToast('数据库文件大小不能超过100MB', 'warning');
+        return;
     }
 
     if (!confirm('恢复数据库将完全替换当前所有数据，包括所有用户、Cookie、卡券等信息。\n\n此操作不可撤销！\n\n确定要继续吗？')) {
-    return;
+        return;
     }
 
     try {
-    showToast('正在上传并恢复数据库，请稍候...', 'info');
+        showToast('正在上传并恢复数据库，请稍候...', 'info');
 
-    const formData = new FormData();
-    formData.append('backup_file', file);
+        const formData = new FormData();
+        formData.append('backup_file', file);
 
-    const response = await fetch(`${apiBase}/admin/backup/upload`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-    });
+        const response = await fetch(`${apiBase}/admin/backup/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
 
-    if (response.ok) {
-        const result = await response.json();
-        showToast(`数据库恢复成功！包含 ${result.user_count} 个用户`, 'success');
+        if (response.ok) {
+            const result = await response.json();
+            showToast(`数据库恢复成功！包含 ${result.user_count} 个用户`, 'success');
 
-        // 清空文件选择
-        fileInput.value = '';
+            // 清空文件选择
+            fileInput.value = '';
 
-        // 提示用户刷新页面
-        setTimeout(() => {
-        if (confirm('数据库已恢复，建议刷新页面以加载新数据。是否立即刷新？')) {
-            window.location.reload();
+            // 提示用户刷新页面
+            setTimeout(() => {
+                if (confirm('数据库已恢复，建议刷新页面以加载新数据。是否立即刷新？')) {
+                    window.location.reload();
+                }
+            }, 2000);
+
+        } else {
+            const error = await response.json();
+            showToast(`恢复失败: ${error.detail}`, 'danger');
         }
-        }, 2000);
-
-    } else {
-        const error = await response.json();
-        showToast(`恢复失败: ${error.detail}`, 'danger');
-    }
     } catch (error) {
-    console.error('上传数据库备份失败:', error);
-    showToast('上传数据库备份失败', 'danger');
+        console.error('上传数据库备份失败:', error);
+        showToast('上传数据库备份失败', 'danger');
     }
 }
 
 // 导出备份（JSON格式，兼容旧版本）
 async function exportBackup() {
     try {
-    showToast('正在导出备份，请稍候...', 'info');
+        showToast('正在导出备份，请稍候...', 'info');
 
-    const response = await fetch(`${apiBase}/backup/export`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/backup/export`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const backupData = await response.json();
+
+            // 生成文件名
+            const now = new Date();
+            const timestamp = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0') +
+                String(now.getSeconds()).padStart(2, '0');
+            const filename = `xianyu_backup_${timestamp}.json`;
+
+            // 创建下载链接
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('备份导出成功', 'success');
+        } else {
+            const error = await response.text();
+            showToast(`导出失败: ${error}`, 'danger');
         }
-    });
-
-    if (response.ok) {
-        const backupData = await response.json();
-
-        // 生成文件名
-        const now = new Date();
-        const timestamp = now.getFullYear() +
-                        String(now.getMonth() + 1).padStart(2, '0') +
-                        String(now.getDate()).padStart(2, '0') + '_' +
-                        String(now.getHours()).padStart(2, '0') +
-                        String(now.getMinutes()).padStart(2, '0') +
-                        String(now.getSeconds()).padStart(2, '0');
-        const filename = `xianyu_backup_${timestamp}.json`;
-
-        // 创建下载链接
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        showToast('备份导出成功', 'success');
-    } else {
-        const error = await response.text();
-        showToast(`导出失败: ${error}`, 'danger');
-    }
     } catch (error) {
-    console.error('导出备份失败:', error);
-    showToast('导出备份失败', 'danger');
+        console.error('导出备份失败:', error);
+        showToast('导出备份失败', 'danger');
     }
 }
 
@@ -7305,108 +7467,108 @@ async function importBackup() {
     const file = fileInput.files[0];
 
     if (!file) {
-    showToast('请选择备份文件', 'warning');
-    return;
+        showToast('请选择备份文件', 'warning');
+        return;
     }
 
     if (!file.name.endsWith('.json')) {
-    showToast('只支持JSON格式的备份文件', 'warning');
-    return;
+        showToast('只支持JSON格式的备份文件', 'warning');
+        return;
     }
 
     if (!confirm('导入备份将覆盖当前所有数据，确定要继续吗？')) {
-    return;
+        return;
     }
 
     try {
-    showToast('正在导入备份，请稍候...', 'info');
+        showToast('正在导入备份，请稍候...', 'info');
 
-    const formData = new FormData();
-    formData.append('file', file);
+        const formData = new FormData();
+        formData.append('file', file);
 
-    const response = await fetch(`${apiBase}/backup/import`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-    });
+        const response = await fetch(`${apiBase}/backup/import`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
 
-    if (response.ok) {
-        showToast('备份导入成功！正在刷新数据...', 'success');
+        if (response.ok) {
+            showToast('备份导入成功！正在刷新数据...', 'success');
 
-        // 清空文件选择
-        fileInput.value = '';
+            // 清空文件选择
+            fileInput.value = '';
 
-        // 清除前端缓存
-        clearKeywordCache();
+            // 清除前端缓存
+            clearKeywordCache();
 
-        // 延迟一下再刷新数据，确保后端缓存已更新
-        setTimeout(async () => {
-        try {
-            // 如果当前在关键字管理页面，重新加载数据
-            if (currentCookieId) {
-            await loadAccountKeywords();
-            }
+            // 延迟一下再刷新数据，确保后端缓存已更新
+            setTimeout(async () => {
+                try {
+                    // 如果当前在关键字管理页面，重新加载数据
+                    if (currentCookieId) {
+                        await loadAccountKeywords();
+                    }
 
-            // 刷新仪表盘数据
-            if (document.getElementById('dashboard-section').classList.contains('active')) {
-            await loadDashboard();
-            }
+                    // 刷新仪表盘数据
+                    if (document.getElementById('dashboard-section').classList.contains('active')) {
+                        await loadDashboard();
+                    }
 
-            // 刷新账号列表
-            if (document.getElementById('accounts-section').classList.contains('active')) {
-            await loadCookies();
-            }
+                    // 刷新账号列表
+                    if (document.getElementById('accounts-section').classList.contains('active')) {
+                        await loadCookies();
+                    }
 
-            showToast('数据刷新完成！', 'success');
-        } catch (error) {
-            console.error('刷新数据失败:', error);
-            showToast('备份导入成功，但数据刷新失败，请手动刷新页面', 'warning');
+                    showToast('数据刷新完成！', 'success');
+                } catch (error) {
+                    console.error('刷新数据失败:', error);
+                    showToast('备份导入成功，但数据刷新失败，请手动刷新页面', 'warning');
+                }
+            }, 1000);
+        } else {
+            const error = await response.text();
+            showToast(`导入失败: ${error}`, 'danger');
         }
-        }, 1000);
-    } else {
-        const error = await response.text();
-        showToast(`导入失败: ${error}`, 'danger');
-    }
     } catch (error) {
-    console.error('导入备份失败:', error);
-    showToast('导入备份失败', 'danger');
+        console.error('导入备份失败:', error);
+        showToast('导入备份失败', 'danger');
     }
 }
 
 // 刷新系统缓存
 async function reloadSystemCache() {
     try {
-    showToast('正在刷新系统缓存...', 'info');
+        showToast('正在刷新系统缓存...', 'info');
 
-    const response = await fetch(`${apiBase}/system/reload-cache`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/system/reload-cache`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            showToast('系统缓存刷新成功！关键字等数据已更新', 'success');
+
+            // 清除前端缓存
+            clearKeywordCache();
+
+            // 如果当前在关键字管理页面，重新加载数据
+            if (currentCookieId) {
+                setTimeout(() => {
+                    loadAccountKeywords();
+                }, 500);
+            }
+        } else {
+            const error = await response.text();
+            showToast(`刷新缓存失败: ${error}`, 'danger');
         }
-    });
-
-    if (response.ok) {
-        const result = await response.json();
-        showToast('系统缓存刷新成功！关键字等数据已更新', 'success');
-
-        // 清除前端缓存
-        clearKeywordCache();
-
-        // 如果当前在关键字管理页面，重新加载数据
-        if (currentCookieId) {
-        setTimeout(() => {
-            loadAccountKeywords();
-        }, 500);
-        }
-    } else {
-        const error = await response.text();
-        showToast(`刷新缓存失败: ${error}`, 'danger');
-    }
     } catch (error) {
-    console.error('刷新系统缓存失败:', error);
-    showToast('刷新系统缓存失败', 'danger');
+        console.error('刷新系统缓存失败:', error);
+        showToast('刷新系统缓存失败', 'danger');
     }
 }
 
@@ -7495,182 +7657,182 @@ async function doRestartSystem() {
 // 切换商品多规格状态
 async function toggleItemMultiSpec(cookieId, itemId, isMultiSpec) {
     try {
-    const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}/multi-spec`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        is_multi_spec: isMultiSpec
-        })
-    });
+        const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}/multi-spec`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                is_multi_spec: isMultiSpec
+            })
+        });
 
-    if (response.ok) {
-        showToast(`${isMultiSpec ? '开启' : '关闭'}多规格成功`, 'success');
-        // 刷新商品列表
-        await refreshItemsData();
-    } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '操作失败');
-    }
+        if (response.ok) {
+            showToast(`${isMultiSpec ? '开启' : '关闭'}多规格成功`, 'success');
+            // 刷新商品列表
+            await refreshItemsData();
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '操作失败');
+        }
     } catch (error) {
-    console.error('切换多规格状态失败:', error);
-    showToast(`切换多规格状态失败: ${error.message}`, 'danger');
+        console.error('切换多规格状态失败:', error);
+        showToast(`切换多规格状态失败: ${error.message}`, 'danger');
     }
 }
 
 // 切换商品多数量发货状态
 async function toggleItemMultiQuantityDelivery(cookieId, itemId, multiQuantityDelivery) {
     try {
-    const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}/multi-quantity-delivery`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        multi_quantity_delivery: multiQuantityDelivery
-        })
-    });
+        const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}/multi-quantity-delivery`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                multi_quantity_delivery: multiQuantityDelivery
+            })
+        });
 
-    if (response.ok) {
-        showToast(`${multiQuantityDelivery ? '开启' : '关闭'}多数量发货成功`, 'success');
-        // 刷新商品列表
-        await refreshItemsData();
-    } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '操作失败');
-    }
+        if (response.ok) {
+            showToast(`${multiQuantityDelivery ? '开启' : '关闭'}多数量发货成功`, 'success');
+            // 刷新商品列表
+            await refreshItemsData();
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '操作失败');
+        }
     } catch (error) {
-    console.error('切换多数量发货状态失败:', error);
-    showToast(`切换多数量发货状态失败: ${error.message}`, 'danger');
+        console.error('切换多数量发货状态失败:', error);
+        showToast(`切换多数量发货状态失败: ${error.message}`, 'danger');
     }
 }
 
 // 加载商品列表
 async function loadItems() {
     try {
-    // 先加载Cookie列表用于筛选
-    await loadCookieFilter('itemCookieFilter');
+        // 先加载Cookie列表用于筛选
+        await loadCookieFilter('itemCookieFilter');
 
-    // 加载商品列表
-    await refreshItemsData();
+        // 加载商品列表
+        await refreshItemsData();
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
 // 只刷新商品数据，不重新加载筛选器
 async function refreshItemsData() {
     try {
-    const selectedCookie = document.getElementById('itemCookieFilter').value;
-    if (selectedCookie) {
-        await loadItemsByCookie();
-    } else {
-        await loadAllItems();
-    }
+        const selectedCookie = document.getElementById('itemCookieFilter').value;
+        if (selectedCookie) {
+            await loadItemsByCookie();
+        } else {
+            await loadAllItems();
+        }
     } catch (error) {
-    console.error('刷新商品数据失败:', error);
-    showToast('刷新商品数据失败', 'danger');
+        console.error('刷新商品数据失败:', error);
+        showToast('刷新商品数据失败', 'danger');
     }
 }
 
 // 加载Cookie筛选选项
 async function loadCookieFilter(id) {
     try {
-    const response = await fetch(`${apiBase}/cookies/details`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const accounts = await response.json();
-        const select = document.getElementById(id);
-
-        // 保存当前选择的值
-        const currentValue = select.value;
-
-        // 清空现有选项（保留"所有账号"）
-        select.innerHTML = '<option value="">所有账号</option>';
-
-        if (accounts.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '❌ 暂无账号';
-        option.disabled = true;
-        select.appendChild(option);
-        return;
-        }
-
-        // 分组显示：先显示启用的账号，再显示禁用的账号
-        const enabledAccounts = accounts.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        return enabled;
-        });
-        const disabledAccounts = accounts.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        return !enabled;
+        const response = await fetch(`${apiBase}/cookies/details`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
         });
 
-        // 添加启用的账号
-        enabledAccounts.forEach(account => {
-        const option = document.createElement('option');
-        option.value = account.id;
-        option.textContent = `🟢 ${account.id}`;
-        select.appendChild(option);
-        });
+        if (response.ok) {
+            const accounts = await response.json();
+            const select = document.getElementById(id);
 
-        // 添加禁用的账号
-        if (disabledAccounts.length > 0) {
-        // 添加分隔线
-        if (enabledAccounts.length > 0) {
-            const separator = document.createElement('option');
-            separator.value = '';
-            separator.textContent = '────────────────';
-            separator.disabled = true;
-            select.appendChild(separator);
-        }
+            // 保存当前选择的值
+            const currentValue = select.value;
 
-        disabledAccounts.forEach(account => {
-            const option = document.createElement('option');
-            option.value = account.id;
-            option.textContent = `🔴 ${account.id} (已禁用)`;
-            select.appendChild(option);
-        });
-        }
+            // 清空现有选项（保留"所有账号"）
+            select.innerHTML = '<option value="">所有账号</option>';
 
-        // 恢复之前选择的值
-        if (currentValue) {
-        select.value = currentValue;
+            if (accounts.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '❌ 暂无账号';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
+
+            // 分组显示：先显示启用的账号，再显示禁用的账号
+            const enabledAccounts = accounts.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                return enabled;
+            });
+            const disabledAccounts = accounts.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                return !enabled;
+            });
+
+            // 添加启用的账号
+            enabledAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `🟢 ${account.id}`;
+                select.appendChild(option);
+            });
+
+            // 添加禁用的账号
+            if (disabledAccounts.length > 0) {
+                // 添加分隔线
+                if (enabledAccounts.length > 0) {
+                    const separator = document.createElement('option');
+                    separator.value = '';
+                    separator.textContent = '────────────────';
+                    separator.disabled = true;
+                    select.appendChild(separator);
+                }
+
+                disabledAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = `🔴 ${account.id} (已禁用)`;
+                    select.appendChild(option);
+                });
+            }
+
+            // 恢复之前选择的值
+            if (currentValue) {
+                select.value = currentValue;
+            }
         }
-    }
     } catch (error) {
-    console.error('加载Cookie列表失败:', error);
-    showToast('加载账号列表失败', 'danger');
+        console.error('加载Cookie列表失败:', error);
+        showToast('加载账号列表失败', 'danger');
     }
 }
 
 // 加载所有商品
 async function loadAllItems() {
     try {
-    const response = await fetch(`${apiBase}/items`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/items`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        displayItems(data.items);
-    } else {
-        throw new Error('获取商品列表失败');
-    }
+        if (response.ok) {
+            const data = await response.json();
+            displayItems(data.items);
+        } else {
+            throw new Error('获取商品列表失败');
+        }
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
@@ -7679,26 +7841,26 @@ async function loadItemsByCookie() {
     const cookieId = document.getElementById('itemCookieFilter').value;
 
     if (!cookieId) {
-    await loadAllItems();
-    return;
+        await loadAllItems();
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        displayItems(data.items);
-    } else {
-        throw new Error('获取商品列表失败');
-    }
+        if (response.ok) {
+            const data = await response.json();
+            displayItems(data.items);
+        } else {
+            throw new Error('获取商品列表失败');
+        }
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
@@ -7976,7 +8138,7 @@ let itemsSearchInitialized = false; // 标记是否已初始化
 function initItemsSearch() {
     // 避免重复初始化
     if (itemsSearchInitialized) return;
-    
+
     // 初始化分页大小
     const pageSizeSelect = document.getElementById('itemsPageSize');
     if (pageSizeSelect) {
@@ -7989,13 +8151,13 @@ function initItemsSearch() {
     if (searchInput) {
         // 使用防抖来避免频繁搜索
         let searchTimeout;
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 filterItems();
             }, 300); // 300ms 防抖延迟
         });
-        
+
         // 标记已初始化
         itemsSearchInitialized = true;
         console.log('商品搜索功能已初始化');
@@ -8021,13 +8183,13 @@ async function getAllItemsFromAccount() {
     const pageNumber = parseInt(document.getElementById('pageNumber').value) || 1;
 
     if (!selectedCookieId) {
-    showToast('请先选择一个账号', 'warning');
-    return;
+        showToast('请先选择一个账号', 'warning');
+        return;
     }
 
     if (pageNumber < 1) {
-    showToast('页码必须大于0', 'warning');
-    return;
+        showToast('页码必须大于0', 'warning');
+        return;
     }
 
     // 显示加载状态
@@ -8037,38 +8199,38 @@ async function getAllItemsFromAccount() {
     button.disabled = true;
 
     try {
-    const response = await fetch(`${apiBase}/items/get-by-page`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        cookie_id: selectedCookieId,
-        page_number: pageNumber,
-        page_size: 20
-        })
-    });
+        const response = await fetch(`${apiBase}/items/get-by-page`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                cookie_id: selectedCookieId,
+                page_number: pageNumber,
+                page_size: 20
+            })
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-        showToast(`成功获取第${pageNumber}页 ${data.current_count} 个商品，请查看控制台日志`, 'success');
-        // 刷新商品列表（保持筛选器选择）
-        await refreshItemsData();
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                showToast(`成功获取第${pageNumber}页 ${data.current_count} 个商品，请查看控制台日志`, 'success');
+                // 刷新商品列表（保持筛选器选择）
+                await refreshItemsData();
+            } else {
+                showToast(data.message || '获取商品信息失败', 'danger');
+            }
         } else {
-        showToast(data.message || '获取商品信息失败', 'danger');
+            throw new Error(`HTTP ${response.status}`);
         }
-    } else {
-        throw new Error(`HTTP ${response.status}`);
-    }
     } catch (error) {
-    console.error('获取商品信息失败:', error);
-    showToast('获取商品信息失败', 'danger');
+        console.error('获取商品信息失败:', error);
+        showToast('获取商品信息失败', 'danger');
     } finally {
-    // 恢复按钮状态
-    button.innerHTML = originalText;
-    button.disabled = false;
+        // 恢复按钮状态
+        button.innerHTML = originalText;
+        button.disabled = false;
     }
 }
 
@@ -8078,8 +8240,8 @@ async function getAllItemsFromAccountAll() {
     const selectedCookieId = cookieSelect.value;
 
     if (!selectedCookieId) {
-    showToast('请先选择一个账号', 'warning');
-    return;
+        showToast('请先选择一个账号', 'warning');
+        return;
     }
 
     // 显示加载状态
@@ -8089,39 +8251,39 @@ async function getAllItemsFromAccountAll() {
     button.disabled = true;
 
     try {
-    const response = await fetch(`${apiBase}/items/get-all-from-account`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        cookie_id: selectedCookieId
-        })
-    });
+        const response = await fetch(`${apiBase}/items/get-all-from-account`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                cookie_id: selectedCookieId
+            })
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-        const message = data.total_pages ?
-            `成功获取 ${data.total_count} 个商品（共${data.total_pages}页），请查看控制台日志` :
-            `成功获取商品信息，请查看控制台日志`;
-        showToast(message, 'success');
-        // 刷新商品列表（保持筛选器选择）
-        await refreshItemsData();
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                const message = data.total_pages ?
+                    `成功获取 ${data.total_count} 个商品（共${data.total_pages}页），请查看控制台日志` :
+                    `成功获取商品信息，请查看控制台日志`;
+                showToast(message, 'success');
+                // 刷新商品列表（保持筛选器选择）
+                await refreshItemsData();
+            } else {
+                showToast(data.message || '获取商品信息失败', 'danger');
+            }
         } else {
-        showToast(data.message || '获取商品信息失败', 'danger');
+            throw new Error(`HTTP ${response.status}`);
         }
-    } else {
-        throw new Error(`HTTP ${response.status}`);
-    }
     } catch (error) {
-    console.error('获取商品信息失败:', error);
-    showToast('获取商品信息失败', 'danger');
+        console.error('获取商品信息失败:', error);
+        showToast('获取商品信息失败', 'danger');
     } finally {
-    // 恢复按钮状态
-    button.innerHTML = originalText;
-    button.disabled = false;
+        // 恢复按钮状态
+        button.innerHTML = originalText;
+        button.disabled = false;
     }
 }
 
@@ -8130,32 +8292,32 @@ async function getAllItemsFromAccountAll() {
 // 编辑商品详情
 async function editItem(cookieId, itemId) {
     try {
-    const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const item = data.item;
+
+            // 填充表单
+            document.getElementById('editItemCookieId').value = item.cookie_id;
+            document.getElementById('editItemId').value = item.item_id;
+            document.getElementById('editItemCookieIdDisplay').value = item.cookie_id;
+            document.getElementById('editItemIdDisplay').value = item.item_id;
+            document.getElementById('editItemDetail').value = item.item_detail || '';
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('editItemModal'));
+            modal.show();
+        } else {
+            throw new Error('获取商品详情失败');
         }
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        const item = data.item;
-
-        // 填充表单
-        document.getElementById('editItemCookieId').value = item.cookie_id;
-        document.getElementById('editItemId').value = item.item_id;
-        document.getElementById('editItemCookieIdDisplay').value = item.cookie_id;
-        document.getElementById('editItemIdDisplay').value = item.item_id;
-        document.getElementById('editItemDetail').value = item.item_detail || '';
-
-        // 显示模态框
-        const modal = new bootstrap.Modal(document.getElementById('editItemModal'));
-        modal.show();
-    } else {
-        throw new Error('获取商品详情失败');
-    }
     } catch (error) {
-    console.error('获取商品详情失败:', error);
-    showToast('获取商品详情失败', 'danger');
+        console.error('获取商品详情失败:', error);
+        showToast('获取商品详情失败', 'danger');
     }
 }
 
@@ -8166,117 +8328,117 @@ async function saveItemDetail() {
     const itemDetail = document.getElementById('editItemDetail').value.trim();
 
     if (!itemDetail) {
-    showToast('请输入商品详情', 'warning');
-    return;
+        showToast('请输入商品详情', 'warning');
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-        item_detail: itemDetail
-        })
-    });
+        const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                item_detail: itemDetail
+            })
+        });
 
-    if (response.ok) {
-        showToast('商品详情更新成功', 'success');
+        if (response.ok) {
+            showToast('商品详情更新成功', 'success');
 
-        // 关闭模态框
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editItemModal'));
-        modal.hide();
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editItemModal'));
+            modal.hide();
 
-        // 刷新列表（保持筛选器选择）
-        await refreshItemsData();
-    } else {
-        const error = await response.text();
-        showToast(`更新失败: ${error}`, 'danger');
-    }
+            // 刷新列表（保持筛选器选择）
+            await refreshItemsData();
+        } else {
+            const error = await response.text();
+            showToast(`更新失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('更新商品详情失败:', error);
-    showToast('更新商品详情失败', 'danger');
+        console.error('更新商品详情失败:', error);
+        showToast('更新商品详情失败', 'danger');
     }
 }
 
 // 删除商品信息
 async function deleteItem(cookieId, itemId, itemTitle) {
     try {
-    // 确认删除
-    const confirmed = confirm(`确定要删除商品信息吗？\n\n商品ID: ${itemId}\n商品标题: ${itemTitle || '未设置'}\n\n此操作不可撤销！`);
-    if (!confirmed) {
-        return;
-    }
-
-    const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-        method: 'DELETE',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
+        // 确认删除
+        const confirmed = confirm(`确定要删除商品信息吗？\n\n商品ID: ${itemId}\n商品标题: ${itemTitle || '未设置'}\n\n此操作不可撤销！`);
+        if (!confirmed) {
+            return;
         }
-    });
 
-    if (response.ok) {
-        showToast('商品信息删除成功', 'success');
-        // 刷新列表（保持筛选器选择）
-        await refreshItemsData();
-    } else {
-        const error = await response.text();
-        showToast(`删除失败: ${error}`, 'danger');
-    }
+        const response = await fetch(`${apiBase}/items/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            showToast('商品信息删除成功', 'success');
+            // 刷新列表（保持筛选器选择）
+            await refreshItemsData();
+        } else {
+            const error = await response.text();
+            showToast(`删除失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('删除商品信息失败:', error);
-    showToast('删除商品信息失败', 'danger');
+        console.error('删除商品信息失败:', error);
+        showToast('删除商品信息失败', 'danger');
     }
 }
 
 // 批量删除商品信息
 async function batchDeleteItems() {
     try {
-    // 获取所有选中的复选框
-    const checkboxes = document.querySelectorAll('input[name="itemCheckbox"]:checked');
-    if (checkboxes.length === 0) {
-        showToast('请选择要删除的商品', 'warning');
-        return;
-    }
+        // 获取所有选中的复选框
+        const checkboxes = document.querySelectorAll('input[name="itemCheckbox"]:checked');
+        if (checkboxes.length === 0) {
+            showToast('请选择要删除的商品', 'warning');
+            return;
+        }
 
-    // 确认删除
-    const confirmed = confirm(`确定要删除选中的 ${checkboxes.length} 个商品信息吗？\n\n此操作不可撤销！`);
-    if (!confirmed) {
-        return;
-    }
+        // 确认删除
+        const confirmed = confirm(`确定要删除选中的 ${checkboxes.length} 个商品信息吗？\n\n此操作不可撤销！`);
+        if (!confirmed) {
+            return;
+        }
 
-    // 构造删除列表
-    const itemsToDelete = Array.from(checkboxes).map(checkbox => {
-        const row = checkbox.closest('tr');
-        return {
-        cookie_id: checkbox.dataset.cookieId,
-        item_id: checkbox.dataset.itemId
-        };
-    });
+        // 构造删除列表
+        const itemsToDelete = Array.from(checkboxes).map(checkbox => {
+            const row = checkbox.closest('tr');
+            return {
+                cookie_id: checkbox.dataset.cookieId,
+                item_id: checkbox.dataset.itemId
+            };
+        });
 
-    const response = await fetch(`${apiBase}/items/batch`, {
-        method: 'DELETE',
-        headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ items: itemsToDelete })
-    });
+        const response = await fetch(`${apiBase}/items/batch`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ items: itemsToDelete })
+        });
 
-    if (response.ok) {
-        const result = await response.json();
-        showToast(`批量删除完成: 成功 ${result.success_count} 个，失败 ${result.failed_count} 个`, 'success');
-        // 刷新列表（保持筛选器选择）
-        await refreshItemsData();
-    } else {
-        const error = await response.text();
-        showToast(`批量删除失败: ${error}`, 'danger');
-    }
+        if (response.ok) {
+            const result = await response.json();
+            showToast(`批量删除完成: 成功 ${result.success_count} 个，失败 ${result.failed_count} 个`, 'success');
+            // 刷新列表（保持筛选器选择）
+            await refreshItemsData();
+        } else {
+            const error = await response.text();
+            showToast(`批量删除失败: ${error}`, 'danger');
+        }
     } catch (error) {
-    console.error('批量删除商品信息失败:', error);
-    showToast('批量删除商品信息失败', 'danger');
+        console.error('批量删除商品信息失败:', error);
+        showToast('批量删除商品信息失败', 'danger');
     }
 }
 
@@ -8284,7 +8446,7 @@ async function batchDeleteItems() {
 function toggleSelectAll(selectAllCheckbox) {
     const checkboxes = document.querySelectorAll('input[name="itemCheckbox"]');
     checkboxes.forEach(checkbox => {
-    checkbox.checked = selectAllCheckbox.checked;
+        checkbox.checked = selectAllCheckbox.checked;
     });
     updateBatchDeleteButton();
 }
@@ -8296,17 +8458,17 @@ function updateSelectAllState() {
     const selectAllCheckbox = document.getElementById('selectAllItems');
 
     if (checkboxes.length === 0) {
-    selectAllCheckbox.checked = false;
-    selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
     } else if (checkedCheckboxes.length === checkboxes.length) {
-    selectAllCheckbox.checked = true;
-    selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
     } else if (checkedCheckboxes.length > 0) {
-    selectAllCheckbox.checked = false;
-    selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
     } else {
-    selectAllCheckbox.checked = false;
-    selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
     }
 
     updateBatchDeleteButton();
@@ -8318,11 +8480,11 @@ function updateBatchDeleteButton() {
     const batchDeleteBtn = document.getElementById('batchDeleteBtn');
 
     if (checkedCheckboxes.length > 0) {
-    batchDeleteBtn.disabled = false;
-    batchDeleteBtn.innerHTML = `<i class="bi bi-trash"></i> 批量删除 (${checkedCheckboxes.length})`;
+        batchDeleteBtn.disabled = false;
+        batchDeleteBtn.innerHTML = `<i class="bi bi-trash"></i> 批量删除 (${checkedCheckboxes.length})`;
     } else {
-    batchDeleteBtn.disabled = true;
-    batchDeleteBtn.innerHTML = '<i class="bi bi-trash"></i> 批量删除';
+        batchDeleteBtn.disabled = true;
+        batchDeleteBtn.innerHTML = '<i class="bi bi-trash"></i> 批量删除';
     }
 }
 
@@ -8353,105 +8515,105 @@ function escapeHtml(text) {
 // 加载商品回复列表
 async function loadItemsReplay() {
     try {
-    // 先加载Cookie列表用于筛选
-    await loadCookieFilter('itemReplayCookieFilter');
-    await loadCookieFilterPlus('editReplyCookieIdSelect');
-    // 加载商品列表
-    await refreshItemsReplayData();
+        // 先加载Cookie列表用于筛选
+        await loadCookieFilter('itemReplayCookieFilter');
+        await loadCookieFilterPlus('editReplyCookieIdSelect');
+        // 加载商品列表
+        await refreshItemsReplayData();
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
 // 只刷新商品回复数据，不重新加载筛选器
 async function refreshItemsReplayData() {
     try {
-    const selectedCookie = document.getElementById('itemCookieFilter').value;
-    if (selectedCookie) {
-        await loadItemsReplayByCookie();
-    } else {
-        await loadAllItemReplays();
-    }
+        const selectedCookie = document.getElementById('itemCookieFilter').value;
+        if (selectedCookie) {
+            await loadItemsReplayByCookie();
+        } else {
+            await loadAllItemReplays();
+        }
     } catch (error) {
-    console.error('刷新商品数据失败:', error);
-    showToast('刷新商品数据失败', 'danger');
+        console.error('刷新商品数据失败:', error);
+        showToast('刷新商品数据失败', 'danger');
     }
 }
 
 // 加载Cookie筛选选项添加弹框中使用
 async function loadCookieFilterPlus(id) {
     try {
-    const response = await fetch(`${apiBase}/cookies/details`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (response.ok) {
-        const accounts = await response.json();
-        const select = document.getElementById(id);
-
-        // 保存当前选择的值
-        const currentValue = select.value;
-
-        // 清空现有选项（保留"所有账号"）
-        select.innerHTML = '<option value="">选择账号</option>';
-
-        if (accounts.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = '❌ 暂无账号';
-        option.disabled = true;
-        select.appendChild(option);
-        return;
-        }
-
-        // 分组显示：先显示启用的账号，再显示禁用的账号
-        const enabledAccounts = accounts.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        return enabled;
-        });
-        const disabledAccounts = accounts.filter(account => {
-        const enabled = account.enabled === undefined ? true : account.enabled;
-        return !enabled;
+        const response = await fetch(`${apiBase}/cookies/details`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
         });
 
-        // 添加启用的账号
-        enabledAccounts.forEach(account => {
-        const option = document.createElement('option');
-        option.value = account.id;
-        option.textContent = `🟢 ${account.id}`;
-        select.appendChild(option);
-        });
+        if (response.ok) {
+            const accounts = await response.json();
+            const select = document.getElementById(id);
 
-        // 添加禁用的账号
-        if (disabledAccounts.length > 0) {
-        // 添加分隔线
-        if (enabledAccounts.length > 0) {
-            const separator = document.createElement('option');
-            separator.value = '';
-            separator.textContent = '────────────────';
-            separator.disabled = true;
-            select.appendChild(separator);
-        }
+            // 保存当前选择的值
+            const currentValue = select.value;
 
-        disabledAccounts.forEach(account => {
-            const option = document.createElement('option');
-            option.value = account.id;
-            option.textContent = `🔴 ${account.id} (已禁用)`;
-            select.appendChild(option);
-        });
-        }
+            // 清空现有选项（保留"所有账号"）
+            select.innerHTML = '<option value="">选择账号</option>';
 
-        // 恢复之前选择的值
-        if (currentValue) {
-        select.value = currentValue;
+            if (accounts.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '❌ 暂无账号';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
+
+            // 分组显示：先显示启用的账号，再显示禁用的账号
+            const enabledAccounts = accounts.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                return enabled;
+            });
+            const disabledAccounts = accounts.filter(account => {
+                const enabled = account.enabled === undefined ? true : account.enabled;
+                return !enabled;
+            });
+
+            // 添加启用的账号
+            enabledAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `🟢 ${account.id}`;
+                select.appendChild(option);
+            });
+
+            // 添加禁用的账号
+            if (disabledAccounts.length > 0) {
+                // 添加分隔线
+                if (enabledAccounts.length > 0) {
+                    const separator = document.createElement('option');
+                    separator.value = '';
+                    separator.textContent = '────────────────';
+                    separator.disabled = true;
+                    select.appendChild(separator);
+                }
+
+                disabledAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = `🔴 ${account.id} (已禁用)`;
+                    select.appendChild(option);
+                });
+            }
+
+            // 恢复之前选择的值
+            if (currentValue) {
+                select.value = currentValue;
+            }
         }
-    }
     } catch (error) {
-    console.error('加载Cookie列表失败:', error);
-    showToast('加载账号列表失败', 'danger');
+        console.error('加载Cookie列表失败:', error);
+        showToast('加载账号列表失败', 'danger');
     }
 }
 
@@ -8464,21 +8626,21 @@ async function refreshItemReplayS() {
 // 加载所有商品回复
 async function loadAllItemReplays() {
     try {
-    const response = await fetch(`${apiBase}/itemReplays`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/itemReplays`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        displayItemReplays(data.items);
-    } else {
-        throw new Error('获取商品列表失败');
-    }
+        if (response.ok) {
+            const data = await response.json();
+            displayItemReplays(data.items);
+        } else {
+            throw new Error('获取商品列表失败');
+        }
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
@@ -8486,26 +8648,26 @@ async function loadAllItemReplays() {
 async function loadItemsReplayByCookie() {
     const cookieId = document.getElementById('itemReplayCookieFilter').value;
     if (!cookieId) {
-    await loadAllItemReplays();
-    return;
+        await loadAllItemReplays();
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/itemReplays/cookie/${encodeURIComponent(cookieId)}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/itemReplays/cookie/${encodeURIComponent(cookieId)}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        displayItemReplays(data.items);
-    } else {
-        throw new Error('获取商品列表失败');
-    }
+        if (response.ok) {
+            const data = await response.json();
+            displayItemReplays(data.items);
+        } else {
+            throw new Error('获取商品列表失败');
+        }
     } catch (error) {
-    console.error('加载商品列表失败:', error);
-    showToast('加载商品列表失败', 'danger');
+        console.error('加载商品列表失败:', error);
+        showToast('加载商品列表失败', 'danger');
     }
 }
 
@@ -8514,43 +8676,43 @@ function displayItemReplays(items) {
     const tbody = document.getElementById('itemReplaysTableBody');
 
     if (!items || items.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无商品数据</td></tr>';
-    // 重置选择状态
-    const selectAllCheckbox = document.getElementById('selectAllItems');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-    }
-    updateBatchDeleteButton();
-    return;
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无商品数据</td></tr>';
+        // 重置选择状态
+        const selectAllCheckbox = document.getElementById('selectAllItems');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
+        updateBatchDeleteButton();
+        return;
     }
 
     const itemsHtml = items.map(item => {
-    // 处理商品标题显示
-    let itemTitleDisplay = item.item_title || '未设置';
-    if (itemTitleDisplay.length > 30) {
-        itemTitleDisplay = itemTitleDisplay.substring(0, 30) + '...';
-    }
-
-    // 处理商品详情显示
-    let itemDetailDisplay = '未设置';
-    if (item.item_detail) {
-        try {
-        // 尝试解析JSON并提取有用信息
-        const detail = JSON.parse(item.item_detail);
-        if (detail.content) {
-            itemDetailDisplay = detail.content.substring(0, 50) + (detail.content.length > 50 ? '...' : '');
-        } else {
-            // 如果是纯文本或其他格式，直接显示前50个字符
-            itemDetailDisplay = item.item_detail.substring(0, 50) + (item.item_detail.length > 50 ? '...' : '');
+        // 处理商品标题显示
+        let itemTitleDisplay = item.item_title || '未设置';
+        if (itemTitleDisplay.length > 30) {
+            itemTitleDisplay = itemTitleDisplay.substring(0, 30) + '...';
         }
-        } catch (e) {
-        // 如果不是JSON格式，直接显示前50个字符
-        itemDetailDisplay = item.item_detail.substring(0, 50) + (item.item_detail.length > 50 ? '...' : '');
-        }
-    }
 
-    return `
+        // 处理商品详情显示
+        let itemDetailDisplay = '未设置';
+        if (item.item_detail) {
+            try {
+                // 尝试解析JSON并提取有用信息
+                const detail = JSON.parse(item.item_detail);
+                if (detail.content) {
+                    itemDetailDisplay = detail.content.substring(0, 50) + (detail.content.length > 50 ? '...' : '');
+                } else {
+                    // 如果是纯文本或其他格式，直接显示前50个字符
+                    itemDetailDisplay = item.item_detail.substring(0, 50) + (item.item_detail.length > 50 ? '...' : '');
+                }
+            } catch (e) {
+                // 如果不是JSON格式，直接显示前50个字符
+                itemDetailDisplay = item.item_detail.substring(0, 50) + (item.item_detail.length > 50 ? '...' : '');
+            }
+        }
+
+        return `
         <tr>
          <td>
             <input type="checkbox" name="itemCheckbox"
@@ -8584,14 +8746,14 @@ function displayItemReplays(items) {
     // 重置选择状态
     const selectAllCheckbox = document.getElementById('selectAllItems');
     if (selectAllCheckbox) {
-    selectAllCheckbox.checked = false;
-    selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
     }
     updateBatchDeleteButton();
 }
 
 // 显示添加弹框
-async function showItemReplayEdit(){
+async function showItemReplayEdit() {
     // 显示模态框
     const modal = new bootstrap.Modal(document.getElementById('editItemReplyModal'));
     document.getElementById('editReplyCookieIdSelect').value = '';
@@ -8604,35 +8766,35 @@ async function showItemReplayEdit(){
 
 // 当账号变化时加载对应商品
 async function onCookieChangeForReply() {
-  const cookieId = document.getElementById('editReplyCookieIdSelect').value;
-  const itemSelect = document.getElementById('editReplyItemIdSelect');
+    const cookieId = document.getElementById('editReplyCookieIdSelect').value;
+    const itemSelect = document.getElementById('editReplyItemIdSelect');
 
-  itemSelect.innerHTML = '<option value="">选择商品</option>';
-  if (!cookieId) {
-    itemSelect.disabled = true;  // 禁用选择框
-    return;
-  } else {
-    itemSelect.disabled = false; // 启用选择框
-  }
+    itemSelect.innerHTML = '<option value="">选择商品</option>';
+    if (!cookieId) {
+        itemSelect.disabled = true;  // 禁用选择框
+        return;
+    } else {
+        itemSelect.disabled = false; // 启用选择框
+    }
 
-  const response = await fetch(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`, {
+    const response = await fetch(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`, {
         headers: {
-        'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${authToken}`
         }
     });
     try {
-       if (response.ok) {
+        if (response.ok) {
             const data = await response.json();
             data.items.forEach(item => {
-                  const opt = document.createElement('option');
-                  opt.value = item.item_id;
-                  opt.textContent = `${item.item_id} - ${item.item_title || '无标题'}`;
-                  itemSelect.appendChild(opt);
-                });
+                const opt = document.createElement('option');
+                opt.value = item.item_id;
+                opt.textContent = `${item.item_id} - ${item.item_title || '无标题'}`;
+                itemSelect.appendChild(opt);
+            });
         } else {
             throw new Error('获取商品列表失败');
         }
-    }catch (error) {
+    } catch (error) {
         console.error('加载商品列表失败:', error);
         showToast('加载商品列表失败', 'danger');
     }
@@ -8640,159 +8802,159 @@ async function onCookieChangeForReply() {
 
 // 编辑商品回复
 async function editItemReply(cookieId, itemId) {
-  try {
-    const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      document.getElementById('itemReplayTitle').textContent = '编辑商品回复';
-      // 填充表单
-      document.getElementById('editReplyCookieIdSelect').value = data.cookie_id;
-      let res = await onCookieChangeForReply()
-      document.getElementById('editReplyItemIdSelect').value = data.item_id;
-      document.getElementById('editItemReplyContent').value = data.reply_content || '';
+    try {
+        const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('itemReplayTitle').textContent = '编辑商品回复';
+            // 填充表单
+            document.getElementById('editReplyCookieIdSelect').value = data.cookie_id;
+            let res = await onCookieChangeForReply()
+            document.getElementById('editReplyItemIdSelect').value = data.item_id;
+            document.getElementById('editItemReplyContent').value = data.reply_content || '';
 
-    } else if (response.status === 404) {
-      // 如果没有记录，则填充空白内容（用于添加）
-//      document.getElementById('editReplyCookieIdSelect').value = data.cookie_id;
-//      document.getElementById('editReplyItemIdSelect').value = data.item_id;
-//      document.getElementById('editItemReplyContent').value = data.reply_content || '';
-    } else {
-      throw new Error('获取商品回复失败');
+        } else if (response.status === 404) {
+            // 如果没有记录，则填充空白内容（用于添加）
+            //      document.getElementById('editReplyCookieIdSelect').value = data.cookie_id;
+            //      document.getElementById('editReplyItemIdSelect').value = data.item_id;
+            //      document.getElementById('editItemReplyContent').value = data.reply_content || '';
+        } else {
+            throw new Error('获取商品回复失败');
+        }
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('editItemReplyModal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('获取商品回复失败:', error);
+        showToast('获取商品回复失败', 'danger');
     }
-
-    // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('editItemReplyModal'));
-    modal.show();
-
-  } catch (error) {
-    console.error('获取商品回复失败:', error);
-    showToast('获取商品回复失败', 'danger');
-  }
 }
 
 // 保存商品回复
 async function saveItemReply() {
-  const cookieId = document.getElementById('editReplyCookieIdSelect').value;
-  const itemId = document.getElementById('editReplyItemIdSelect').value;
-  const replyContent = document.getElementById('editItemReplyContent').value.trim();
+    const cookieId = document.getElementById('editReplyCookieIdSelect').value;
+    const itemId = document.getElementById('editReplyItemIdSelect').value;
+    const replyContent = document.getElementById('editItemReplyContent').value.trim();
 
-  console.log(cookieId)
-  console.log(itemId)
-  console.log(replyContent)
-  if (!cookieId) {
-    showToast('请选择账号', 'warning');
-    return;
-  }
-
-  if (!itemId) {
-    showToast('请选择商品', 'warning');
-    return;
-  }
-
-  if (!replyContent) {
-    showToast('请输入商品回复内容', 'warning');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      },
-      body: JSON.stringify({
-        reply_content: replyContent
-      })
-    });
-
-    if (response.ok) {
-      showToast('商品回复保存成功', 'success');
-
-      // 关闭模态框
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editItemReplyModal'));
-      modal.hide();
-
-      // 可选：刷新数据
-      await refreshItemsReplayData?.();
-    } else {
-      const error = await response.text();
-      showToast(`保存失败: ${error}`, 'danger');
+    console.log(cookieId)
+    console.log(itemId)
+    console.log(replyContent)
+    if (!cookieId) {
+        showToast('请选择账号', 'warning');
+        return;
     }
-  } catch (error) {
-    console.error('保存商品回复失败:', error);
-    showToast('保存商品回复失败', 'danger');
-  }
+
+    if (!itemId) {
+        showToast('请选择商品', 'warning');
+        return;
+    }
+
+    if (!replyContent) {
+        showToast('请输入商品回复内容', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                reply_content: replyContent
+            })
+        });
+
+        if (response.ok) {
+            showToast('商品回复保存成功', 'success');
+
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editItemReplyModal'));
+            modal.hide();
+
+            // 可选：刷新数据
+            await refreshItemsReplayData?.();
+        } else {
+            const error = await response.text();
+            showToast(`保存失败: ${error}`, 'danger');
+        }
+    } catch (error) {
+        console.error('保存商品回复失败:', error);
+        showToast('保存商品回复失败', 'danger');
+    }
 }
 
 // 删除商品回复
 async function deleteItemReply(cookieId, itemId, itemTitle) {
-  try {
-    const confirmed = confirm(`确定要删除该商品的自动回复吗？\n\n商品ID: ${itemId}\n商品标题: ${itemTitle || '未设置'}\n\n此操作不可撤销！`);
-    if (!confirmed) return;
+    try {
+        const confirmed = confirm(`确定要删除该商品的自动回复吗？\n\n商品ID: ${itemId}\n商品标题: ${itemTitle || '未设置'}\n\n此操作不可撤销！`);
+        if (!confirmed) return;
 
-    const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
-    });
+        const response = await fetch(`${apiBase}/item-reply/${encodeURIComponent(cookieId)}/${encodeURIComponent(itemId)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-      showToast('商品回复删除成功', 'success');
-      await loadItemsReplayByCookie?.(); // 如果你有刷新商品列表的函数
-    } else {
-      const error = await response.text();
-      showToast(`删除失败: ${error}`, 'danger');
+        if (response.ok) {
+            showToast('商品回复删除成功', 'success');
+            await loadItemsReplayByCookie?.(); // 如果你有刷新商品列表的函数
+        } else {
+            const error = await response.text();
+            showToast(`删除失败: ${error}`, 'danger');
+        }
+    } catch (error) {
+        console.error('删除商品回复失败:', error);
+        showToast('删除商品回复失败', 'danger');
     }
-  } catch (error) {
-    console.error('删除商品回复失败:', error);
-    showToast('删除商品回复失败', 'danger');
-  }
 }
 
 // 批量删除商品回复
 async function batchDeleteItemReplies() {
-  try {
-    const checkboxes = document.querySelectorAll('input[name="itemCheckbox"]:checked');
-    if (checkboxes.length === 0) {
-      showToast('请选择要删除回复的商品', 'warning');
-      return;
+    try {
+        const checkboxes = document.querySelectorAll('input[name="itemCheckbox"]:checked');
+        if (checkboxes.length === 0) {
+            showToast('请选择要删除回复的商品', 'warning');
+            return;
+        }
+
+        const confirmed = confirm(`确定要删除选中商品的自动回复吗？\n共 ${checkboxes.length} 个商品\n\n此操作不可撤销！`);
+        if (!confirmed) return;
+
+        const itemsToDelete = Array.from(checkboxes).map(checkbox => ({
+            cookie_id: checkbox.dataset.cookieId,
+            item_id: checkbox.dataset.itemId
+        }));
+
+        const response = await fetch(`${apiBase}/item-reply/batch`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ items: itemsToDelete })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            showToast(`批量删除回复完成: 成功 ${result.success_count} 个，失败 ${result.failed_count} 个`, 'success');
+            await loadItemsReplayByCookie?.();
+        } else {
+            const error = await response.text();
+            showToast(`批量删除失败: ${error}`, 'danger');
+        }
+    } catch (error) {
+        console.error('批量删除商品回复失败:', error);
+        showToast('批量删除商品回复失败', 'danger');
     }
-
-    const confirmed = confirm(`确定要删除选中商品的自动回复吗？\n共 ${checkboxes.length} 个商品\n\n此操作不可撤销！`);
-    if (!confirmed) return;
-
-    const itemsToDelete = Array.from(checkboxes).map(checkbox => ({
-      cookie_id: checkbox.dataset.cookieId,
-      item_id: checkbox.dataset.itemId
-    }));
-
-    const response = await fetch(`${apiBase}/item-reply/batch`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      },
-      body: JSON.stringify({ items: itemsToDelete })
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      showToast(`批量删除回复完成: 成功 ${result.success_count} 个，失败 ${result.failed_count} 个`, 'success');
-      await loadItemsReplayByCookie?.();
-    } else {
-      const error = await response.text();
-      showToast(`批量删除失败: ${error}`, 'danger');
-    }
-  } catch (error) {
-    console.error('批量删除商品回复失败:', error);
-    showToast('批量删除商品回复失败', 'danger');
-  }
 }
 
 // ================================
@@ -8854,20 +9016,20 @@ function displayLogs() {
     }
 
     if (!window.filteredLogs || window.filteredLogs.length === 0) {
-    container.innerHTML = `
+        container.innerHTML = `
         <div class="text-center p-4 text-muted">
         <i class="bi bi-file-text fs-1"></i>
         <p class="mt-2">暂无日志数据</p>
         </div>
     `;
-    return;
+        return;
     }
 
     const logsHtml = window.filteredLogs.map(log => {
-    const timestamp = formatLogTimestamp(log.timestamp);
-    const levelClass = log.level || 'INFO';
+        const timestamp = formatLogTimestamp(log.timestamp);
+        const levelClass = log.level || 'INFO';
 
-    return `
+        return `
         <div class="log-entry ${levelClass}">
         <span class="log-timestamp">${timestamp}</span>
         <span class="log-level">[${log.level}]</span>
@@ -8888,13 +9050,13 @@ function formatLogTimestamp(timestamp) {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        fractionalSecondDigits: 3
     });
 }
 
@@ -8933,73 +9095,73 @@ function toggleAutoRefresh() {
     const icon = button.previousElementSibling;
 
     if (window.autoRefreshInterval) {
-    // 停止自动刷新
-    clearInterval(window.autoRefreshInterval);
-    window.autoRefreshInterval = null;
-    button.textContent = '开启自动刷新';
-    icon.className = 'bi bi-play-circle me-1';
-    showToast('自动刷新已停止', 'info');
+        // 停止自动刷新
+        clearInterval(window.autoRefreshInterval);
+        window.autoRefreshInterval = null;
+        button.textContent = '开启自动刷新';
+        icon.className = 'bi bi-play-circle me-1';
+        showToast('自动刷新已停止', 'info');
     } else {
-    // 开启自动刷新
-    window.autoRefreshInterval = setInterval(refreshLogs, 5000); // 每5秒刷新一次
-    button.textContent = '停止自动刷新';
-    icon.className = 'bi bi-pause-circle me-1';
-    showToast('自动刷新已开启（每5秒）', 'success');
+        // 开启自动刷新
+        window.autoRefreshInterval = setInterval(refreshLogs, 5000); // 每5秒刷新一次
+        button.textContent = '停止自动刷新';
+        icon.className = 'bi bi-pause-circle me-1';
+        showToast('自动刷新已开启（每5秒）', 'success');
 
-    // 立即刷新一次
-    refreshLogs();
+        // 立即刷新一次
+        refreshLogs();
     }
 }
 
 // 清空服务器日志
 async function clearLogsServer() {
     if (!confirm('确定要清空服务器端的所有日志吗？此操作不可恢复！')) {
-    return;
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/logs/clear`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/logs/clear`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-        window.allLogs = [];
-        window.filteredLogs = [];
-        displayLogs();
-        updateLogStats();
-        showToast('服务器日志已清空', 'success');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                window.allLogs = [];
+                window.filteredLogs = [];
+                displayLogs();
+                updateLogStats();
+                showToast('服务器日志已清空', 'success');
+            } else {
+                showToast(data.message || '清空失败', 'danger');
+            }
         } else {
-        showToast(data.message || '清空失败', 'danger');
+            throw new Error(`HTTP ${response.status}`);
         }
-    } else {
-        throw new Error(`HTTP ${response.status}`);
-    }
     } catch (error) {
-    console.error('清空服务器日志失败:', error);
-    showToast('清空服务器日志失败', 'danger');
+        console.error('清空服务器日志失败:', error);
+        showToast('清空服务器日志失败', 'danger');
     }
 }
 
 // 显示日志统计信息
 async function showLogStats() {
     try {
-    const response = await fetch(`${apiBase}/logs/stats`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/logs/stats`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-        const stats = data.stats;
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                const stats = data.stats;
 
-        let statsHtml = `
+                let statsHtml = `
             <div class="row">
             <div class="col-md-6">
                 <h6>总体统计</h6>
@@ -9014,12 +9176,12 @@ async function showLogStats() {
                 <ul class="list-unstyled">
         `;
 
-        for (const [level, count] of Object.entries(stats.level_counts || {})) {
-            const percentage = ((count / stats.total_logs) * 100).toFixed(1);
-            statsHtml += `<li>${level}: <strong>${count}</strong> (${percentage}%)</li>`;
-        }
+                for (const [level, count] of Object.entries(stats.level_counts || {})) {
+                    const percentage = ((count / stats.total_logs) * 100).toFixed(1);
+                    statsHtml += `<li>${level}: <strong>${count}</strong> (${percentage}%)</li>`;
+                }
 
-        statsHtml += `
+                statsHtml += `
                 </ul>
             </div>
             </div>
@@ -9029,22 +9191,22 @@ async function showLogStats() {
                 <div class="row">
         `;
 
-        const sources = Object.entries(stats.source_counts || {});
-        sources.forEach(([source, count], index) => {
-            if (index % 2 === 0) statsHtml += '<div class="col-md-6"><ul class="list-unstyled">';
-            const percentage = ((count / stats.total_logs) * 100).toFixed(1);
-            statsHtml += `<li>${source}: <strong>${count}</strong> (${percentage}%)</li>`;
-            if (index % 2 === 1 || index === sources.length - 1) statsHtml += '</ul></div>';
-        });
+                const sources = Object.entries(stats.source_counts || {});
+                sources.forEach(([source, count], index) => {
+                    if (index % 2 === 0) statsHtml += '<div class="col-md-6"><ul class="list-unstyled">';
+                    const percentage = ((count / stats.total_logs) * 100).toFixed(1);
+                    statsHtml += `<li>${source}: <strong>${count}</strong> (${percentage}%)</li>`;
+                    if (index % 2 === 1 || index === sources.length - 1) statsHtml += '</ul></div>';
+                });
 
-        statsHtml += `
+                statsHtml += `
                 </div>
             </div>
             </div>
         `;
 
-        // 显示模态框
-        const modalHtml = `
+                // 显示模态框
+                const modalHtml = `
             <div class="modal fade" id="logStatsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -9063,26 +9225,26 @@ async function showLogStats() {
             </div>
         `;
 
-        // 移除旧的模态框
-        const oldModal = document.getElementById('logStatsModal');
-        if (oldModal) oldModal.remove();
+                // 移除旧的模态框
+                const oldModal = document.getElementById('logStatsModal');
+                if (oldModal) oldModal.remove();
 
-        // 添加新的模态框
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+                // 添加新的模态框
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // 显示模态框
-        const modal = new bootstrap.Modal(document.getElementById('logStatsModal'));
-        modal.show();
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('logStatsModal'));
+                modal.show();
 
+            } else {
+                showToast(data.message || '获取统计信息失败', 'danger');
+            }
         } else {
-        showToast(data.message || '获取统计信息失败', 'danger');
+            throw new Error(`HTTP ${response.status}`);
         }
-    } else {
-        throw new Error(`HTTP ${response.status}`);
-    }
     } catch (error) {
-    console.error('获取日志统计失败:', error);
-    showToast('获取日志统计失败', 'danger');
+        console.error('获取日志统计失败:', error);
+        showToast('获取日志统计失败', 'danger');
     }
 }
 
@@ -9091,55 +9253,55 @@ async function showLogStats() {
 // 导出关键词
 async function exportKeywords() {
     if (!currentCookieId) {
-    showToast('请先选择账号', 'warning');
-    return;
+        showToast('请先选择账号', 'warning');
+        return;
     }
 
     try {
-    const response = await fetch(`${apiBase}/keywords-export/${currentCookieId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/keywords-export/${currentCookieId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        // 创建下载链接
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        if (response.ok) {
+            // 创建下载链接
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
 
-        // 根据当前账号是否有数据来设置文件名和提示
-        const currentKeywords = keywordsData[currentCookieId] || [];
-        const hasData = currentKeywords.length > 0;
+            // 根据当前账号是否有数据来设置文件名和提示
+            const currentKeywords = keywordsData[currentCookieId] || [];
+            const hasData = currentKeywords.length > 0;
 
-        if (hasData) {
-        a.download = `keywords_${currentCookieId}_${new Date().getTime()}.xlsx`;
-        showToast('关键词导出成功！', 'success');
+            if (hasData) {
+                a.download = `keywords_${currentCookieId}_${new Date().getTime()}.xlsx`;
+                showToast('关键词导出成功！', 'success');
+            } else {
+                a.download = `keywords_template_${currentCookieId}_${new Date().getTime()}.xlsx`;
+                showToast('导入模板导出成功！模板中包含示例数据供参考', 'success');
+            }
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         } else {
-        a.download = `keywords_template_${currentCookieId}_${new Date().getTime()}.xlsx`;
-        showToast('导入模板导出成功！模板中包含示例数据供参考', 'success');
+            const error = await response.json();
+            showToast(`导出失败: ${error.detail}`, 'error');
         }
-
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    } else {
-        const error = await response.json();
-        showToast(`导出失败: ${error.detail}`, 'error');
-    }
     } catch (error) {
-    console.error('导出关键词失败:', error);
-    showToast('导出关键词失败', 'error');
+        console.error('导出关键词失败:', error);
+        showToast('导出关键词失败', 'error');
     }
 }
 
 // 显示导入模态框
 function showImportModal() {
     if (!currentCookieId) {
-    showToast('请先选择账号', 'warning');
-    return;
+        showToast('请先选择账号', 'warning');
+        return;
     }
 
     const modal = new bootstrap.Modal(document.getElementById('importKeywordsModal'));
@@ -9149,69 +9311,69 @@ function showImportModal() {
 // 导入关键词
 async function importKeywords() {
     if (!currentCookieId) {
-    showToast('请先选择账号', 'warning');
-    return;
+        showToast('请先选择账号', 'warning');
+        return;
     }
 
     const fileInput = document.getElementById('importFileInput');
     const file = fileInput.files[0];
 
     if (!file) {
-    showToast('请选择要导入的Excel文件', 'warning');
-    return;
+        showToast('请选择要导入的Excel文件', 'warning');
+        return;
     }
 
     try {
-    // 显示进度条
-    const progressDiv = document.getElementById('importProgress');
-    const progressBar = progressDiv.querySelector('.progress-bar');
-    progressDiv.style.display = 'block';
-    progressBar.style.width = '30%';
+        // 显示进度条
+        const progressDiv = document.getElementById('importProgress');
+        const progressBar = progressDiv.querySelector('.progress-bar');
+        progressDiv.style.display = 'block';
+        progressBar.style.width = '30%';
 
-    const formData = new FormData();
-    formData.append('file', file);
+        const formData = new FormData();
+        formData.append('file', file);
 
-    const response = await fetch(`${apiBase}/keywords-import/${currentCookieId}`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-    });
+        const response = await fetch(`${apiBase}/keywords-import/${currentCookieId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
 
-    progressBar.style.width = '70%';
+        progressBar.style.width = '70%';
 
-    if (response.ok) {
-        const result = await response.json();
-        progressBar.style.width = '100%';
+        if (response.ok) {
+            const result = await response.json();
+            progressBar.style.width = '100%';
 
-        setTimeout(() => {
-        progressDiv.style.display = 'none';
-        progressBar.style.width = '0%';
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                progressBar.style.width = '0%';
 
-        // 关闭模态框
-        const modal = bootstrap.Modal.getInstance(document.getElementById('importKeywordsModal'));
-        modal.hide();
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('importKeywordsModal'));
+                modal.hide();
 
-        // 清空文件输入
-        fileInput.value = '';
+                // 清空文件输入
+                fileInput.value = '';
 
-        // 重新加载关键词列表
-        loadAccountKeywords(currentCookieId);
+                // 重新加载关键词列表
+                loadAccountKeywords(currentCookieId);
 
-        showToast(`导入成功！新增: ${result.added}, 更新: ${result.updated}`, 'success');
-        }, 500);
-    } else {
-        const error = await response.json();
-        progressDiv.style.display = 'none';
-        progressBar.style.width = '0%';
-        showToast(`导入失败: ${error.detail}`, 'error');
-    }
+                showToast(`导入成功！新增: ${result.added}, 更新: ${result.updated}`, 'success');
+            }, 500);
+        } else {
+            const error = await response.json();
+            progressDiv.style.display = 'none';
+            progressBar.style.width = '0%';
+            showToast(`导入失败: ${error.detail}`, 'error');
+        }
     } catch (error) {
-    console.error('导入关键词失败:', error);
-    document.getElementById('importProgress').style.display = 'none';
-    document.querySelector('#importProgress .progress-bar').style.width = '0%';
-    showToast('导入关键词失败', 'error');
+        console.error('导入关键词失败:', error);
+        document.getElementById('importProgress').style.display = 'none';
+        document.querySelector('#importProgress .progress-bar').style.width = '0%';
+        showToast('导入关键词失败', 'error');
     }
 }
 
@@ -9318,10 +9480,10 @@ async function loadRefreshCookieAccountList() {
 }
 
 // 刷新Cookie账号选择变化时显示状态
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const select = document.getElementById('refreshCookieAccountSelect');
     if (select) {
-        select.addEventListener('change', function() {
+        select.addEventListener('change', function () {
             const statusDiv = document.getElementById('refreshCookieAccountStatus');
             const selectedOption = this.options[this.selectedIndex];
 
@@ -9487,23 +9649,23 @@ let passwordLoginSessionId = null;
 // 处理账号密码登录表单提交
 async function handlePasswordLogin(event) {
     event.preventDefault();
-    
+
     const accountId = document.getElementById('passwordLoginAccountId').value.trim();
     const account = document.getElementById('passwordLoginAccount').value.trim();
     const password = document.getElementById('passwordLoginPassword').value;
     const showBrowser = document.getElementById('passwordLoginShowBrowser').checked;
-    
+
     if (!accountId || !account || !password) {
         showToast('请填写完整的登录信息', 'warning');
         return;
     }
-    
+
     // 禁用提交按钮，显示加载状态
     const submitBtn = event.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>登录中...';
-    
+
     try {
         const response = await fetch(`${apiBase}/password-login`, {
             method: 'POST',
@@ -9518,9 +9680,9 @@ async function handlePasswordLogin(event) {
                 show_browser: showBrowser
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok && data.success && data.session_id) {
             passwordLoginSessionId = data.session_id;
             // 开始轮询检查登录状态
@@ -9543,25 +9705,25 @@ function startPasswordLoginCheck() {
     if (passwordLoginCheckInterval) {
         clearInterval(passwordLoginCheckInterval);
     }
-    
+
     passwordLoginCheckInterval = setInterval(checkPasswordLoginStatus, 2000); // 每2秒检查一次
 }
 
 // 检查账号密码登录状态
 async function checkPasswordLoginStatus() {
     if (!passwordLoginSessionId) return;
-    
+
     try {
         const response = await fetch(`${apiBase}/password-login/check/${passwordLoginSessionId}`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('账号密码登录状态检查:', data); // 调试日志
-            
+
             switch (data.status) {
                 case 'processing':
                     // 处理中，继续等待
@@ -9620,43 +9782,43 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
         createPasswordLoginQRModal();
         modal = document.getElementById('passwordLoginQRModal');
     }
-    
+
     // 更新模态框标题
     const modalTitle = document.getElementById('passwordLoginQRModalLabel');
     if (modalTitle) {
         modalTitle.innerHTML = '<i class="bi bi-shield-exclamation text-warning me-2"></i>平台验证';
     }
-    
+
     // 获取或创建模态框实例
     let modalInstance = bootstrap.Modal.getInstance(modal);
     if (!modalInstance) {
         modalInstance = new bootstrap.Modal(modal);
     }
     modalInstance.show();
-    
+
     // 隐藏加载容器
     const qrContainer = document.getElementById('passwordLoginQRContainer');
     if (qrContainer) {
         qrContainer.style.display = 'none';
     }
-    
+
     // 优先显示截图，如果没有截图则显示链接
     const screenshotImg = document.getElementById('passwordLoginScreenshotImg');
     const linkButton = document.getElementById('passwordLoginVerificationLink');
     const statusText = document.getElementById('passwordLoginQRStatusText');
-    
+
     if (screenshotPath) {
         // 显示截图
         if (screenshotImg) {
             screenshotImg.src = `/${screenshotPath}?t=${new Date().getTime()}`;
             screenshotImg.style.display = 'block';
         }
-        
+
         // 隐藏链接按钮
         if (linkButton) {
             linkButton.style.display = 'none';
         }
-        
+
         // 更新状态文本
         if (statusText) {
             statusText.textContent = '需要人脸验证，请使用手机APP扫描下方二维码完成验证';
@@ -9666,13 +9828,13 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
         if (screenshotImg) {
             screenshotImg.style.display = 'none';
         }
-        
+
         // 显示链接按钮
         if (linkButton) {
             linkButton.href = verificationUrl;
             linkButton.style.display = 'inline-block';
         }
-        
+
         // 更新状态文本
         if (statusText) {
             statusText.textContent = '需要平台验证，请点击下方按钮跳转到验证页面';
@@ -9732,7 +9894,7 @@ function createPasswordLoginQRModal() {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
@@ -9743,15 +9905,15 @@ function handlePasswordLoginSuccess(data) {
     if (modal) {
         modal.hide();
     }
-    
+
     showToast(`账号 ${data.account_id} 登录成功！`, 'success');
-    
+
     // 隐藏表单
     togglePasswordLogin();
-    
+
     // 刷新账号列表
     loadCookies();
-    
+
     // 重置表单
     resetPasswordLoginForm();
 }
@@ -9759,19 +9921,19 @@ function handlePasswordLoginSuccess(data) {
 // 处理账号密码登录失败
 function handlePasswordLoginFailure(data) {
     console.log('账号密码登录失败，错误数据:', data); // 调试日志
-    
+
     // 关闭二维码模态框
     const modal = bootstrap.Modal.getInstance(document.getElementById('passwordLoginQRModal'));
     if (modal) {
         modal.hide();
     }
-    
+
     // 优先使用 message，如果没有则使用 error 字段
     const errorMessage = data.message || data.error || '登录失败，请检查账号密码是否正确';
     console.log('显示错误消息:', errorMessage); // 调试日志
-    
+
     showToast(errorMessage, 'danger');  // 使用 'danger' 而不是 'error'，因为 Bootstrap 使用 'danger' 作为错误类型
-    
+
     // 重置表单
     resetPasswordLoginForm();
 }
@@ -9788,7 +9950,7 @@ function clearPasswordLoginCheck() {
 function resetPasswordLoginForm() {
     passwordLoginSessionId = null;
     clearPasswordLoginCheck();
-    
+
     const submitBtn = document.querySelector('#passwordLoginFormElement button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = false;
@@ -9808,12 +9970,12 @@ function showQRCodeLogin() {
 
     // 模态框显示后生成二维码
     modal._element.addEventListener('shown.bs.modal', function () {
-    generateQRCode();
+        generateQRCode();
     });
 
     // 模态框关闭时清理定时器
     modal._element.addEventListener('hidden.bs.modal', function () {
-    clearQRCodeCheck();
+        clearQRCodeCheck();
     });
 }
 
@@ -9825,31 +9987,31 @@ async function refreshQRCode() {
 // 生成二维码
 async function generateQRCode() {
     try {
-    showQRCodeLoading();
+        showQRCodeLoading();
 
-    const response = await fetch(`${apiBase}/qr-login/generate`, {
-        method: 'POST',
-        headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-        }
-    });
+        const response = await fetch(`${apiBase}/qr-login/generate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-        qrCodeSessionId = data.session_id;
-        showQRCodeImage(data.qr_code_url);
-        startQRCodeCheck();
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                qrCodeSessionId = data.session_id;
+                showQRCodeImage(data.qr_code_url);
+                startQRCodeCheck();
+            } else {
+                showQRCodeError(data.message || '生成二维码失败');
+            }
         } else {
-        showQRCodeError(data.message || '生成二维码失败');
+            showQRCodeError('生成二维码失败');
         }
-    } else {
-        showQRCodeError('生成二维码失败');
-    }
     } catch (error) {
-    console.error('生成二维码失败:', error);
-    showQRCodeError('网络错误，请重试');
+        console.error('生成二维码失败:', error);
+        showQRCodeError('网络错误，请重试');
     }
 }
 
@@ -9863,7 +10025,7 @@ function showQRCodeLoading() {
     // 隐藏验证容器
     const verificationContainer = document.getElementById('verificationContainer');
     if (verificationContainer) {
-    verificationContainer.style.display = 'none';
+        verificationContainer.style.display = 'none';
     }
 }
 
@@ -9892,7 +10054,7 @@ function showQRCodeError(message) {
 // 开始检查二维码状态
 function startQRCodeCheck() {
     if (qrCodeCheckInterval) {
-    clearInterval(qrCodeCheckInterval);
+        clearInterval(qrCodeCheckInterval);
     }
 
     document.getElementById('statusSpinner').style.display = 'inline-block';
@@ -9906,71 +10068,71 @@ async function checkQRCodeStatus() {
     if (!qrCodeSessionId) return;
 
     try {
-    const response = await fetch(`${apiBase}/qr-login/check/${qrCodeSessionId}`, {
-        headers: {
-        'Authorization': `Bearer ${authToken}`
-        }
-    });
+        const response = await fetch(`${apiBase}/qr-login/check/${qrCodeSessionId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
 
-    if (response.ok) {
-        const data = await response.json();
+        if (response.ok) {
+            const data = await response.json();
 
-        switch (data.status) {
-        case 'waiting':
-            document.getElementById('statusText').textContent = '等待扫码...';
-            break;
-        case 'scanned':
-            document.getElementById('statusText').textContent = '已扫码，请在手机上确认...';
-            break;
-        case 'success':
-            document.getElementById('statusText').textContent = '登录成功！';
-            document.getElementById('statusSpinner').style.display = 'none';
-            clearQRCodeCheck();
-            handleQRCodeSuccess(data);
-            break;
-        case 'expired':
-            document.getElementById('statusText').textContent = '二维码已过期';
-            document.getElementById('statusSpinner').style.display = 'none';
-            clearQRCodeCheck();
-            showQRCodeError('二维码已过期，请刷新重试');
-            break;
-        case 'cancelled':
-            document.getElementById('statusText').textContent = '用户取消登录';
-            document.getElementById('statusSpinner').style.display = 'none';
-            clearQRCodeCheck();
-            break;
-        case 'verification_required':
-            document.getElementById('statusText').textContent = '需要手机验证';
-            document.getElementById('statusSpinner').style.display = 'none';
-            clearQRCodeCheck();
-            showVerificationRequired(data);
-            break;
-        case 'processing':
-            document.getElementById('statusText').textContent = '正在处理中...';
-            // 继续轮询，不清理检查
-            break;
-        case 'already_processed':
-            document.getElementById('statusText').textContent = '登录已完成';
-            document.getElementById('statusSpinner').style.display = 'none';
-            clearQRCodeCheck();
-            showToast('该扫码会话已处理完成', 'info');
-            break;
+            switch (data.status) {
+                case 'waiting':
+                    document.getElementById('statusText').textContent = '等待扫码...';
+                    break;
+                case 'scanned':
+                    document.getElementById('statusText').textContent = '已扫码，请在手机上确认...';
+                    break;
+                case 'success':
+                    document.getElementById('statusText').textContent = '登录成功！';
+                    document.getElementById('statusSpinner').style.display = 'none';
+                    clearQRCodeCheck();
+                    handleQRCodeSuccess(data);
+                    break;
+                case 'expired':
+                    document.getElementById('statusText').textContent = '二维码已过期';
+                    document.getElementById('statusSpinner').style.display = 'none';
+                    clearQRCodeCheck();
+                    showQRCodeError('二维码已过期，请刷新重试');
+                    break;
+                case 'cancelled':
+                    document.getElementById('statusText').textContent = '用户取消登录';
+                    document.getElementById('statusSpinner').style.display = 'none';
+                    clearQRCodeCheck();
+                    break;
+                case 'verification_required':
+                    document.getElementById('statusText').textContent = '需要手机验证';
+                    document.getElementById('statusSpinner').style.display = 'none';
+                    clearQRCodeCheck();
+                    showVerificationRequired(data);
+                    break;
+                case 'processing':
+                    document.getElementById('statusText').textContent = '正在处理中...';
+                    // 继续轮询，不清理检查
+                    break;
+                case 'already_processed':
+                    document.getElementById('statusText').textContent = '登录已完成';
+                    document.getElementById('statusSpinner').style.display = 'none';
+                    clearQRCodeCheck();
+                    showToast('该扫码会话已处理完成', 'info');
+                    break;
+            }
         }
-    }
     } catch (error) {
-    console.error('检查二维码状态失败:', error);
+        console.error('检查二维码状态失败:', error);
     }
 }
 
 // 显示需要验证的提示
 function showVerificationRequired(data) {
     if (data.verification_url) {
-    // 隐藏二维码区域
-    document.getElementById('qrCodeContainer').style.display = 'none';
-    document.getElementById('qrCodeImage').style.display = 'none';
+        // 隐藏二维码区域
+        document.getElementById('qrCodeContainer').style.display = 'none';
+        document.getElementById('qrCodeImage').style.display = 'none';
 
-    // 显示验证提示
-    const verificationHtml = `
+        // 显示验证提示
+        const verificationHtml = `
         <div class="text-center">
         <div class="mb-4">
             <i class="bi bi-shield-exclamation text-warning" style="font-size: 4rem;"></i>
@@ -9999,74 +10161,74 @@ function showVerificationRequired(data) {
         </div>
     `;
 
-    // 创建验证提示容器
-    let verificationContainer = document.getElementById('verificationContainer');
-    if (!verificationContainer) {
-        verificationContainer = document.createElement('div');
-        verificationContainer.id = 'verificationContainer';
-        document.querySelector('#qrCodeLoginModal .modal-body').appendChild(verificationContainer);
-    }
+        // 创建验证提示容器
+        let verificationContainer = document.getElementById('verificationContainer');
+        if (!verificationContainer) {
+            verificationContainer = document.createElement('div');
+            verificationContainer.id = 'verificationContainer';
+            document.querySelector('#qrCodeLoginModal .modal-body').appendChild(verificationContainer);
+        }
 
-    verificationContainer.innerHTML = verificationHtml;
-    verificationContainer.style.display = 'block';
+        verificationContainer.innerHTML = verificationHtml;
+        verificationContainer.style.display = 'block';
 
-    // 显示Toast提示
-    showToast('账号需要手机验证，请按照提示完成验证', 'warning');
+        // 显示Toast提示
+        showToast('账号需要手机验证，请按照提示完成验证', 'warning');
     }
 }
 
 // 处理扫码成功
 function handleQRCodeSuccess(data) {
     if (data.account_info) {
-    const { account_id, is_new_account, real_cookie_refreshed, fallback_reason, cookie_length } = data.account_info;
+        const { account_id, is_new_account, real_cookie_refreshed, fallback_reason, cookie_length } = data.account_info;
 
-    // 构建成功消息
-    let successMessage = '';
-    if (is_new_account) {
-        successMessage = `新账号添加成功！账号ID: ${account_id}`;
-    } else {
-        successMessage = `账号Cookie已更新！账号ID: ${account_id}`;
-    }
-
-    // 添加cookie长度信息
-    if (cookie_length) {
-        successMessage += `\nCookie长度: ${cookie_length}`;
-    }
-
-    // 添加真实cookie获取状态信息
-    if (real_cookie_refreshed === true) {
-        successMessage += '\n✅ 真实Cookie获取并保存成功';
-        document.getElementById('statusText').textContent = '登录成功！真实Cookie已获取并保存';
-        showToast(successMessage, 'success');
-    } else if (real_cookie_refreshed === false) {
-        successMessage += '\n⚠️ 真实Cookie获取失败，已保存原始扫码Cookie';
-        if (fallback_reason) {
-            successMessage += `\n原因: ${fallback_reason}`;
+        // 构建成功消息
+        let successMessage = '';
+        if (is_new_account) {
+            successMessage = `新账号添加成功！账号ID: ${account_id}`;
+        } else {
+            successMessage = `账号Cookie已更新！账号ID: ${account_id}`;
         }
-        document.getElementById('statusText').textContent = '登录成功，但使用原始Cookie';
-        showToast(successMessage, 'warning');
-    } else {
-        // 兼容旧版本，没有真实cookie刷新信息
-        document.getElementById('statusText').textContent = '登录成功！';
-        showToast(successMessage, 'success');
-    }
 
-    // 关闭模态框
-    setTimeout(() => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('qrCodeLoginModal'));
-        modal.hide();
+        // 添加cookie长度信息
+        if (cookie_length) {
+            successMessage += `\nCookie长度: ${cookie_length}`;
+        }
 
-        // 刷新账号列表
-        loadCookies();
-    }, 3000); // 延长显示时间以便用户看到详细信息
+        // 添加真实cookie获取状态信息
+        if (real_cookie_refreshed === true) {
+            successMessage += '\n✅ 真实Cookie获取并保存成功';
+            document.getElementById('statusText').textContent = '登录成功！真实Cookie已获取并保存';
+            showToast(successMessage, 'success');
+        } else if (real_cookie_refreshed === false) {
+            successMessage += '\n⚠️ 真实Cookie获取失败，已保存原始扫码Cookie';
+            if (fallback_reason) {
+                successMessage += `\n原因: ${fallback_reason}`;
+            }
+            document.getElementById('statusText').textContent = '登录成功，但使用原始Cookie';
+            showToast(successMessage, 'warning');
+        } else {
+            // 兼容旧版本，没有真实cookie刷新信息
+            document.getElementById('statusText').textContent = '登录成功！';
+            showToast(successMessage, 'success');
+        }
+
+        // 关闭模态框
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('qrCodeLoginModal'));
+            modal.hide();
+
+            // 刷新账号列表
+            loadCookies();
+        }, 3000); // 延长显示时间以便用户看到详细信息
     }
 }
 
 // 清理二维码检查
 function clearQRCodeCheck() {
     if (qrCodeCheckInterval) {
-    clearInterval(qrCodeCheckInterval);
-    qrCodeCheckInterval = null;
+        clearInterval(qrCodeCheckInterval);
+        qrCodeCheckInterval = null;
     }
     qrCodeSessionId = null;
 }
@@ -10145,7 +10307,7 @@ async function loadItemsListForImageKeyword() {
 function initImageKeywordEventListeners() {
     const imageFileInput = document.getElementById('imageFile');
     if (imageFileInput && !imageFileInput.hasEventListener) {
-        imageFileInput.addEventListener('change', function(e) {
+        imageFileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 // 验证文件类型
@@ -10179,7 +10341,7 @@ function validateImageDimensions(file, inputElement) {
     const img = new Image();
     const url = URL.createObjectURL(file);
 
-    img.onload = function() {
+    img.onload = function () {
         const width = this.naturalWidth;
         const height = this.naturalHeight;
 
@@ -10216,7 +10378,7 @@ function validateImageDimensions(file, inputElement) {
         }
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
         URL.revokeObjectURL(url);
         showToast('❌ 无法读取图片文件，请选择有效的图片', 'warning');
         inputElement.value = '';
@@ -10229,7 +10391,7 @@ function validateImageDimensions(file, inputElement) {
 // 显示图片预览
 function showImagePreview(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const previewContainer = document.getElementById('imagePreview');
         const previewImg = document.getElementById('previewImg');
 
@@ -10270,7 +10432,7 @@ async function addImageKeyword() {
         .split(/[\|\n]/)
         .map(k => k.trim())
         .filter(k => k.length > 0);
-    
+
     if (keywords.length === 0) {
         showToast('请填写有效的关键词', 'warning');
         return;
@@ -10280,7 +10442,7 @@ async function addImageKeyword() {
     let itemIds = selectedOptions
         .map(opt => opt.value)
         .filter(id => id !== ''); // 过滤掉空值（通用关键词选项）
-    
+
     // 如果没有选中任何商品，或者选中了空值，则作为通用关键词
     if (itemIds.length === 0) {
         itemIds = [''];
@@ -10368,7 +10530,7 @@ async function addImageKeyword() {
             if (successCount > 0) {
                 const keywordText = keywords.length > 1 ? `${keywords.length}个关键词` : `"${keywords[0]}"`;
                 const itemText = itemIds.length > 1 ? `${itemIds.length}个商品` : (itemIds[0] ? '指定商品' : '通用');
-                
+
                 if (failCount === 0) {
                     showToast(`✨ ${keywordText} 添加成功！（共${totalCount}条配置，应用于${itemText}）`, 'success');
                 } else {
@@ -10429,7 +10591,7 @@ function showImageModal(imageUrl) {
     modal.show();
 
     // 模态框关闭后移除DOM元素
-    document.getElementById('imageViewModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('imageViewModal').addEventListener('hidden.bs.modal', function () {
         this.remove();
     });
 }
@@ -10925,10 +11087,10 @@ async function loadOutgoingConfigs() {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (response.ok) {
             const settings = await response.json();
-            
+
             // 渲染外发配置界面
             renderOutgoingConfigs(settings);
         }
@@ -10942,9 +11104,9 @@ async function loadOutgoingConfigs() {
 function renderOutgoingConfigs(settings) {
     const container = document.getElementById('outgoing-configs');
     if (!container) return;
-    
+
     let html = '<div class="row">';
-    
+
     // 渲染SMTP配置
     const smtpConfig = outgoingConfigs.smtp;
     html += `
@@ -10960,7 +11122,7 @@ function renderOutgoingConfigs(settings) {
                     <p class="text-muted">${smtpConfig.description}</p>
                     <form id="smtp-config-form">
                         <div class="row">`;
-    
+
     smtpConfig.fields.forEach(field => {
         const value = settings[field.id] || '';
         html += `
@@ -10970,7 +11132,7 @@ function renderOutgoingConfigs(settings) {
                 <div class="form-text">${field.help}</div>
             </div>`;
     });
-    
+
     html += `
                         </div>
                         <div class="text-end">
@@ -10982,10 +11144,10 @@ function renderOutgoingConfigs(settings) {
                 </div>
             </div>
         </div>`;
-    
+
     html += '</div>';
     container.innerHTML = html;
-    
+
     // 绑定表单提交事件
     const form = document.getElementById('smtp-config-form');
     if (form) {
@@ -11003,16 +11165,16 @@ function generateOutgoingFieldHtml(field, value) {
                 options += `<option value="${option.value}" ${selected}>${option.text}</option>`;
             });
             return `<select class="form-select" id="${field.id}" name="${field.id}" ${field.required ? 'required' : ''}>${options}</select>`;
-        
+
         case 'password':
             return `<input type="password" class="form-control" id="${field.id}" name="${field.id}" value="${value}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
-        
+
         case 'number':
             return `<input type="number" class="form-control" id="${field.id}" name="${field.id}" value="${value}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
-        
+
         case 'email':
             return `<input type="email" class="form-control" id="${field.id}" name="${field.id}" value="${value}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
-        
+
         default:
             return `<input type="text" class="form-control" id="${field.id}" name="${field.id}" value="${value}" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>`;
     }
@@ -11021,16 +11183,16 @@ function generateOutgoingFieldHtml(field, value) {
 // 保存外发配置
 async function saveOutgoingConfigs(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const formData = new FormData(form);
     const configs = {};
-    
+
     // 收集表单数据
     for (let [key, value] of formData.entries()) {
         configs[key] = value;
     }
-    
+
     try {
         // 逐个保存配置项
         for (const [key, value] of Object.entries(configs)) {
@@ -11046,17 +11208,17 @@ async function saveOutgoingConfigs(event) {
                     description: `SMTP配置 - ${key}`
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error(`保存${key}失败`);
             }
         }
-        
+
         showToast('外发配置保存成功', 'success');
-        
+
         // 重新加载配置
         await loadOutgoingConfigs();
-        
+
     } catch (error) {
         console.error('保存外发配置失败:', error);
         showToast('保存外发配置失败: ' + error.message, 'danger');
@@ -11424,9 +11586,9 @@ function createOrderRow(order) {
             </td>
             <td>
                 ${order.spec_name && order.spec_value ?
-                    `<small class="text-muted">${order.spec_name}:</small><br>${order.spec_value}${order.spec_name_2 && order.spec_value_2 ? `<br><small class="text-muted">${order.spec_name_2}:</small><br>${order.spec_value_2}` : ''}` :
-                    '-'
-                }
+            `<small class="text-muted">${order.spec_name}:</small><br>${order.spec_value}${order.spec_name_2 && order.spec_value_2 ? `<br><small class="text-muted">${order.spec_name_2}:</small><br>${order.spec_value_2}` : ''}` :
+            '-'
+        }
             </td>
             <td>${order.quantity || '-'}</td>
             <td>
@@ -11561,7 +11723,7 @@ function initOrdersSearch() {
     if (searchInput) {
         // 使用防抖来避免频繁搜索
         let searchTimeout;
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 filterOrders();
@@ -11855,7 +12017,7 @@ async function batchDeleteOrders() {
 
         if (successCount > 0) {
             showToast(`成功删除 ${successCount} 个订单${failCount > 0 ? `，${failCount} 个失败` : ''}`,
-                     failCount > 0 ? 'warning' : 'success');
+                failCount > 0 ? 'warning' : 'success');
             await refreshOrdersData();
         } else {
             showToast('批量删除失败', 'danger');
@@ -12015,13 +12177,13 @@ async function batchRefreshOrders() {
 
 
 // 页面加载完成后初始化订单搜索功能
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // 延迟初始化，确保DOM完全加载
     setTimeout(() => {
         initOrdersSearch();
 
         // 绑定复选框变化事件
-        document.addEventListener('change', function(e) {
+        document.addEventListener('change', function (e) {
             if (e.target.classList.contains('order-checkbox')) {
                 updateOrderBatchButtons();
             }
@@ -12651,7 +12813,7 @@ function deleteRecord(record, index) {
 
     // 尝试多种方式获取记录ID
     currentDeleteId = record.id || record.user_id || record.cookie_id || record.keyword_id ||
-                     record.card_id || record.item_id || record.order_id || index;
+        record.card_id || record.item_id || record.order_id || index;
 
     console.log('设置currentDeleteId为:', currentDeleteId);
     console.log('record的所有字段:', Object.keys(record));
@@ -13109,7 +13271,7 @@ async function loadRiskControlLogs(offset = 0) {
             logContainer.style.display = 'block';
         } else {
             noLogsDiv.style.display = 'block';
-            updateRiskLogInfo({total: 0, data: []});
+            updateRiskLogInfo({ total: 0, data: [] });
         }
 
         currentRiskLogOffset = offset;
@@ -13134,7 +13296,7 @@ function displayRiskControlLogs(logs) {
 
         // 状态标签
         let statusBadge = '';
-        switch(log.processing_status) {
+        switch (log.processing_status) {
             case 'processing':
                 statusBadge = '<span class="badge bg-warning">处理中</span>';
                 break;
@@ -13388,13 +13550,13 @@ async function handleItemSearch(event) {
         }
 
         const token = localStorage.getItem('auth_token');
-        
+
         // 启动会话检查器（在搜索过程中检查是否有验证会话）
         let sessionChecker = null;
         let checkCount = 0;
         const maxChecks = 30; // 最多检查30次（30秒）
         let isSearchCompleted = false; // 标记搜索是否完成
-        
+
         sessionChecker = setInterval(async () => {
             // 如果搜索已完成，停止检查
             if (isSearchCompleted) {
@@ -13404,12 +13566,12 @@ async function handleItemSearch(event) {
                 }
                 return;
             }
-            
+
             try {
                 checkCount++;
                 const checkResponse = await fetch('/api/captcha/sessions');
                 const checkData = await checkResponse.json();
-                
+
                 if (checkData.sessions && checkData.sessions.length > 0) {
                     for (const session of checkData.sessions) {
                         if (!session.completed) {
@@ -13418,17 +13580,17 @@ async function handleItemSearch(event) {
                                 clearInterval(sessionChecker);
                                 sessionChecker = null;
                             }
-                            
+
                             // 确保监控已启动
                             if (typeof startCaptchaSessionMonitor === 'function') {
                                 startCaptchaSessionMonitor();
                             }
-                            
+
                             // 弹出验证窗口
                             if (typeof showCaptchaVerificationModal === 'function') {
                                 showCaptchaVerificationModal(session.session_id);
                                 showToast('🎨 检测到滑块验证，请完成验证', 'warning');
-                                
+
                                 // 停止搜索时的会话检查器，因为已经弹窗了，由弹窗的监控接管
                                 if (sessionChecker) {
                                     clearInterval(sessionChecker);
@@ -13444,7 +13606,7 @@ async function handleItemSearch(event) {
                         }
                     }
                 }
-                
+
                 // 如果检查次数超过限制，停止检查
                 if (checkCount >= maxChecks) {
                     if (sessionChecker) {
@@ -13456,7 +13618,7 @@ async function handleItemSearch(event) {
                 console.error('检查验证会话失败:', error);
             }
         }, 1000); // 每秒检查一次
-        
+
         // 使用 Promise 包装，以便使用 finally
         const fetchPromise = fetch('/items/search_multiple', {
             method: 'POST',
@@ -13491,19 +13653,19 @@ async function handleItemSearch(event) {
             if (data.need_captcha || data.status === 'need_verification') {
                 console.log('检测到需要滑块验证');
                 showSearchStatus(false);
-                
+
                 // 显示滑块验证模态框
                 const sessionId = data.session_id || 'default';
                 const modal = showCaptchaVerificationModal(sessionId);
-                
+
                 try {
                     // 等待用户完成验证
                     await checkCaptchaCompletion(modal, sessionId);
-                    
+
                     // 验证成功，显示搜索状态并重新发起搜索请求
                     showSearchStatus(true);
                     document.getElementById('searchProgress').textContent = '验证成功，继续搜索商品...';
-                    
+
                     // 重新发起搜索请求
                     const retryResponse = await fetch('/items/search_multiple', {
                         method: 'POST',
@@ -13516,17 +13678,17 @@ async function handleItemSearch(event) {
                             total_pages: totalPages
                         })
                     });
-                    
+
                     if (retryResponse.ok) {
                         const retryData = await retryResponse.json();
-                        
+
                         // 再次检查是否需要验证（理论上不应该再需要）
                         if (retryData.need_captcha || retryData.status === 'need_verification') {
                             showSearchStatus(false);
                             showToast('验证后仍需要滑块，请联系管理员', 'danger');
                             return;
                         }
-                        
+
                         // 处理搜索结果
                         searchResultsData = retryData.data || [];
                         console.log('验证后搜索结果:', searchResultsData);
@@ -13574,11 +13736,11 @@ async function handleItemSearch(event) {
             }
 
             showSearchStatus(false);
-            
+
             // 确保显示搜索结果
             if (searchResultsData.length > 0) {
-            displaySearchResults();
-            updateSearchStats(data);
+                displaySearchResults();
+                updateSearchStats(data);
             } else {
                 console.warn('搜索结果为空，显示无结果提示');
                 showNoSearchResults();
@@ -14037,10 +14199,10 @@ async function loadSystemVersion() {
             console.warn('无法读取本地版本文件，使用默认版本');
             LOCAL_VERSION = DEFAULT_VERSION;
         }
-        
+
         // 显示当前本地版本
         document.getElementById('versionNumber').textContent = LOCAL_VERSION;
-        
+
         // 添加点击事件，显示更新日志
         const systemVersionBadge = document.getElementById('systemVersion');
         if (systemVersionBadge) {
@@ -14176,13 +14338,13 @@ async function showUpdateInfo(newVersion) {
     if (updateInfo.updates && updateInfo.updates.length > 0) {
         updateList = updateInfo.updates.map(item => `<li style="color: #333; margin-bottom: 8px; line-height: 1.5; font-size: 15px;"><i class="bi bi-check-circle-fill me-2" style="color: #28a745;"></i>${item}</li>`).join('');
     }
-    
+
     // 构建安装方式区域
     let installSection = '';
     if (updateInfo.installMethods && updateInfo.installMethods.length > 0) {
         installSection = updateInfo.installMethods.map(method => {
             let content = '';
-            
+
             // 如果有步骤说明（如Docker安装）
             if (method.steps && method.steps.length > 0) {
                 content = `
@@ -14191,7 +14353,7 @@ async function showUpdateInfo(newVersion) {
                     </div>
                 `;
             }
-            
+
             // 如果有下载链接（如EXE下载）
             if (method.downloads && method.downloads.length > 0) {
                 content = `
@@ -14205,7 +14367,7 @@ async function showUpdateInfo(newVersion) {
                     </div>
                 `;
             }
-            
+
             return `
                 <div style="margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
                     <div class="d-flex align-items-center justify-content-between" style="background: #5a67d8; color: #fff; padding: 8px 12px;">
@@ -14217,7 +14379,7 @@ async function showUpdateInfo(newVersion) {
             `;
         }).join('');
     }
-    
+
     // 兼容旧格式：构建下载按钮（如果有下载地址）
     let downloadSection = '';
     if (!installSection && updateInfo.downloadUrl) {
@@ -14229,7 +14391,7 @@ async function showUpdateInfo(newVersion) {
             </div>
         `;
     }
-    
+
     // 兼容旧格式：构建备用下载地址
     let altDownloadSection = '';
     if (!installSection && updateInfo.altDownloadUrl) {
@@ -14423,12 +14585,12 @@ async function showBenefitsModal() {
     try {
         // 获取权益信息（使用缓存或重新请求）
         const benefitsData = await getBenefitsInfo();
-        
+
         if (!benefitsData || !benefitsData.benefits || benefitsData.benefits.length === 0) {
             showToast('暂无权益信息', 'info');
             return;
         }
-        
+
         // 构建权益列表
         const benefitsList = benefitsData.benefits.map(benefit => `
             <a href="${benefit.url}" target="_blank" class="benefit-item" style="text-decoration: none; display: block; margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1px solid #e8ecf0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
@@ -14444,7 +14606,7 @@ async function showBenefitsModal() {
                 </div>
             </a>
         `).join('');
-        
+
         const modalHtml = `
             <div class="modal fade" id="benefitsModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -14491,20 +14653,20 @@ async function showBenefitsModal() {
                 }
             </style>
         `;
-        
+
         // 移除已存在的模态框
         const existingModal = document.getElementById('benefitsModal');
         if (existingModal) {
             existingModal.remove();
         }
-        
+
         // 添加新的模态框
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
         // 显示模态框
         const modal = new bootstrap.Modal(document.getElementById('benefitsModal'));
         modal.show();
-        
+
     } catch (error) {
         console.error('显示权益弹窗失败:', error);
         showToast('获取权益信息失败', 'danger');
@@ -14566,24 +14728,24 @@ function startCaptchaSessionMonitor() {
         console.log('⚠️ 会话监控已在运行中');
         return; // 已经在监控中
     }
-    
+
     console.log('🔍 开始监控验证会话...');
-    
+
     let checkCount = 0;
     captchaSessionMonitor = setInterval(async () => {
         try {
             checkCount++;
             const response = await fetch('/api/captcha/sessions');
             const data = await response.json();
-            
+
             // 每10次检查输出一次日志
             if (checkCount % 10 === 0) {
                 console.log(`🔍 监控检查 #${checkCount}: 活跃会话数=${data.count || 0}`);
             }
-            
+
             if (data.sessions && data.sessions.length > 0) {
                 console.log('📋 当前活跃会话:', data.sessions);
-                
+
                 for (const session of data.sessions) {
                     // 如果会话已完成或不存在，从监控列表中移除
                     if (session.completed || !session.has_websocket) {
@@ -14593,19 +14755,19 @@ function startCaptchaSessionMonitor() {
                         }
                         continue;
                     }
-                    
+
                     // 如果发现新的会话（未完成且未被监控），立即弹出窗口
                     if (!monitoredSessions.has(session.session_id)) {
                         console.log(`✨ 检测到新的验证会话: ${session.session_id}`);
                         monitoredSessions.add(session.session_id);
-                        
+
                         // 自动弹出验证窗口
                         showCaptchaVerificationModal(session.session_id);
                         showToast('🎨 检测到滑块验证，请完成验证', 'warning');
                     }
                 }
             }
-            
+
             // 如果没有活跃会话且没有监控中的会话，停止监控
             if ((!data.sessions || data.sessions.length === 0) && monitoredSessions.size === 0) {
                 console.log('✅ 没有活跃会话且没有监控中的会话，停止全局监控');
@@ -14615,7 +14777,7 @@ function startCaptchaSessionMonitor() {
             console.error('监控验证会话失败:', error);
         }
     }, 1000); // 每秒检查一次
-    
+
     console.log('✅ 会话监控已启动');
 }
 
@@ -14663,50 +14825,50 @@ function showCaptchaVerificationModal(sessionId = 'default') {
         console.log('已有活跃的验证窗口，不重复弹出');
         return activeCaptchaModal;
     }
-    
+
     const modal = new bootstrap.Modal(document.getElementById('captchaVerifyModal'), {
         backdrop: 'static',
         keyboard: false
     });
     const iframe = document.getElementById('captchaIframe');
     const loadingIndicator = document.getElementById('captchaLoadingIndicator');
-    
+
     // 获取服务器地址
     const serverUrl = window.location.origin;
-    
+
     // 重置 iframe
     iframe.style.display = 'none';
     loadingIndicator.style.display = 'block';
-    
+
     // 设置 iframe 源（嵌入模式）
     iframe.src = `${serverUrl}/api/captcha/control/${sessionId}?embed=1`;
-    
+
     // iframe 加载完成后隐藏加载指示器
-    iframe.onload = function() {
+    iframe.onload = function () {
         loadingIndicator.style.display = 'none';
         iframe.style.display = 'block';
     };
-    
+
     // 显示模态框
     modal.show();
     activeCaptchaModal = modal;
-    
+
     // 自动启动验证完成监控
     startCheckCaptchaCompletion(modal, sessionId);
-    
+
     // 监听模态框关闭事件
     document.getElementById('captchaVerifyModal').addEventListener('hidden.bs.modal', () => {
         activeCaptchaModal = null;
         // 从监控列表中移除
         monitoredSessions.delete(sessionId);
-        
+
         // 如果没有其他监控中的会话，停止全局监控
         if (monitoredSessions.size === 0) {
             stopCaptchaSessionMonitor();
             console.log('✅ 弹窗关闭，已停止全局监控');
         }
     }, { once: true });
-    
+
     // 返回 modal 实例用于后续控制
     return modal;
 }
@@ -14715,38 +14877,38 @@ function showCaptchaVerificationModal(sessionId = 'default') {
 function startCheckCaptchaCompletion(modal, sessionId) {
     let checkInterval = null;
     let isClosed = false;
-    
+
     const closeModal = () => {
         if (isClosed) return;
         isClosed = true;
-        
+
         if (checkInterval) {
             clearInterval(checkInterval);
             checkInterval = null;
         }
-        
+
         // 从监控列表中移除
         monitoredSessions.delete(sessionId);
-        
+
         // 如果没有其他监控中的会话，停止全局监控
         if (monitoredSessions.size === 0) {
             stopCaptchaSessionMonitor();
             console.log('✅ 所有验证已完成，已停止全局监控');
         }
-        
+
         modal.hide();
         activeCaptchaModal = null;
         showToast('✅ 滑块验证成功！', 'success');
         console.log(`✅ 验证完成: ${sessionId}`);
     };
-    
+
     checkInterval = setInterval(async () => {
         try {
             const response = await fetch(`/api/captcha/status/${sessionId}`);
             const data = await response.json();
-            
+
             console.log(`检查验证状态: ${sessionId}`, data);
-            
+
             // 如果验证完成，或者会话不存在（已关闭），都视为完成
             if (data.completed || (data.session_exists === false && data.success)) {
                 closeModal();
@@ -14760,7 +14922,7 @@ function startCheckCaptchaCompletion(modal, sessionId) {
             }
         }
     }, 1000); // 每秒检查一次
-    
+
     // 5分钟超时
     setTimeout(() => {
         if (!isClosed && checkInterval) {
@@ -14773,7 +14935,7 @@ function startCheckCaptchaCompletion(modal, sessionId) {
             }
         }
     }, 300000);
-    
+
     // 模态框关闭时停止检查
     document.getElementById('captchaVerifyModal').addEventListener('hidden.bs.modal', () => {
         if (checkInterval) {
@@ -14791,7 +14953,7 @@ async function checkCaptchaCompletion(modal, sessionId) {
             try {
                 const response = await fetch(`/api/captcha/status/${sessionId}`);
                 const data = await response.json();
-                
+
                 if (data.completed) {
                     clearInterval(checkInterval);
                     resolve(true);
@@ -14800,12 +14962,12 @@ async function checkCaptchaCompletion(modal, sessionId) {
                 console.error('检查验证状态失败:', error);
             }
         }, 1000);
-        
+
         setTimeout(() => {
             clearInterval(checkInterval);
             reject(new Error('验证超时'));
         }, 300000);
-        
+
         document.getElementById('captchaVerifyModal').addEventListener('hidden.bs.modal', () => {
             clearInterval(checkInterval);
         }, { once: true });
@@ -14818,30 +14980,30 @@ async function checkCaptchaCompletion(modal, sessionId) {
 async function showFaceVerification(accountId) {
     try {
         toggleLoading(true);
-        
+
         // 获取该账号的验证截图
         const response = await fetch(`${apiBase}/face-verification/screenshot/${accountId}`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (!response.ok) {
             throw new Error('获取验证截图失败');
         }
-        
+
         const data = await response.json();
-        
+
         toggleLoading(false);
-        
+
         if (!data.success) {
             showToast(data.message || '未找到验证截图', 'warning');
             return;
         }
-        
+
         // 使用与密码登录相同的弹窗显示验证截图
         showAccountFaceVerificationModal(accountId, data.screenshot);
-        
+
     } catch (error) {
         toggleLoading(false);
         console.error('获取人脸验证截图失败:', error);
@@ -14857,42 +15019,42 @@ function showAccountFaceVerificationModal(accountId, screenshot) {
         createPasswordLoginQRModal();
         modal = document.getElementById('passwordLoginQRModal');
     }
-    
+
     // 更新模态框标题
     const modalTitle = document.getElementById('passwordLoginQRModalLabel');
     if (modalTitle) {
         modalTitle.innerHTML = `<i class="bi bi-shield-exclamation text-warning me-2"></i>人脸验证 - 账号 ${accountId}`;
     }
-    
+
     // 显示截图
     const screenshotImg = document.getElementById('passwordLoginScreenshotImg');
     const linkButton = document.getElementById('passwordLoginVerificationLink');
     const statusText = document.getElementById('passwordLoginQRStatusText');
-    
+
     if (screenshotImg) {
         screenshotImg.src = `${screenshot.path}?t=${new Date().getTime()}`;
         screenshotImg.style.display = 'block';
     }
-    
+
     // 隐藏链接按钮
     if (linkButton) {
         linkButton.style.display = 'none';
     }
-    
+
     // 更新状态文本
     if (statusText) {
         statusText.innerHTML = `需要人脸验证，请使用手机APP扫描下方二维码完成验证<br><small class="text-muted">创建时间: ${screenshot.created_time_str}</small>`;
     }
-    
+
     // 获取或创建模态框实例
     let modalInstance = bootstrap.Modal.getInstance(modal);
     if (!modalInstance) {
         modalInstance = new bootstrap.Modal(modal);
     }
-    
+
     // 显示弹窗
     modalInstance.show();
-    
+
     // 注意：截图删除由后端在验证完成或失败时自动处理，前端不需要手动删除
 }
 
@@ -14904,10 +15066,10 @@ function showAccountFaceVerificationModal(accountId, screenshot) {
 async function showVersionInfo(version) {
     // 尝试获取远程版本信息
     const versionInfo = await getUpdateInfo();
-    
+
     // 构建项目介绍
     const intro = versionInfo?.intro || '此版本为本人利用业余时间开发，功能可能不完善，欢迎大家提出建议和bug，我会尽快修复。此版本纯粹免费，没有任何收费项目，请大家放心使用。如果大家觉得这个项目对你有帮助，可以请我喝杯咖啡，支持我继续开发。';
-    
+
     // 构建版本历史
     let versionHistoryHtml = '';
     if (versionInfo?.versionHistory && versionInfo.versionHistory.length > 0) {
@@ -14916,7 +15078,7 @@ async function showVersionInfo(version) {
             const bgClass = isLatest ? 'background: linear-gradient(135deg, #e8f5e9, #c8e6c9);' : 'background: #f8f9fa;';
             const borderColor = isLatest ? 'border-left: 4px solid #28a745;' : 'border-left: 4px solid #dee2e6;';
             const badgeStyle = isLatest ? 'background: linear-gradient(135deg, #28a745, #20c997); color: #fff;' : 'background: #6c757d; color: #fff;';
-            
+
             return `
                 <div class="mb-3 p-3 rounded-3" style="${bgClass} ${borderColor}">
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -14948,7 +15110,7 @@ async function showVersionInfo(version) {
             </div>
         `;
     }
-    
+
     const modalHtml = `
         <div class="modal fade" id="versionInfoModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
@@ -15040,21 +15202,21 @@ async function checkHotUpdate() {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (!response.ok) {
             console.warn('热更新检查请求失败:', response.status);
             return null;
         }
-        
+
         const result = await response.json();
-        
+
         if (!result.success) {
             console.warn('热更新检查返回错误:', result.message);
             return null;
         }
-        
+
         return result.data;
-        
+
     } catch (error) {
         console.error('热更新检查失败:', error);
         return null;
@@ -15067,40 +15229,40 @@ async function checkHotUpdate() {
  */
 async function performHotUpdate() {
     const hotUpdateBtn = document.getElementById('hotUpdateBtn');
-    
+
     // 禁用按钮，显示加载状态
     if (hotUpdateBtn) {
         hotUpdateBtn.disabled = true;
         hotUpdateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i>检查更新中...';
     }
-    
+
     try {
         // 先检查是否有更新
         const checkResult = await checkHotUpdate();
-        
+
         if (!checkResult) {
             showToast('检查更新失败，请稍后重试', 'danger');
             resetHotUpdateBtn();
             return;
         }
-        
+
         if (!checkResult.has_update) {
             showToast('已是最新版本，无需更新', 'info');
             resetHotUpdateBtn();
             return;
         }
-        
+
         // 显示确认对话框
         const confirmed = await showHotUpdateConfirmDialog(checkResult);
-        
+
         if (!confirmed) {
             resetHotUpdateBtn();
             return;
         }
-        
+
         // 显示更新进度
         showHotUpdateProgress();
-        
+
         // 执行更新
         const response = await fetch('/api/update/apply', {
             method: 'POST',
@@ -15110,23 +15272,23 @@ async function performHotUpdate() {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         const result = await response.json();
-        
+
         // 关闭进度弹窗
         closeHotUpdateProgress();
-        
+
         if (result.success && result.data.success) {
             // 更新成功
             const updateData = result.data;
-            
+
             if (updateData.needs_restart) {
                 // 需要重启
                 showHotUpdateRestartDialog(updateData);
             } else {
                 // 不需要重启，刷新页面即可
                 showToast(`更新成功！共更新 ${updateData.updated_files.length} 个文件`, 'success');
-                
+
                 // 3秒后刷新页面
                 setTimeout(() => {
                     window.location.reload();
@@ -15135,7 +15297,7 @@ async function performHotUpdate() {
         } else {
             showToast('更新失败: ' + (result.message || result.data?.message || '未知错误'), 'danger');
         }
-        
+
     } catch (error) {
         console.error('热更新执行失败:', error);
         showToast('更新失败: ' + error.message, 'danger');
@@ -15164,9 +15326,9 @@ async function showHotUpdateConfirmDialog(updateInfo) {
         const filesInfo = updateInfo.files && updateInfo.files.length > 0
             ? updateInfo.files.map(f => `<li><code>${f.path}</code> ${f.requires_restart ? '<span class="badge bg-warning">需重启</span>' : ''}</li>`).join('')
             : '<li>暂无详细文件列表</li>';
-        
+
         const totalSizeKB = (updateInfo.total_size / 1024).toFixed(2);
-        
+
         const modalHtml = `
             <div class="modal fade" id="hotUpdateConfirmModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
@@ -15229,32 +15391,32 @@ async function showHotUpdateConfirmDialog(updateInfo) {
                 </div>
             </div>
         `;
-        
+
         // 移除已存在的模态框
         const existingModal = document.getElementById('hotUpdateConfirmModal');
         if (existingModal) {
             existingModal.remove();
         }
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
         const modal = new bootstrap.Modal(document.getElementById('hotUpdateConfirmModal'));
-        
+
         // 绑定按钮事件
         document.getElementById('hotUpdateConfirmBtn').onclick = () => {
             modal.hide();
             resolve(true);
         };
-        
+
         document.getElementById('hotUpdateCancelBtn').onclick = () => {
             modal.hide();
             resolve(false);
         };
-        
+
         document.getElementById('hotUpdateConfirmModal').addEventListener('hidden.bs.modal', () => {
             document.getElementById('hotUpdateConfirmModal').remove();
         });
-        
+
         modal.show();
     });
 }
@@ -15278,15 +15440,15 @@ function showHotUpdateProgress() {
             </div>
         </div>
     `;
-    
+
     // 移除已存在的模态框
     const existingModal = document.getElementById('hotUpdateProgressModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     const modal = new bootstrap.Modal(document.getElementById('hotUpdateProgressModal'));
     modal.show();
 }
@@ -15350,15 +15512,15 @@ function showHotUpdateRestartDialog(updateData) {
             </div>
         </div>
     `;
-    
+
     // 移除已存在的模态框
     const existingModal = document.getElementById('hotUpdateRestartModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     const modal = new bootstrap.Modal(document.getElementById('hotUpdateRestartModal'));
     modal.show();
 }
@@ -15369,7 +15531,7 @@ function showHotUpdateRestartDialog(updateData) {
 async function restartApplication() {
     try {
         showToast('正在重启应用...', 'info');
-        
+
         const response = await fetch('/api/update/restart', {
             method: 'POST',
             headers: {
@@ -15378,12 +15540,12 @@ async function restartApplication() {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             showToast('应用正在重启，页面将在5秒后自动刷新...', 'success');
-            
+
             // 5秒后刷新页面
             setTimeout(() => {
                 window.location.reload();
@@ -15391,7 +15553,7 @@ async function restartApplication() {
         } else {
             showToast('重启失败: ' + result.message, 'danger');
         }
-        
+
     } catch (error) {
         console.error('重启应用失败:', error);
         showToast('重启失败: ' + error.message, 'danger');
