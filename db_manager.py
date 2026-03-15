@@ -2899,26 +2899,8 @@ Cookie数量: {cookie_count}
                 return None
 
     def fix_migrated_presets(self, full_template: str) -> None:
-        """将旧格式迁移（只含场景片段、无角色定义）的预设替换为完整模板"""
-        with self.lock:
-            try:
-                cursor = self.conn.cursor()
-                # 完整模板必含"销冠核心法则"；旧迁移预设只有 ### 场景片段
-                cursor.execute(
-                    "SELECT id FROM prompt_presets WHERE system_prompt != '' AND system_prompt NOT LIKE '%销冠核心法则%'"
-                )
-                rows = cursor.fetchall()
-                if not rows:
-                    return
-                ids = [r[0] for r in rows]
-                cursor.executemany(
-                    "UPDATE prompt_presets SET system_prompt=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                    [(full_template, pid) for pid in ids]
-                )
-                self.conn.commit()
-                logger.info(f"已修复 {len(ids)} 个旧格式提示词预设，补充完整模板")
-            except Exception as e:
-                logger.error(f"修复迁移预设失败: {e}")
+        """已废弃：提示词统一由前端管理，不再自动覆盖预设内容"""
+        pass
 
     # -------------------- 商品预设映射操作 --------------------
     def get_item_preset_mappings(self, cookie_id: str) -> list:

@@ -21,34 +21,10 @@ class AIReplyEngine:
     """AI回复引擎 - 统一意图识别与回复生成"""
     
     def __init__(self):
-        self._init_default_prompts()
         # 用于控制同一chat_id消息的串行处理
         self._chat_locks = {}
         self._chat_locks_lock = threading.Lock()
-        # 修复旧格式迁移预设（补充完整角色模板）
-        self._fix_migrated_presets()
-    
-    def _init_default_prompts(self):
-        """初始化默认提示词（用于构建统一提示词）"""
-        self.default_prompts = {
-            'price': '''【议价场景】
-策略：不接受议价，但用销冠思维制造紧迫感促成下单。
-- 友好但坚定：已经是官方1/10的价格，全网最低档位了
-- 制造稀缺："这个价格最近咨询的人特别多，这批额度快分完了，建议趁现在入手"
-- 如果犹豫：推荐10元=128刀尝鲜体验，"先拍个小的体验一下，好用再囤"
-- 如果还在砍价："真没利润空间了，我们走量的，您看中的话直接拍就行，自动发货秒到"''',
 
-            'tech': '''【技术/产品问题】
-基于知识库回答，遇到不确定的问题不要编造。
-回答技术问题时顺带强调优势（稳定性、速度、性价比）。
-如果问题超出知识库范围：引导加V深度交流，"这个加V：greatluck2023聊，我给您详细演示"''',
-
-            'default': '''【一般咨询】
-基于知识库回答发货、配置等问题，同时寻找机会推动下单。
-如果客户询问退款：先挽留（"额度还没到期呢，趁有效期内用完更划算哦，我们性价比真的超高"），再说"实在需要退款的话，请您先提交退货申请，稍后帮您办理"
-如果遇到复杂售后问题（报错、异常等），引导加V：greatluck2023'''
-        }
-    
     def _create_openai_client(self, cookie_id: str) -> Optional[OpenAI]:
         """创建指定账号的OpenAI客户端（无状态）"""
         settings = db_manager.get_ai_reply_settings(cookie_id)
@@ -158,124 +134,8 @@ class AIReplyEngine:
             logger.error(f"Anthropic API 响应格式错误: {result} - {e}")
             raise Exception(f"Anthropic API 响应格式错误: {result}")
     def get_default_system_prompt(self) -> str:
-        """返回内置的默认系统提示词，供前端新建预设时预填充"""
-        return self._build_unified_system_prompt(self.default_prompts, {})
-
-    def _fix_migrated_presets(self) -> None:
-        """修复从旧custom_prompts迁移过来的不完整预设，补充完整的角色模板"""
-        try:
-            full_template = self.get_default_system_prompt()
-            # 识别标志：完整模板必然包含"销冠核心法则"；旧迁移预设只有场景片段
-            db_manager.fix_migrated_presets(full_template)
-        except Exception as e:
-            logger.warning(f"修复迁移预设失败（不影响启动）: {e}")
-
-    def _build_unified_system_prompt(self, custom_prompts: dict, settings: dict) -> str:
-        """
-        构建统一的系统提示词
-        将意图判断和回复生成整合到一个提示词中
-        """
-        # 获取各场景的指导（优先使用用户自定义）
-        price_guide = custom_prompts.get('price', self.default_prompts['price'])
-        tech_guide = custom_prompts.get('tech', self.default_prompts['tech'])
-        default_guide = custom_prompts.get('default', self.default_prompts['default'])
-        knowledge_base = custom_prompts.get('knowledge_base', '')
-
-        unified_prompt = f"""你是一位顶尖销冠AI，负责在闲鱼平台上促成API额度的成交。你不仅仅是客服——你懂得销售心理学，善于制造稀缺感和紧迫感，同时真诚地帮客户做出最优选择。请根据用户消息、知识库和上下文，直接生成合适的回复。
-
-## 销冠核心法则
-1. **每句话都朝成交推进**：回答问题的同时，自然植入下单引导（"拍下秒发""现在入手正好"）
-2. **制造稀缺和紧迫**：适时暗示库存/名额有限（"最近咨询量特别大""这批快分完了""今天已经出了好几单了"），但不要每句话都说，自然穿插
-3. **强调独特优势**：官方1/10价格、国内直连CN2专线不限速、满血4.6模型、自动发货秒到、独立后台查用量
-4. **社会认证**：适时提到其他客户的正面反馈（"回头客特别多""很多开发者都在用""老客户都是直接囤1800刀的"），自然不刻意
-5. **严格基于知识库**：只回答知识库和商品信息中有的内容，绝不编造
-6. **准确理解意图**：只根据用户实际说的内容判断，不过度解读
-7. **不主动提及敏感话题**：用户没提到的（如退款、砍价）不要主动提
-8. **避免重复**：结合对话历史，不重复之前说过的话
-9. **语言简洁自然**：像真人聊天，简短友好，一般不超过30字，不要用markdown格式
-
-## 场景处理指南
-
-### 当用户明确要求降价/优惠/砍价时
-{price_guide}
-
-### 当用户询问产品技术/功能/使用问题时
-{tech_guide}
-
-### 售后问题处理
-- 简单售后（教程在哪、怎么配置）：直接根据知识库回答，给出具体教程链接
-- 疑难售后（报错、无法使用、账号异常、退款等复杂问题）：引导客户加V处理，回复类似"这个加V：greatluck2023，我帮你排查处理~"
-- 判断标准：如果知识库里有明确答案就直接回答，如果没有或问题比较复杂就引导加V
-
-### 其他一般咨询
-{default_guide}
-
-{f'## 产品知识库（回答问题的核心依据）{chr(10)}{knowledge_base}' if knowledge_base else ''}
-
-## 回复示例（学习销冠的语气和节奏）
-
-客户: 怎么收费的
-销冠: 10元=128刀先体验，140元=1800刀囤货最划算，官方1/10的价格，最近拍的人挺多的~
-
-客户: 能便宜点吗
-销冠: 已经是官方十分之一了真没空间了，好多老客户都是直接囤1800刀的，先拍个128刀体验下？好用再囤~
-
-客户: 支持Claude Code吗
-销冠: 完美适配Claude Code，国内直连不限速，很多开发者都在用，拍下秒发~
-
-客户: 怎么发货
-销冠: 拍下后自动发API地址和Key，附带保姆级教程，秒到账~
-
-客户: 可以用酒馆吗
-销冠: 不支持酒馆哦，主要适配Claude Code、OpenCode、OpenClaw等开发工具
-
-客户: 有后台看消耗吗
-销冠: 有的，购买后给您专属后台，余额用量随时可查，用着很透明~
-
-客户: 有网站可以看看吗
-销冠: 有独立后台可以随时查余额和用量，使用方式是API地址+Key接入，拍下后自动发给您~
-
-客户: 国内能用吗需要翻墙吗
-销冠: 国内直连，走CN2 GIA专线，不需要翻墙，速度很快~
-
-客户: 用不了报错了怎么办
-销冠: 加一下V：greatluck2023，发我报错截图帮你看看~
-
-客户: 教程在哪
-销冠: Claude Code教程：Linux/Mac版 https://ucnkgui8gbgt.feishu.cn/wiki/AMKLwkOyYikFtrk62TPcbnYbnOe ，Windows版 https://ucnkgui8gbgt.feishu.cn/docx/VpPudlFqlozgadxtj2CcgwAQnkc ，有问题随时问~
-
-客户: 能退款不
-销冠: 额度还没到期呢，趁有效期内用完更划算哦。实在需要退款的话，您先提交退货申请，稍后帮您办理~
-
-客户: 是逆向的吗
-销冠: 我们走的官方Anthropic协议，满血4.6模型，高稳定性，很多客户用了大半年了非常稳~
-
-客户: token数统计偏大/消耗怎么这么多
-销冠: 我们性价比极高，官方1/10的价格，您可以随时在后台查询详细用量明细哦
-
-客户: 有没有1m上下文
-销冠: 暂时不支持1m上下文哦，目前是标准的200k上下文
-
-客户: 好的我看看
-销冠: 好的随时找我，最近咨询量比较大，想好了直接拍就行，自动发货秒到~
-
-客户: 稳定吗
-销冠: 非常稳定，CN2专线直连，很多客户用了大半年了，回头客特别多~
-
-## 特别注意
-- 用户只是问价格 ≠ 用户在砍价，正常回答价格并顺带推荐即可
-- 用户说"好的""我看看""考虑一下"→ 不要追着推销，轻轻制造紧迫感即可（"想好了随时拍~"）
-- 用户咨询简单售后（教程、配置方法）→ 直接根据知识库回答
-- 用户遇到疑难问题（报错、异常、退款）→ 引导加V：greatluck2023
-- 超出知识库范围的问题 → 引导加V：greatluck2023
-- 用户问"是不是逆向"→ 强调走官方协议、满血模型、高稳定性，不要说"我们不是逆向"也不要承认逆向，突出比较优势和客户口碑
-- 用户问退款→ 先挽留（强调趁有效期用完更划算），再告知提交退货申请流程
-- 套餐是月度有效期，到期额度清零，绝对不要说"额度不会过期""用不完下个月继续"
-- 用户问"有网站吗"→ 回答有独立后台查余额，使用方式是API+Key，不要说没有网站
-- 制造稀缺感要自然，不要每条消息都说"快没了"，根据对话节奏适时穿插
-- 不要输出分析过程，直接输出回复内容"""
-        
-        return unified_prompt
+        """返回空字符串，提示词由前端 AI提示词 页面统一管理"""
+        return ''
 
     def _call_dashscope_api(self, settings: dict, messages: list, max_tokens: int = 100, temperature: float = 0.7) -> str:
         """调用DashScope API"""
@@ -461,52 +321,32 @@ class AIReplyEngine:
                 # 1. 获取AI设置
                 settings = db_manager.get_ai_reply_settings(cookie_id)
 
-                # 优先级：商品级预设 > 账号活跃预设 > custom_prompts字段（向后兼容）> 代码默认值
+                # 获取预设提示词：商品级预设 > 账号活跃预设 > 空
                 preset = db_manager.get_preset_for_item(cookie_id, item_id)
                 if not preset:
                     preset = db_manager.get_active_preset(cookie_id)
-                if preset and preset.get('system_prompt'):
-                    _override_system_prompt = preset['system_prompt']
-                    custom_prompts = {}
-                elif preset:
-                    # 旧4字段预设（迁移期兼底层兼容）
-                    _override_system_prompt = None
-                    custom_prompts = {
-                        'price': preset.get('price_prompt', ''),
-                        'tech': preset.get('tech_prompt', ''),
-                        'default': preset.get('default_prompt', ''),
-                        'knowledge_base': preset.get('knowledge_base', ''),
-                    }
-                else:
-                    _override_system_prompt = None
-                    custom_prompts = json.loads(settings['custom_prompts']) if settings.get('custom_prompts') else {}
+                system_prompt = preset.get('system_prompt', '') if preset else ''
 
                 # 2. 获取对话历史
                 context = self.get_conversation_context(chat_id, cookie_id)
 
-                # 3. 获取对话轮数和议价设置（供AI参考）
+                # 3. 获取对话轮数
                 conversation_rounds = self.get_conversation_rounds(chat_id, cookie_id)
-                max_bargain_rounds = settings.get('max_bargain_rounds', 3)
-                max_discount_percent = settings.get('max_discount_percent', 10)
-                max_discount_amount = settings.get('max_discount_amount', 100)
 
-                # 4. 构建统一的系统提示词（整合意图判断和回复生成）
-                system_prompt = _override_system_prompt or self._build_unified_system_prompt(custom_prompts, settings)
-
-                # 5. 构建商品信息
+                # 4. 构建商品信息
                 item_desc = f"商品标题: {item_info.get('title', '未知')}\n"
                 item_desc += f"商品价格: {item_info.get('price', '未知')}元\n"
                 item_desc += f"商品描述: {item_info.get('desc', '无')}"
 
-                # 6. 构建对话历史字符串
+                # 5. 构建对话历史字符串
                 context_str = ""
                 if context:
                     context_str = "\n".join([
-                        f"{'客户' if msg['role'] == 'user' else '客服'}: {msg['content']}" 
+                        f"{'客户' if msg['role'] == 'user' else '客服'}: {msg['content']}"
                         for msg in context[-10:]
                     ])
 
-                # 7. 构建用户消息（包含所有上下文）
+                # 6. 构建用户消息（包含所有上下文）
                 user_prompt = f"""## 商品信息
 {item_desc}
 
@@ -515,8 +355,6 @@ class AIReplyEngine:
 
 ## 对话状态
 - 当前对话轮数：第{conversation_rounds + 1}轮
-- 议价限制：最多{max_bargain_rounds}轮议价后需坚持底价
-- 最大可优惠：{max_discount_percent}%或{max_discount_amount}元
 
 ## 当前用户消息
 {message}
