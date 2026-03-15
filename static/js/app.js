@@ -87,6 +87,10 @@ function showSection(sectionName) {
         case 'auto-reply':      // 【自动回复菜单】
             refreshAccountList();
             break;
+        case 'ai-prompts':      // 【AI提示词菜单】
+            loadUserAISettings();
+            loadPromptPresets();
+            break;
         case 'cards':           // 【卡券管理菜单】
             loadCards();
             break;
@@ -1804,8 +1808,8 @@ async function loadCookies() {
         </td>
         <td class="align-middle">
             <div class="pause-duration-cell" data-cookie-id="${cookie.id}">
-                <span class="pause-duration-display" onclick="editPauseDuration('${cookie.id}', ${cookie.pause_duration !== undefined ? cookie.pause_duration : 10})" title="点击编辑暂停时间" style="cursor: pointer; color: #6c757d; font-size: 0.875rem;">
-                    <i class="bi bi-clock me-1"></i>${cookie.pause_duration === 0 ? '不暂停' : (cookie.pause_duration || 10) + '分钟'}
+                <span class="pause-duration-display" onclick="editPauseDuration('${cookie.id}', ${cookie.pause_duration !== undefined ? cookie.pause_duration : 1})" title="点击编辑暂停时间" style="cursor: pointer; color: #6c757d; font-size: 0.875rem;">
+                    <i class="bi bi-clock me-1"></i>${cookie.pause_duration === 0 ? '不暂停' : (cookie.pause_duration || 1) + '分钟'}
                 </span>
             </div>
         </td>
@@ -1820,9 +1824,14 @@ async function loadCookies() {
             <button class="btn btn-sm btn-outline-success" onclick="goToAutoReply('${cookie.id}')" title="${isEnabled ? '设置自动回复' : '配置关键词 (账号已禁用)'}">
                 <i class="bi bi-arrow-right-circle"></i>
             </button>
-            <button class="btn btn-sm btn-outline-warning" onclick="configAIReply('${cookie.id}')" title="配置AI回复" ${!isEnabled ? 'disabled' : ''}>
+            <button class="btn btn-sm btn-outline-warning" onclick="goToAIPrompts('${cookie.id}')" title="AI提示词配置" ${!isEnabled ? 'disabled' : ''}>
                 <i class="bi bi-robot"></i>
             </button>
+            <div class="form-check form-switch d-inline-block ms-1 align-middle" title="AI回复开关">
+                <input class="form-check-input" type="checkbox" id="aiToggle_${cookie.id}"
+                    ${cookie.aiReply.ai_enabled ? 'checked' : ''} ${!isEnabled ? 'disabled' : ''}
+                    onchange="toggleAIEnabled('${cookie.id}', this)">
+            </div>
             <button class="btn btn-sm btn-outline-info" onclick="copyCookie('${cookie.id}', '${cookie.value}')" title="复制Cookie">
                 <i class="bi bi-clipboard"></i>
             </button>
@@ -3324,58 +3333,74 @@ async function clearDefaultReplyRecords(accountId) {
 
 // ==================== AI回复配置相关函数 ====================
 
-// 配置AI回复
+// 配置AI回复 - 跳转到AI提示词页面并加载指定账号
 async function configAIReply(accountId) {
-    try {
-        // 获取当前AI回复设置
-        const settings = await fetchJSON(`${apiBase}/ai-reply-settings/${accountId}`);
+    goToAIPrompts(accountId);
+}
 
-        // 填充表单
-        document.getElementById('aiConfigAccountId').value = accountId;
-        document.getElementById('aiConfigAccountIdDisplay').value = accountId;
+// 跳转到AI提示词页面
+function goToAIPrompts(accountId) {
+    showSection('ai-prompts');
+}
+
+// AI提示词页面：刷新账号列表（保留供其他地方调用，此页面不再需要）
+async function refreshAIPromptsAccountList() {}
+
+// AI提示词页面：加载用户级AI设置
+let _aiTestCookieId = null;  // 用于测试的第一个账号ID
+
+async function loadUserAISettings() {
+    try {
+        const settings = await fetchJSON(`${apiBase}/ai-reply-settings-user`);
+        _aiTestCookieId = settings.first_cookie_id || null;
+
         document.getElementById('aiReplyEnabled').checked = settings.ai_enabled;
-        // 处理模型名称
+
         const modelSelect = document.getElementById('aiModelName');
         const customModelInput = document.getElementById('customModelName');
-        const modelName = settings.model_name;
-        // 检查是否是预设模型
+        const modelName = settings.model_name || 'deepseek-v3.2';
         const presetModels = ['deepseek-v3.2', 'kimi-k2.5', 'qwen3-max-2026-01-23', 'qwen3.5-plus', 'gpt-4o-mini', 'gpt-4o'];
         if (presetModels.includes(modelName)) {
             modelSelect.value = modelName;
             customModelInput.style.display = 'none';
             customModelInput.value = '';
         } else {
-            // 自定义模型
             modelSelect.value = 'custom';
             customModelInput.style.display = 'block';
             customModelInput.value = modelName;
         }
-        document.getElementById('aiBaseUrl').value = settings.base_url;
-        document.getElementById('aiApiKey').value = settings.api_key;
-        document.getElementById('maxDiscountPercent').value = settings.max_discount_percent;
-        document.getElementById('maxDiscountAmount').value = settings.max_discount_amount;
-        document.getElementById('maxBargainRounds').value = settings.max_bargain_rounds;
-        // 解析自定义提示词 JSON，填入三个独立文本框
-        let prompts = {};
-        if (settings.custom_prompts) {
-            try { prompts = JSON.parse(settings.custom_prompts); } catch (e) { prompts = {}; }
-        }
-        document.getElementById('promptPrice').value = prompts.price || '';
-        document.getElementById('promptTech').value = prompts.tech || '';
-        document.getElementById('promptDefault').value = prompts.default || '';
-        document.getElementById('promptKnowledgeBase').value = prompts.knowledge_base || '';
+        document.getElementById('aiBaseUrl').value = settings.base_url || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+        document.getElementById('aiApiKey').value = settings.api_key || '';
 
-        // 切换设置显示状态
         toggleAIReplySettings();
         await loadAIPresets();
+    } catch (e) {
+        console.error('加载AI设置失败:', e);
+        showToast('加载AI设置失败', 'danger');
+    }
+}
 
-        // 显示模态框
-        const modal = new bootstrap.Modal(document.getElementById('aiReplyConfigModal'));
-        modal.show();
 
-    } catch (error) {
-        console.error('获取AI回复设置失败:', error);
-        showToast('获取AI回复设置失败', 'danger');
+// 快速切换AI开关（账号列表行）
+async function toggleAIEnabled(accountId, checkbox) {
+    const prev = !checkbox.checked;
+    try {
+        const settings = await fetchJSON(`${apiBase}/ai-reply-settings/${accountId}`);
+        settings.ai_enabled = checkbox.checked;
+        const response = await fetch(`${apiBase}/ai-reply-settings/${accountId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify(settings)
+        });
+        if (response.ok) {
+            showToast(`AI回复已${checkbox.checked ? '启用' : '禁用'}`, 'success');
+        } else {
+            checkbox.checked = prev;
+            showToast('操作失败', 'danger');
+        }
+    } catch (e) {
+        checkbox.checked = prev;
+        showToast('操作失败', 'danger');
     }
 }
 
@@ -3383,27 +3408,20 @@ async function configAIReply(accountId) {
 function toggleAIReplySettings() {
     const enabled = document.getElementById('aiReplyEnabled').checked;
     const settingsDiv = document.getElementById('aiReplySettings');
-    const bargainSettings = document.getElementById('bargainSettings');
-    const promptSettings = document.getElementById('promptSettings');
     const testArea = document.getElementById('testArea');
 
     if (enabled) {
         settingsDiv.style.display = 'block';
-        bargainSettings.style.display = 'block';
-        promptSettings.style.display = 'block';
         testArea.style.display = 'block';
     } else {
         settingsDiv.style.display = 'none';
-        bargainSettings.style.display = 'none';
-        promptSettings.style.display = 'none';
         testArea.style.display = 'none';
     }
 }
 
-// 保存AI回复配置
+// 保存AI回复配置（应用到所有账号）
 async function saveAIReplyConfig() {
     try {
-        const accountId = document.getElementById('aiConfigAccountId').value;
         const enabled = document.getElementById('aiReplyEnabled').checked;
 
         // 如果启用AI回复，验证必填字段
@@ -3424,32 +3442,15 @@ async function saveAIReplyConfig() {
             }
             modelName = customModelName;
         }
-        // 从文本框组装自定义提示词 JSON
-        const promptsObj = {};
-        const priceVal = document.getElementById('promptPrice').value.trim();
-        const techVal = document.getElementById('promptTech').value.trim();
-        const defaultVal = document.getElementById('promptDefault').value.trim();
-        const knowledgeBaseVal = document.getElementById('promptKnowledgeBase').value.trim();
-        if (priceVal) promptsObj.price = priceVal;
-        if (techVal) promptsObj.tech = techVal;
-        if (defaultVal) promptsObj.default = defaultVal;
-        if (knowledgeBaseVal) promptsObj.knowledge_base = knowledgeBaseVal;
-        const customPromptsJson = Object.keys(promptsObj).length > 0 ? JSON.stringify(promptsObj) : '';
-
-        // 构建设置对象
         const settings = {
             ai_enabled: enabled,
             model_name: modelName,
             api_key: document.getElementById('aiApiKey').value,
             base_url: document.getElementById('aiBaseUrl').value,
-            max_discount_percent: parseInt(document.getElementById('maxDiscountPercent').value),
-            max_discount_amount: parseInt(document.getElementById('maxDiscountAmount').value),
-            max_bargain_rounds: parseInt(document.getElementById('maxBargainRounds').value),
-            custom_prompts: customPromptsJson
+            custom_prompts: ""
         };
 
-        // 保存设置
-        const response = await fetch(`${apiBase}/ai-reply-settings/${accountId}`, {
+        const response = await fetch(`${apiBase}/ai-reply-settings-user`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -3459,9 +3460,8 @@ async function saveAIReplyConfig() {
         });
 
         if (response.ok) {
-            showToast('AI回复配置保存成功', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('aiReplyConfigModal')).hide();
-            loadCookies(); // 刷新账号列表以更新AI回复状态显示
+            showToast('AI配置保存成功', 'success');
+            loadCookies(); // 刷新账号列表以更新AI状态显示
         } else {
             const error = await response.text();
             showToast(`保存失败: ${error}`, 'danger');
@@ -3480,7 +3480,11 @@ async function testAIReply() {
     if (testBtn) { testBtn.disabled = true; testBtn.textContent = '测试中...'; }
 
     try {
-        const accountId = document.getElementById('aiConfigAccountId').value;
+        const accountId = _aiTestCookieId;
+        if (!accountId) {
+            showToast('暂无账号，无法测试', 'warning');
+            return;
+        }
         const testMessage = document.getElementById('testMessage').value.trim();
         const testItemPrice = document.getElementById('testItemPrice').value;
 
@@ -3530,6 +3534,270 @@ async function testAIReply() {
         showToast('测试AI回复失败', 'danger');
     } finally {
         if (testBtn) { testBtn.disabled = false; testBtn.textContent = '测试回复'; }
+    }
+}
+
+// -------------------- 提示词预设管理功能 --------------------
+
+let _promptPresets = [];   // [{id, name, system_prompt, is_active}]
+let _currentPresetId = null;  // 当前编辑的 preset id，null 表示新建
+let _defaultSystemPrompt = null;  // 缓存内置默认模板
+
+async function loadPromptPresets() {
+    try {
+        const presets = await fetchJSON(`${apiBase}/prompt-presets`);
+        _promptPresets = presets || [];
+        renderPresetGrid();
+    } catch (e) {
+        console.error('加载提示词预设失败:', e);
+    }
+}
+
+function renderPresetGrid() {
+    const grid = document.getElementById('promptPresetGrid');
+    if (!grid) return;
+
+    if (_promptPresets.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12 text-center text-muted py-5">
+                <i class="bi bi-chat-quote" style="font-size:2.5rem;opacity:.3;"></i>
+                <p class="mt-2 mb-0">暂无提示词预设，点击"新建预设"开始配置</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = _promptPresets.map(p => {
+        const preview = escapeHtml((p.system_prompt || '').slice(0, 150));
+        const isActive = p.is_active;
+        return `
+            <div class="col-xl-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm ${isActive ? 'border-primary border-2' : ''}" style="cursor:pointer;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'" onmouseleave="this.style.boxShadow=''" onclick="editPromptPreset(${p.id})">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center ${isActive ? 'bg-primary text-white' : ''}">
+                        <span class="fw-semibold text-truncate" style="max-width:130px;" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+                        ${isActive ? '<span class="badge bg-white text-primary ms-1">激活中</span>' : ''}
+                    </div>
+                    <div class="card-body py-2 px-3" style="min-height:80px;">
+                        <p class="text-muted small mb-0" style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;word-break:break-all;">${preview || '<em>（空）</em>'}</p>
+                    </div>
+                    <div class="card-footer py-1 px-2 d-flex gap-1 justify-content-end bg-transparent border-top-0">
+                        <button class="btn btn-xs btn-outline-primary" style="padding:.15rem .4rem;font-size:.75rem;" onclick="event.stopPropagation();editPromptPreset(${p.id})" title="编辑"><i class="bi bi-pencil"></i></button>
+                        ${!isActive ? `<button class="btn btn-xs btn-outline-success" style="padding:.15rem .4rem;font-size:.75rem;" onclick="event.stopPropagation();activatePresetById(${p.id})" title="激活"><i class="bi bi-check-circle"></i></button>` : ''}
+                        <button class="btn btn-xs btn-outline-danger" style="padding:.15rem .4rem;font-size:.75rem;" onclick="event.stopPropagation();deletePromptPresetById(${p.id}, '${escapeHtml(p.name)}')" title="删除"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function editPromptPreset(presetId) {
+    _currentPresetId = presetId;
+    const preset = _promptPresets.find(p => p.id === presetId);
+    if (!preset) return;
+    document.getElementById('promptPresetEditModalTitle').textContent = `编辑：${preset.name}`;
+    document.getElementById('promptPresetName').value = preset.name;
+    document.getElementById('promptSystemPrompt').value = preset.system_prompt || '';
+    const activateBtn = document.getElementById('activatePromptPresetBtn');
+    if (activateBtn) activateBtn.style.display = preset.is_active ? 'none' : '';
+    new bootstrap.Modal(document.getElementById('promptPresetEditModal')).show();
+}
+
+async function loadDefaultTemplateToEditor() {
+    const ta = document.getElementById('promptSystemPrompt');
+    if (!confirm('确认用内置默认模板覆盖当前内容？')) return;
+    if (_defaultSystemPrompt !== null) {
+        ta.value = _defaultSystemPrompt;
+        return;
+    }
+    ta.value = '正在加载...';
+    try {
+        const res = await fetchJSON(`${apiBase}/ai/default-system-prompt`);
+        _defaultSystemPrompt = res.system_prompt || '';
+        ta.value = _defaultSystemPrompt;
+    } catch (e) {
+        ta.value = '';
+        showToast('加载失败: ' + (e.message || e), 'danger');
+    }
+}
+
+async function newPromptPreset() {
+    _currentPresetId = null;
+    document.getElementById('promptPresetEditModalTitle').textContent = '新建提示词预设';
+    document.getElementById('promptPresetName').value = '';
+    const activateBtn = document.getElementById('activatePromptPresetBtn');
+    if (activateBtn) activateBtn.style.display = 'none';
+
+    const ta = document.getElementById('promptSystemPrompt');
+    if (_defaultSystemPrompt !== null) {
+        ta.value = _defaultSystemPrompt;
+    } else {
+        ta.value = '正在加载默认模板...';
+        try {
+            const res = await fetchJSON(`${apiBase}/ai/default-system-prompt`);
+            _defaultSystemPrompt = res.system_prompt || '';
+            ta.value = _defaultSystemPrompt;
+        } catch (e) {
+            ta.value = '';
+            console.error('加载默认模板失败:', e);
+        }
+    }
+    new bootstrap.Modal(document.getElementById('promptPresetEditModal')).show();
+}
+
+async function activateCurrentPromptPreset() {
+    if (!_currentPresetId) return;
+    try {
+        await fetchJSON(`${apiBase}/prompt-presets/${_currentPresetId}/activate`, { method: 'POST' });
+        showToast('预设已设为默认', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('promptPresetEditModal'));
+        if (modal) modal.hide();
+        await loadPromptPresets();
+    } catch (e) {
+        showToast('激活失败: ' + (e.message || e), 'danger');
+    }
+}
+
+async function activatePresetById(presetId) {
+    try {
+        await fetchJSON(`${apiBase}/prompt-presets/${presetId}/activate`, { method: 'POST' });
+        showToast('预设已设为默认', 'success');
+        await loadPromptPresets();
+    } catch (e) {
+        showToast('激活失败: ' + (e.message || e), 'danger');
+    }
+}
+
+async function saveCurrentPromptPreset() {
+    const name = document.getElementById('promptPresetName').value.trim();
+    if (!name) { showToast('请输入预设名称', 'warning'); return; }
+    const body = {
+        name,
+        system_prompt: document.getElementById('promptSystemPrompt').value,
+    };
+    try {
+        let presetId = _currentPresetId;
+        const isNew = !presetId;
+        if (presetId) {
+            await fetchJSON(`${apiBase}/prompt-presets/${presetId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } else {
+            const res = await fetchJSON(`${apiBase}/prompt-presets`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            presetId = res.preset_id;
+            // 新建时自动设为默认
+            await fetchJSON(`${apiBase}/prompt-presets/${presetId}/activate`, { method: 'POST' });
+        }
+        showToast(isNew ? '预设创建并设为默认' : '预设保存成功', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('promptPresetEditModal'));
+        if (modal) modal.hide();
+        await loadPromptPresets();
+    } catch (e) {
+        console.error('保存提示词预设失败:', e);
+        showToast('保存失败: ' + (e.message || e), 'danger');
+    }
+}
+
+async function deletePromptPresetById(presetId, presetName) {
+    if (!confirm(`确定删除预设"${presetName}"？`)) return;
+    try {
+        await fetchJSON(`${apiBase}/prompt-presets/${presetId}`, { method: 'DELETE' });
+        showToast('预设已删除', 'success');
+        await loadPromptPresets();
+    } catch (e) {
+        showToast('删除失败: ' + (e.message || e), 'danger');
+    }
+}
+
+// compat: keep old name for any lingering references
+function onPromptPresetEdited() {}
+
+// -------------------- 商品AI提示词分配（per-item modal）--------------------
+
+// key: "cookieId:itemId" → preset_name (非空表示已分配)
+let _itemPresetMap = {};
+
+async function _loadItemPresetMappings() {
+    try {
+        const mappings = await fetchJSON(`${apiBase}/item-preset-mapping`);
+        _itemPresetMap = {};
+        (mappings || []).forEach(m => {
+            _itemPresetMap[`${m.cookie_id || ''}:${m.item_id}`] = m.preset_name || '';
+        });
+    } catch (e) {
+        console.error('加载商品预设映射失败:', e);
+    }
+}
+
+let _itemPresetModalState = { cookieId: null, itemId: null };
+
+async function openItemPresetModal(cookieId, itemId, itemTitle) {
+    _itemPresetModalState = { cookieId, itemId };
+    document.getElementById('itemPresetModalTitle').textContent = itemTitle || itemId;
+
+    const selectEl = document.getElementById('itemPresetModalSelect');
+    const saveBtn = document.getElementById('itemPresetModalSaveBtn');
+    selectEl.innerHTML = '<option value="">加载中...</option>';
+    selectEl.disabled = true;
+    if (saveBtn) saveBtn.disabled = true;
+
+    const modal = new bootstrap.Modal(document.getElementById('itemPresetAssignModal'));
+    modal.show();
+
+    try {
+        const [presets, mappings] = await Promise.all([
+            fetchJSON(`${apiBase}/prompt-presets`).catch(() => []),
+            fetchJSON(`${apiBase}/item-preset-mapping/${cookieId}`).catch(() => [])
+        ]);
+
+        selectEl.innerHTML = '<option value="">账号默认（不指定）</option>';
+        (presets || []).forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.is_active ? `${p.name} ★` : p.name;
+            selectEl.appendChild(opt);
+        });
+
+        // 回填当前映射
+        const currentMapping = (mappings || []).find(m => m.item_id === itemId);
+        selectEl.value = currentMapping ? String(currentMapping.preset_id) : '';
+        selectEl.disabled = false;
+
+        if ((presets || []).length === 0) {
+            selectEl.innerHTML = '<option value="">（该账号暂无提示词预设，请先到AI提示词页新建）</option>';
+            if (saveBtn) saveBtn.disabled = true;
+        } else {
+            if (saveBtn) saveBtn.disabled = false;
+        }
+    } catch (e) {
+        selectEl.innerHTML = '<option value="">加载失败</option>';
+        console.error('加载提示词预设失败:', e);
+    }
+}
+
+async function saveItemPresetFromModal() {
+    const { cookieId, itemId } = _itemPresetModalState;
+    if (!cookieId || !itemId) return;
+
+    const presetIdStr = document.getElementById('itemPresetModalSelect').value;
+    const presetId = presetIdStr ? parseInt(presetIdStr) : null;
+    try {
+        await fetchJSON(`${apiBase}/item-preset-mapping/${cookieId}/${encodeURIComponent(itemId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ preset_id: presetId })
+        });
+        showToast('已保存', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('itemPresetAssignModal')).hide();
+        // 刷新映射缓存并重新渲染当前页，让按钮颜色立即更新
+        await _loadItemPresetMappings();
+        displayCurrentPageItems();
+    } catch (e) {
+        showToast('保存失败: ' + (e.message || e), 'danger');
     }
 }
 
@@ -4486,7 +4754,12 @@ async function onNotifBindAccountChange() {
         if (bindingsRes.ok) {
             currentBindings = await bindingsRes.json();
         }
-        const boundChannelIds = new Set(currentBindings.filter(b => b.enabled).map(b => b.channel_id));
+        // 构建绑定映射：channel_id -> binding info (包含notify_types)
+        const bindingsMap = {};
+        currentBindings.filter(b => b.enabled).forEach(b => {
+            bindingsMap[b.channel_id] = b;
+        });
+        const boundChannelIds = new Set(Object.keys(bindingsMap).map(Number));
 
         if (enabledChannels.length === 0) {
             container.innerHTML = '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>暂无已启用的通知渠道，请先到"通知渠道管理"页面添加渠道</div>';
@@ -4494,10 +4767,20 @@ async function onNotifBindAccountChange() {
             return;
         }
 
+        // 通知类型定义
+        const notifyTypeOptions = [
+            { value: 'message', label: '买家消息' },
+            { value: 'order', label: '订单通知' },
+            { value: 'delivery', label: '发货通知' }
+        ];
+
         // 渲染渠道复选框列表
         let html = '<div class="list-group">';
         enabledChannels.forEach(channel => {
             const checked = boundChannelIds.has(channel.id) ? 'checked' : '';
+            const binding = bindingsMap[channel.id];
+            const currentNotifyTypes = binding && binding.notify_types ? binding.notify_types : ['message', 'delivery', 'order'];
+
             // 解析渠道类型图标
             let channelType = channel.type;
             if (channelType === 'ding_talk') channelType = 'dingtalk';
@@ -4507,35 +4790,53 @@ async function onNotifBindAccountChange() {
             const color = typeConfig ? typeConfig.color : 'secondary';
             const typeLabel = typeConfig ? typeConfig.title : channel.type;
 
+            // 生成通知类型复选框
+            let notifyTypesHtml = notifyTypeOptions.map(opt => {
+                const typeChecked = currentNotifyTypes.includes(opt.value) ? 'checked' : '';
+                return `<label class="form-check form-check-inline mb-0" style="font-size:0.85rem;">
+                    <input class="form-check-input notif-type-cb" type="checkbox" value="${opt.value}"
+                           data-channel-id="${channel.id}" ${typeChecked} style="font-size:0.9em;">
+                    <span class="form-check-label">${opt.label}</span>
+                </label>`;
+            }).join('');
+
             html += `
-            <label class="list-group-item d-flex align-items-center gap-3" style="cursor:pointer;">
-                <input class="form-check-input flex-shrink-0" type="checkbox" value="${channel.id}" ${checked}
-                       id="notifBind_ch_${channel.id}" style="font-size:1.2em;">
-                <div class="d-flex align-items-center gap-2 flex-grow-1">
-                    <i class="bi ${icon} text-${color}" style="font-size:1.3em;"></i>
-                    <div>
-                        <strong>${channel.name}</strong>
-                        <span class="badge bg-${color} ms-2">${typeLabel}</span>
+            <div class="list-group-item" style="cursor:pointer;">
+                <div class="d-flex align-items-center gap-3">
+                    <input class="form-check-input flex-shrink-0" type="checkbox" value="${channel.id}" ${checked}
+                           id="notifBind_ch_${channel.id}" style="font-size:1.2em;">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1">
+                        <i class="bi ${icon} text-${color}" style="font-size:1.3em;"></i>
+                        <div>
+                            <strong>${channel.name}</strong>
+                            <span class="badge bg-${color} ms-2">${typeLabel}</span>
+                        </div>
                     </div>
+                    <span class="badge ${checked ? 'bg-success' : 'bg-secondary'}" id="notifBind_badge_${channel.id}">${checked ? '已绑定' : '未绑定'}</span>
                 </div>
-                <span class="badge ${checked ? 'bg-success' : 'bg-secondary'}" id="notifBind_badge_${channel.id}">${checked ? '已绑定' : '未绑定'}</span>
-            </label>`;
+                <div class="mt-2 ms-4 ps-2 notif-types-row" id="notifTypes_${channel.id}" style="${checked ? '' : 'opacity:0.5;pointer-events:none;'}">
+                    <small class="text-muted me-2">通知类型:</small>${notifyTypesHtml}
+                </div>
+            </div>`;
         });
         html += '</div>';
         container.innerHTML = html;
 
-        // 实时更新 badge 状态
+        // 实时更新 badge 状态和通知类型区域的启用/禁用
         enabledChannels.forEach(channel => {
             const cb = document.getElementById(`notifBind_ch_${channel.id}`);
             if (cb) {
                 cb.addEventListener('change', () => {
                     const badge = document.getElementById(`notifBind_badge_${channel.id}`);
+                    const typesRow = document.getElementById(`notifTypes_${channel.id}`);
                     if (cb.checked) {
                         badge.className = 'badge bg-success';
                         badge.textContent = '已绑定';
+                        if (typesRow) { typesRow.style.opacity = '1'; typesRow.style.pointerEvents = 'auto'; }
                     } else {
                         badge.className = 'badge bg-secondary';
                         badge.textContent = '未绑定';
+                        if (typesRow) { typesRow.style.opacity = '0.5'; typesRow.style.pointerEvents = 'none'; }
                     }
                 });
             }
@@ -4558,10 +4859,21 @@ async function saveNotificationBindings() {
     }
 
     // 收集所有选中的渠道 ID
-    const checkboxes = document.querySelectorAll('#notifChannelCheckboxes input[type="checkbox"]');
+    const checkboxes = document.querySelectorAll('#notifChannelCheckboxes input[type="checkbox"][id^="notifBind_ch_"]');
     const channelIds = [];
     checkboxes.forEach(cb => {
         if (cb.checked) channelIds.push(parseInt(cb.value));
+    });
+
+    // 收集每个渠道的通知类型
+    const channelNotifyTypes = {};
+    channelIds.forEach(chId => {
+        const typeCbs = document.querySelectorAll(`.notif-type-cb[data-channel-id="${chId}"]`);
+        const types = [];
+        typeCbs.forEach(tcb => {
+            if (tcb.checked) types.push(tcb.value);
+        });
+        channelNotifyTypes[String(chId)] = types.length > 0 ? types : ['message', 'delivery', 'order'];
     });
 
     try {
@@ -4571,7 +4883,7 @@ async function saveNotificationBindings() {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ channel_ids: channelIds })
+            body: JSON.stringify({ channel_ids: channelIds, channel_notify_types: channelNotifyTypes })
         });
 
         if (response.ok) {
@@ -5230,6 +5542,9 @@ function renderCardsList(cards) {
         <div class="btn-group" role="group">
             <button class="btn btn-sm btn-outline-primary" onclick="editCard(${card.id})" title="编辑">
             <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyCard(${card.id})" title="复制">
+            <i class="bi bi-copy"></i>
             </button>
             <button class="btn btn-sm btn-outline-info" onclick="testCard(${card.id})" title="测试">
             <i class="bi bi-play"></i>
@@ -6161,6 +6476,87 @@ async function saveDeliveryRule() {
     } catch (error) {
         console.error('保存发货规则失败:', error);
         showToast('保存发货规则失败', 'danger');
+    }
+}
+
+// 复制卡券
+async function copyCard(cardId) {
+    try {
+        const response = await fetch(`${apiBase}/cards/${cardId}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            showToast('获取卡券详情失败', 'danger');
+            return;
+        }
+
+        const card = await response.json();
+
+        // 重置添加表单
+        document.getElementById('addCardForm').reset();
+
+        // 填充基本字段
+        document.getElementById('cardName').value = card.name + ' (副本)';
+        document.getElementById('cardType').value = card.type;
+        document.getElementById('cardDescription').value = card.description || '';
+        document.getElementById('cardDelaySeconds').value = card.delay_seconds || 0;
+
+        // 填充多规格字段
+        const isMultiSpec = card.is_multi_spec || false;
+        document.getElementById('isMultiSpec').checked = isMultiSpec;
+        document.getElementById('specName').value = card.spec_name || '';
+        document.getElementById('specValue').value = card.spec_value || '';
+        document.getElementById('specName2').value = card.spec_name_2 || '';
+        document.getElementById('specValue2').value = card.spec_value_2 || '';
+
+        // 根据类型填充特定字段
+        switch (card.type) {
+            case 'api':
+                if (card.api_config) {
+                    document.getElementById('apiUrl').value = card.api_config.url || '';
+                    document.getElementById('apiMethod').value = card.api_config.method || 'GET';
+                    document.getElementById('apiTimeout').value = card.api_config.timeout || 10;
+                    document.getElementById('apiHeaders').value = card.api_config.headers || '{}';
+                    document.getElementById('apiParams').value = card.api_config.params || '{}';
+                    document.getElementById('apiResponseTemplate').value = card.api_config.response_template || '';
+                }
+                break;
+            case 'yifan_api':
+                if (card.api_config) {
+                    document.getElementById('yifanUserId').value = card.api_config.user_id || '';
+                    document.getElementById('yifanUserKey').value = card.api_config.user_key || '';
+                    document.getElementById('yifanGoodsId').value = card.api_config.goods_id || '';
+                    document.getElementById('yifanCallbackUrl').value = card.api_config.callback_url || '';
+                    document.getElementById('yifanRequireAccount').checked = card.api_config.require_account || false;
+                }
+                break;
+            case 'text':
+                document.getElementById('textContent').value = card.text_content || '';
+                break;
+            case 'data':
+                document.getElementById('dataContent').value = card.data_content || '';
+                break;
+        }
+
+        // 切换显示对应类型的字段
+        toggleCardTypeFields();
+
+        // 延迟显示多规格字段
+        setTimeout(() => {
+            toggleMultiSpecFields();
+        }, 100);
+
+        // 打开添加卡券模态框
+        const modal = new bootstrap.Modal(document.getElementById('addCardModal'));
+        modal.show();
+
+        showToast('已复制卡券配置，请修改后保存', 'info');
+    } catch (error) {
+        console.error('复制卡券失败:', error);
+        showToast('复制卡券失败', 'danger');
     }
 }
 
@@ -7818,18 +8214,11 @@ async function loadCookieFilter(id) {
 // 加载所有商品
 async function loadAllItems() {
     try {
-        const response = await fetch(`${apiBase}/items`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            displayItems(data.items);
-        } else {
-            throw new Error('获取商品列表失败');
-        }
+        const [data] = await Promise.all([
+            fetchJSON(`${apiBase}/items`),
+            _loadItemPresetMappings(),
+        ]);
+        displayItems(data.items);
     } catch (error) {
         console.error('加载商品列表失败:', error);
         showToast('加载商品列表失败', 'danger');
@@ -7846,18 +8235,11 @@ async function loadItemsByCookie() {
     }
 
     try {
-        const response = await fetch(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            displayItems(data.items);
-        } else {
-            throw new Error('获取商品列表失败');
-        }
+        const [data] = await Promise.all([
+            fetchJSON(`${apiBase}/items/cookie/${encodeURIComponent(cookieId)}`),
+            _loadItemPresetMappings(),
+        ]);
+        displayItems(data.items);
     } catch (error) {
         console.error('加载商品列表失败:', error);
         showToast('加载商品列表失败', 'danger');
@@ -7990,6 +8372,9 @@ function displayCurrentPageItems() {
                 </button>
                 <button class="btn btn-sm ${isMultiQuantityDelivery ? 'btn-warning' : 'btn-success'}" onclick="toggleItemMultiQuantityDelivery('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', ${!isMultiQuantityDelivery})" title="${isMultiQuantityDelivery ? '关闭多数量发货' : '开启多数量发货'}">
                     <i class="bi ${isMultiQuantityDelivery ? 'bi-box-arrow-down' : 'bi-box-arrow-up'}"></i>
+                </button>
+                <button class="btn btn-sm ${_itemPresetMap[`${item.cookie_id}:${item.item_id}`] ? 'btn-primary' : 'btn-outline-secondary'}" onclick="openItemPresetModal('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', '${escapeHtml(item.item_title || item.item_id)}')" title="${_itemPresetMap[`${item.cookie_id}:${item.item_id}`] ? '已指定：' + _itemPresetMap[`${item.cookie_id}:${item.item_id}`] : '指定AI提示词（使用账号默认）'}">
+                    <i class="bi bi-robot"></i>
                 </button>
                 </div>
             </td>
@@ -10788,7 +11173,7 @@ function editPauseDuration(cookieId, currentDuration) {
     const input = document.createElement('input');
     input.type = 'number';
     input.className = 'form-control form-control-sm';
-    input.value = currentDuration !== undefined ? currentDuration : 10;
+    input.value = currentDuration !== undefined ? currentDuration : 1;
     input.placeholder = '请输入暂停时间...';
     input.style.fontSize = '0.875rem';
     input.min = 0;
@@ -10797,7 +11182,7 @@ function editPauseDuration(cookieId, currentDuration) {
 
     // 保存原始内容和原始值
     const originalContent = pauseCell.innerHTML;
-    const originalValue = currentDuration !== undefined ? currentDuration : 10;
+    const originalValue = currentDuration !== undefined ? currentDuration : 1;
 
     // 标记是否已经进行了编辑
     let hasChanged = false;

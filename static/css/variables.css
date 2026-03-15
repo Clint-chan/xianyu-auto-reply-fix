@@ -2,9 +2,9 @@
    全局变量和基础样式
    ================================ */
 :root {
-    --primary-color: #4f46e5;
-    --primary-hover: #4338ca;
-    --primary-light: #6366f1;
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #3b82f6;
     --secondary-color: #6b7280;
     --success-color: #10b981;
     --danger-color: #ef4444;
