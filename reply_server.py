@@ -1766,6 +1766,7 @@ class MessageNotificationIn(BaseModel):
 
 class AccountNotificationBindingsIn(BaseModel):
     channel_ids: List[int]  # 要绑定的渠道ID列表
+    channel_notify_types: Dict[str, List[str]] = {}  # 每个渠道的通知类型 {channel_id: ["message","delivery","order"]}
 
 
 class SystemSettingIn(BaseModel):
@@ -1825,7 +1826,7 @@ def get_cookies_details(current_user: Dict[str, Any] = Depends(get_current_user)
             'remark': remark,
             'username': username,
             'password': password,
-            'pause_duration': cookie_details.get('pause_duration', 10) if cookie_details else 10
+            'pause_duration': cookie_details.get('pause_duration', 1) if cookie_details else 1
         })
     return result
 
@@ -3551,7 +3552,9 @@ def update_account_notification_bindings(cid: str, bindings: AccountNotification
         for channel_id in bindings.channel_ids:
             channel = db_manager.get_notification_channel(channel_id)
             if channel:
-                db_manager.set_message_notification(cid, channel_id, True)
+                # 获取该渠道的通知类型配置
+                notify_types = bindings.channel_notify_types.get(str(channel_id), ["message", "delivery", "order"])
+                db_manager.set_message_notification(cid, channel_id, True, notify_types=notify_types)
                 bound_channels.append(channel_id)
 
         return {'msg': 'account notification bindings updated', 'bound_channels': bound_channels}
@@ -6084,6 +6087,15 @@ class AIConfigPreset(BaseModel):
     base_url: str = ""
 
 
+class PromptPresetModel(BaseModel):
+    name: str
+    system_prompt: str = ""
+
+
+class ItemPresetAssign(BaseModel):
+    preset_id: Optional[int] = None
+
+
 @app.delete("/items/batch")
 def batch_delete_items(
     request: BatchDeleteRequest,
@@ -6187,6 +6199,48 @@ def get_all_ai_reply_settings(current_user: Dict[str, Any] = Depends(get_current
         raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
 
 
+@app.get("/ai-reply-settings-user")
+def get_user_ai_reply_settings(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """获取当前用户的AI回复设置（取第一个账号的设置，所有账号共用）"""
+    try:
+        user_id = current_user['user_id']
+        from db_manager import db_manager
+        user_cookies = list(db_manager.get_all_cookies(user_id))
+        if not user_cookies:
+            # 没有账号，返回默认值
+            return {
+                "ai_enabled": False, "model_name": "deepseek-v3.2",
+                "api_key": "", "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "custom_prompts": "", "first_cookie_id": None
+            }
+        first_cookie = user_cookies[0]
+        settings = db_manager.get_ai_reply_settings(first_cookie)
+        settings["first_cookie_id"] = first_cookie
+        return settings
+    except Exception as e:
+        logger.error(f"获取用户AI回复设置异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.put("/ai-reply-settings-user")
+def update_user_ai_reply_settings(settings: AIReplySettings, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """更新当前用户所有账号的AI回复设置（统一应用）"""
+    try:
+        user_id = current_user['user_id']
+        from db_manager import db_manager
+        user_cookies = list(db_manager.get_all_cookies(user_id))
+        if not user_cookies:
+            return {"message": "暂无账号，设置已保存待账号添加后生效"}
+        settings_dict = settings.dict()
+        for cookie_id in user_cookies:
+            db_manager.save_ai_reply_settings(cookie_id, settings_dict)
+        logger.info(f"用户 {user_id} 统一更新 {len(user_cookies)} 个账号的AI回复设置")
+        return {"message": "AI回复设置已应用到所有账号"}
+    except Exception as e:
+        logger.error(f"更新用户AI回复设置异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
 @app.get("/ai-config-presets")
 def list_ai_config_presets(current_user: Dict[str, Any] = Depends(get_current_user)):
     """获取当前用户的AI配置预设列表"""
@@ -6248,6 +6302,166 @@ def delete_ai_config_preset(
         raise
     except Exception as e:
         logger.error(f"删除AI配置预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+# ==================== 提示词预设管理API ====================
+
+def _verify_cookie_owner(cookie_id: str, user_id: int):
+    """验证 cookie 归属当前用户，不属于则抛出 403"""
+    from db_manager import db_manager as _db
+    user_cookies = _db.get_all_cookies(user_id)
+    if cookie_id not in user_cookies:
+        raise HTTPException(status_code=403, detail="无权限访问该Cookie")
+
+
+@app.get("/prompt-presets")
+def list_prompt_presets(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """获取当前用户的所有提示词预设"""
+    try:
+        from db_manager import db_manager as _db
+        return _db.get_prompt_presets(current_user['user_id'])
+    except Exception as e:
+        logger.error(f"获取提示词预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.post("/prompt-presets")
+def create_prompt_preset(
+    preset: PromptPresetModel,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """创建提示词预设"""
+    try:
+        from db_manager import db_manager as _db
+        new_id = _db.create_prompt_preset(
+            current_user['user_id'], preset.name, preset.system_prompt
+        )
+        return {"message": "预设创建成功", "preset_id": new_id}
+    except Exception as e:
+        logger.error(f"创建提示词预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.put("/prompt-presets/{preset_id}")
+def update_prompt_preset(
+    preset_id: int,
+    preset: PromptPresetModel,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """更新提示词预设"""
+    try:
+        from db_manager import db_manager as _db
+        ok = _db.update_prompt_preset(
+            preset_id, current_user['user_id'], preset.name, preset.system_prompt
+        )
+        if not ok:
+            raise HTTPException(status_code=404, detail="预设不存在或无权修改")
+        return {"message": "预设更新成功"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"更新提示词预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.delete("/prompt-presets/{preset_id}")
+def delete_prompt_preset(
+    preset_id: int,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """删除提示词预设"""
+    try:
+        from db_manager import db_manager as _db
+        ok = _db.delete_prompt_preset(preset_id, current_user['user_id'])
+        if not ok:
+            raise HTTPException(status_code=404, detail="预设不存在或无权删除")
+        return {"message": "预设删除成功"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除提示词预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.post("/prompt-presets/{preset_id}/activate")
+def activate_prompt_preset(
+    preset_id: int,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """设置默认提示词预设"""
+    try:
+        from db_manager import db_manager as _db
+        ok = _db.set_default_preset(current_user['user_id'], preset_id)
+        if not ok:
+            raise HTTPException(status_code=500, detail="设置默认预设失败")
+        return {"message": "预设已设为默认"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"激活提示词预设异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.get("/ai/default-system-prompt")
+def get_default_system_prompt(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """返回内置的默认系统提示词，供前端新建预设时预填充"""
+    return {"system_prompt": ai_reply_engine.get_default_system_prompt()}
+
+
+@app.get("/item-preset-mapping")
+def list_all_item_preset_mappings(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """获取当前用户所有账号的商品-预设映射（用于前端批量着色）"""
+    try:
+        user_id = current_user['user_id']
+        from db_manager import db_manager as _db
+        user_cookies = list(_db.get_all_cookies(user_id))
+        result = []
+        for cid in user_cookies:
+            result.extend(_db.get_item_preset_mappings(cid))
+        return result
+    except Exception as e:
+        logger.error(f"获取用户商品预设映射异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.get("/item-preset-mapping/{cookie_id}")
+def list_item_preset_mapping(
+    cookie_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """获取账号下所有商品-预设映射"""
+    try:
+        _verify_cookie_owner(cookie_id, current_user['user_id'])
+        from db_manager import db_manager as _db
+        return _db.get_item_preset_mappings(cookie_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取商品预设映射异常: {e}")
+        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+
+
+@app.put("/item-preset-mapping/{cookie_id}/{item_id}")
+def set_item_preset_mapping(
+    cookie_id: str,
+    item_id: str,
+    body: ItemPresetAssign,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """设置或清除商品指定的提示词预设"""
+    try:
+        _verify_cookie_owner(cookie_id, current_user['user_id'])
+        from db_manager import db_manager as _db
+        if body.preset_id:
+            _db.set_item_preset(cookie_id, item_id, body.preset_id)
+        else:
+            _db.delete_item_preset(cookie_id, item_id)
+        return {"message": "商品预设映射已更新"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"设置商品预设映射异常: {e}")
         raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
 
 
