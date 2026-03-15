@@ -115,7 +115,7 @@ class DBManager:
                 user_id INTEGER NOT NULL,
                 auto_confirm INTEGER DEFAULT 1,
                 remark TEXT DEFAULT '',
-                pause_duration INTEGER DEFAULT 10,
+                pause_duration INTEGER DEFAULT 1,
                 username TEXT DEFAULT '',
                 password TEXT DEFAULT '',
                 show_browser INTEGER DEFAULT 0,
@@ -163,6 +163,35 @@ class DBManager:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (cookie_id) REFERENCES cookies(id) ON DELETE CASCADE
+            )
+            ''')
+
+            # 创建提示词预设表（用户级别，与具体账号无关）
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prompt_presets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                system_prompt TEXT DEFAULT '',
+                is_default INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            ''')
+
+            # 创建商品预设映射表
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS item_preset_mapping (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cookie_id TEXT NOT NULL,
+                item_id TEXT NOT NULL,
+                preset_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (cookie_id) REFERENCES cookies(id) ON DELETE CASCADE,
+                FOREIGN KEY (preset_id) REFERENCES prompt_presets(id) ON DELETE CASCADE,
+                UNIQUE(cookie_id, item_id)
             )
             ''')
 
@@ -423,6 +452,7 @@ class DBManager:
                 cookie_id TEXT NOT NULL,
                 channel_id INTEGER NOT NULL,
                 enabled BOOLEAN DEFAULT TRUE,
+                notify_types TEXT DEFAULT '["message","delivery","order"]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (cookie_id) REFERENCES cookies(id) ON DELETE CASCADE,
@@ -612,7 +642,7 @@ Cookie数量: {cookie_count}
             # 检查cookies表是否存在pause_duration列
             if 'pause_duration' not in cookie_columns:
                 logger.info("添加cookies表的pause_duration列...")
-                cursor.execute("ALTER TABLE cookies ADD COLUMN pause_duration INTEGER DEFAULT 10")
+                cursor.execute("ALTER TABLE cookies ADD COLUMN pause_duration INTEGER DEFAULT 1")
                 logger.info("数据库迁移完成：添加pause_duration列")
 
             # 检查cookies表是否存在auto_comment列
@@ -620,6 +650,136 @@ Cookie数量: {cookie_count}
                 logger.info("添加cookies表的auto_comment列...")
                 cursor.execute("ALTER TABLE cookies ADD COLUMN auto_comment INTEGER DEFAULT 0")
                 logger.info("数据库迁移完成：添加auto_comment列")
+
+            # 检查ai_reply_settings表是否存在active_preset_id列，并迁移旧custom_prompts数据
+            cursor.execute("PRAGMA table_info(ai_reply_settings)")
+            ai_settings_cols = [column[1] for column in cursor.fetchall()]
+            if 'active_preset_id' not in ai_settings_cols:
+                logger.info("添加ai_reply_settings表的active_preset_id列...")
+                cursor.execute("ALTER TABLE ai_reply_settings ADD COLUMN active_preset_id INTEGER DEFAULT NULL")
+                # 迁移旧 custom_prompts 数据为命名预设（存入 system_prompt 字段）
+                cursor.execute("SELECT cookie_id, custom_prompts FROM ai_reply_settings WHERE custom_prompts IS NOT NULL AND custom_prompts != ''")
+                rows = cursor.fetchall()
+                import json as _json
+                for cookie_id, cp_json in rows:
+                    try:
+                        cp = _json.loads(cp_json)
+                        if not isinstance(cp, dict):
+                            continue
+                        # 将旧4字段拼接成结构化文本存入system_prompt
+                        parts = []
+                        if cp.get('price'):
+                            parts.append(f"### 议价场景\n{cp['price']}")
+                        if cp.get('tech'):
+                            parts.append(f"### 技术/产品问题\n{cp['tech']}")
+                        if cp.get('default'):
+                            parts.append(f"### 一般咨询\n{cp['default']}")
+                        if cp.get('knowledge_base'):
+                            parts.append(f"### 产品知识库\n{cp['knowledge_base']}")
+                        system_prompt_text = "\n\n".join(parts)
+                        cursor.execute(
+                            '''INSERT INTO prompt_presets (cookie_id, name, system_prompt)
+                               VALUES (?, ?, ?)''',
+                            (cookie_id, '默认', system_prompt_text)
+                        )
+                        new_id = cursor.lastrowid
+                        cursor.execute("UPDATE ai_reply_settings SET active_preset_id = ? WHERE cookie_id = ?", (new_id, cookie_id))
+                        logger.info(f"迁移 custom_prompts → preset id={new_id} for cookie_id={cookie_id}")
+                    except Exception as migrate_err:
+                        logger.warning(f"迁移 custom_prompts 失败 cookie_id={cookie_id}: {migrate_err}")
+                logger.info("数据库迁移完成：添加active_preset_id列并迁移旧数据")
+
+            # 检查prompt_presets表是否需要迁移到单一system_prompt字段
+            cursor.execute("PRAGMA table_info(prompt_presets)")
+            pp_cols = [col[1] for col in cursor.fetchall()]
+            if 'price_prompt' in pp_cols and 'system_prompt' not in pp_cols:
+                logger.info("迁移prompt_presets表：4字段→system_prompt...")
+                cursor.execute("ALTER TABLE prompt_presets ADD COLUMN system_prompt TEXT DEFAULT ''")
+                # 将旧4字段内容合并到system_prompt
+                cursor.execute("SELECT id, price_prompt, tech_prompt, default_prompt, knowledge_base FROM prompt_presets")
+                pp_rows = cursor.fetchall()
+                for pp_id, price, tech, default_, kb in pp_rows:
+                    parts = []
+                    if price:
+                        parts.append(f"### 议价场景\n{price}")
+                    if tech:
+                        parts.append(f"### 技术/产品问题\n{tech}")
+                    if default_:
+                        parts.append(f"### 一般咨询\n{default_}")
+                    if kb:
+                        parts.append(f"### 产品知识库\n{kb}")
+                    merged = "\n\n".join(parts)
+                    cursor.execute("UPDATE prompt_presets SET system_prompt=? WHERE id=?", (merged, pp_id))
+                logger.info(f"迁移完成：共迁移 {len(pp_rows)} 条预设记录")
+
+            # 迁移prompt_presets：cookie_id → user_id（用户级预设）
+            cursor.execute("PRAGMA table_info(prompt_presets)")
+            pp_cols2 = [col[1] for col in cursor.fetchall()]
+            if 'cookie_id' in pp_cols2 and 'user_id' not in pp_cols2:
+                logger.info("迁移prompt_presets表：cookie_id → user_id（第一步：加列）...")
+                cursor.execute("ALTER TABLE prompt_presets ADD COLUMN user_id INTEGER DEFAULT NULL")
+                cursor.execute("ALTER TABLE prompt_presets ADD COLUMN is_default INTEGER DEFAULT 0")
+                cursor.execute(
+                    '''UPDATE prompt_presets SET user_id = (
+                        SELECT user_id FROM cookies WHERE cookies.id = prompt_presets.cookie_id
+                    ) WHERE user_id IS NULL'''
+                )
+                cursor.execute(
+                    '''UPDATE prompt_presets SET is_default = 1
+                       WHERE id IN (SELECT active_preset_id FROM ai_reply_settings WHERE active_preset_id IS NOT NULL)'''
+                )
+                cursor.execute(
+                    '''UPDATE prompt_presets SET is_default = 0
+                       WHERE is_default = 1 AND id NOT IN (
+                           SELECT MAX(id) FROM prompt_presets WHERE is_default = 1 GROUP BY user_id
+                       )'''
+                )
+                self.conn.commit()
+                logger.info("prompt_presets列迁移完成，准备重建表结构...")
+            elif 'user_id' in pp_cols2 and 'is_default' not in pp_cols2:
+                cursor.execute("ALTER TABLE prompt_presets ADD COLUMN is_default INTEGER DEFAULT 0")
+                self.conn.commit()
+
+            # 若 cookie_id 列仍存在，重建表以彻底去除旧 NOT NULL 约束
+            cursor.execute("PRAGMA table_info(prompt_presets)")
+            pp_cols3 = [col[1] for col in cursor.fetchall()]
+            if 'cookie_id' in pp_cols3:
+                logger.info("重建prompt_presets表：去除cookie_id约束...")
+                cursor.execute("PRAGMA foreign_keys = OFF")
+                cursor.execute('''
+                    CREATE TABLE prompt_presets_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        system_prompt TEXT DEFAULT '',
+                        is_default INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                    )
+                ''')
+                cursor.execute('''
+                    INSERT INTO prompt_presets_new (id, user_id, name, system_prompt, is_default, created_at, updated_at)
+                    SELECT id, COALESCE(user_id, 0), name,
+                           COALESCE(system_prompt, ''),
+                           COALESCE(is_default, 0),
+                           created_at, updated_at
+                    FROM prompt_presets
+                    WHERE user_id IS NOT NULL
+                ''')
+                cursor.execute("DROP TABLE prompt_presets")
+                cursor.execute("ALTER TABLE prompt_presets_new RENAME TO prompt_presets")
+                cursor.execute("PRAGMA foreign_keys = ON")
+                self.conn.commit()
+                logger.info("prompt_presets表重建完成")
+
+            # 检查message_notifications表是否存在notify_types列
+            cursor.execute("PRAGMA table_info(message_notifications)")
+            mn_columns = [column[1] for column in cursor.fetchall()]
+            if 'notify_types' not in mn_columns:
+                logger.info("添加message_notifications表的notify_types列...")
+                cursor.execute("ALTER TABLE message_notifications ADD COLUMN notify_types TEXT DEFAULT '[\"message\",\"delivery\",\"order\"]'")
+                logger.info("数据库迁移完成：添加notify_types列")
 
             # 迁移notification_templates表以支持新的模板类型
             self._migrate_notification_templates(cursor)
@@ -1703,18 +1863,18 @@ Cookie数量: {cookie_count}
                 result = cursor.fetchone()
                 if result:
                     if result[0] is None:
-                        logger.warning(f"账号 {cookie_id} 的pause_duration为NULL，使用默认值10分钟并修复数据库")
+                        logger.warning(f"账号 {cookie_id} 的pause_duration为NULL，使用默认值1分钟并修复数据库")
                         # 修复数据库中的NULL值
-                        self._execute_sql(cursor, "UPDATE cookies SET pause_duration = 10 WHERE id = ?", (cookie_id,))
+                        self._execute_sql(cursor, "UPDATE cookies SET pause_duration = 1 WHERE id = ?", (cookie_id,))
                         self.conn.commit()
-                        return 10
+                        return 1
                     return result[0]  # 返回实际值，包括0（0表示不暂停）
                 else:
-                    logger.warning(f"账号 {cookie_id} 未找到记录，使用默认值10分钟")
-                    return 10
+                    logger.warning(f"账号 {cookie_id} 未找到记录，使用默认值1分钟")
+                    return 1
             except Exception as e:
                 logger.error(f"获取账号自动回复暂停时间失败: {e}")
-                return 10
+                return 1
 
     def update_cookie_account_info(self, cookie_id: str, cookie_value: str = None, username: str = None, password: str = None, show_browser: bool = None, user_id: int = None) -> bool:
         """更新Cookie的账号信息（包括cookie值、用户名、密码和显示浏览器设置）
@@ -2618,6 +2778,229 @@ Cookie数量: {cookie_count}
                 logger.error(f"删除AI配置预设失败: {e}")
                 return False
 
+    # -------------------- 提示词预设操作（用户级别）--------------------
+    def get_prompt_presets(self, user_id: int) -> list:
+        """获取用户的所有提示词预设"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''SELECT id, name, system_prompt, is_default, created_at, updated_at
+                       FROM prompt_presets WHERE user_id = ? ORDER BY created_at ASC''',
+                    (user_id,)
+                )
+                return [
+                    {
+                        'id': r[0], 'name': r[1],
+                        'system_prompt': r[2] or '',
+                        'is_active': bool(r[3]),
+                        'created_at': r[4], 'updated_at': r[5],
+                    }
+                    for r in cursor.fetchall()
+                ]
+            except Exception as e:
+                logger.error(f"获取提示词预设失败: {e}")
+                return []
+
+    def create_prompt_preset(self, user_id: int, name: str, system_prompt: str = '') -> int:
+        """创建提示词预设，返回新预设 id"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''INSERT INTO prompt_presets (user_id, name, system_prompt)
+                       VALUES (?, ?, ?)''',
+                    (user_id, name, system_prompt)
+                )
+                self.conn.commit()
+                return cursor.lastrowid
+            except Exception as e:
+                logger.error(f"创建提示词预设失败: {e}")
+                self.conn.rollback()
+                raise
+
+    def update_prompt_preset(self, preset_id: int, user_id: int, name: str,
+                              system_prompt: str = '') -> bool:
+        """更新提示词预设"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''UPDATE prompt_presets SET name=?, system_prompt=?, updated_at=CURRENT_TIMESTAMP
+                       WHERE id=? AND user_id=?''',
+                    (name, system_prompt, preset_id, user_id)
+                )
+                self.conn.commit()
+                return cursor.rowcount > 0
+            except Exception as e:
+                logger.error(f"更新提示词预设失败: {e}")
+                self.conn.rollback()
+                return False
+
+    def delete_prompt_preset(self, preset_id: int, user_id: int) -> bool:
+        """删除提示词预设"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    "DELETE FROM prompt_presets WHERE id=? AND user_id=?",
+                    (preset_id, user_id)
+                )
+                self.conn.commit()
+                return cursor.rowcount > 0
+            except Exception as e:
+                logger.error(f"删除提示词预设失败: {e}")
+                self.conn.rollback()
+                return False
+
+    def set_default_preset(self, user_id: int, preset_id: Optional[int]) -> bool:
+        """设置用户默认提示词预设（preset_id=None 表示清除）"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                # 先清除该用户所有默认标记
+                cursor.execute(
+                    "UPDATE prompt_presets SET is_default=0 WHERE user_id=?", (user_id,)
+                )
+                if preset_id is not None:
+                    cursor.execute(
+                        "UPDATE prompt_presets SET is_default=1 WHERE id=? AND user_id=?",
+                        (preset_id, user_id)
+                    )
+                self.conn.commit()
+                return True
+            except Exception as e:
+                logger.error(f"设置默认预设失败: {e}")
+                self.conn.rollback()
+                return False
+
+    def get_active_preset(self, cookie_id: str) -> Optional[dict]:
+        """获取账号所属用户的默认提示词预设（AI引擎调用）"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''SELECT p.id, p.name, p.system_prompt
+                       FROM prompt_presets p
+                       JOIN cookies c ON p.user_id = c.user_id
+                       WHERE c.id = ? AND p.is_default = 1
+                       LIMIT 1''',
+                    (cookie_id,)
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0], 'name': row[1],
+                    'system_prompt': row[2] or '',
+                }
+            except Exception as e:
+                logger.error(f"获取活跃提示词预设失败: {e}")
+                return None
+
+    def fix_migrated_presets(self, full_template: str) -> None:
+        """将旧格式迁移（只含场景片段、无角色定义）的预设替换为完整模板"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                # 完整模板必含"销冠核心法则"；旧迁移预设只有 ### 场景片段
+                cursor.execute(
+                    "SELECT id FROM prompt_presets WHERE system_prompt != '' AND system_prompt NOT LIKE '%销冠核心法则%'"
+                )
+                rows = cursor.fetchall()
+                if not rows:
+                    return
+                ids = [r[0] for r in rows]
+                cursor.executemany(
+                    "UPDATE prompt_presets SET system_prompt=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                    [(full_template, pid) for pid in ids]
+                )
+                self.conn.commit()
+                logger.info(f"已修复 {len(ids)} 个旧格式提示词预设，补充完整模板")
+            except Exception as e:
+                logger.error(f"修复迁移预设失败: {e}")
+
+    # -------------------- 商品预设映射操作 --------------------
+    def get_item_preset_mappings(self, cookie_id: str) -> list:
+        """获取账号下所有商品-预设映射"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''SELECT m.item_id, COALESCE(i.item_title, m.item_id) AS item_name,
+                              m.preset_id, p.name AS preset_name
+                       FROM item_preset_mapping m
+                       JOIN prompt_presets p ON m.preset_id = p.id
+                       LEFT JOIN item_info i ON m.item_id = i.item_id AND i.cookie_id = m.cookie_id
+                       WHERE m.cookie_id = ?
+                       ORDER BY m.created_at ASC''',
+                    (cookie_id,)
+                )
+                return [
+                    {'cookie_id': cookie_id, 'item_id': r[0], 'item_name': r[1], 'preset_id': r[2], 'preset_name': r[3]}
+                    for r in cursor.fetchall()
+                ]
+            except Exception as e:
+                logger.error(f"获取商品预设映射失败: {e}")
+                return []
+
+    def set_item_preset(self, cookie_id: str, item_id: str, preset_id: int) -> bool:
+        """设置商品使用的预设"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''INSERT INTO item_preset_mapping (cookie_id, item_id, preset_id, updated_at)
+                       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                       ON CONFLICT(cookie_id, item_id) DO UPDATE SET preset_id=excluded.preset_id, updated_at=CURRENT_TIMESTAMP''',
+                    (cookie_id, item_id, preset_id)
+                )
+                self.conn.commit()
+                return True
+            except Exception as e:
+                logger.error(f"设置商品预设失败: {e}")
+                self.conn.rollback()
+                return False
+
+    def delete_item_preset(self, cookie_id: str, item_id: str) -> bool:
+        """删除商品预设映射"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    "DELETE FROM item_preset_mapping WHERE cookie_id=? AND item_id=?",
+                    (cookie_id, item_id)
+                )
+                self.conn.commit()
+                return cursor.rowcount > 0
+            except Exception as e:
+                logger.error(f"删除商品预设映射失败: {e}")
+                self.conn.rollback()
+                return False
+
+    def get_preset_for_item(self, cookie_id: str, item_id: str) -> Optional[dict]:
+        """获取商品指定的提示词预设（无映射则返回 None）"""
+        with self.lock:
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    '''SELECT p.id, p.name, p.system_prompt
+                       FROM item_preset_mapping m
+                       JOIN prompt_presets p ON m.preset_id = p.id
+                       WHERE m.cookie_id=? AND m.item_id=?''',
+                    (cookie_id, item_id)
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0], 'name': row[1],
+                    'system_prompt': row[2] or '',
+                }
+            except Exception as e:
+                logger.error(f"获取商品预设失败: {e}")
+                return None
+
     # -------------------- 默认回复操作 --------------------
     def save_default_reply(self, cookie_id: str, enabled: bool, reply_content: str = None, reply_once: bool = False):
         """保存默认回复设置"""
@@ -2843,17 +3226,19 @@ Cookie数量: {cookie_count}
                 return False
 
     # -------------------- 消息通知配置操作 --------------------
-    def set_message_notification(self, cookie_id: str, channel_id: int, enabled: bool = True) -> bool:
+    def set_message_notification(self, cookie_id: str, channel_id: int, enabled: bool = True, notify_types: list = None) -> bool:
         """设置账号的消息通知"""
         with self.lock:
             try:
+                import json
                 cursor = self.conn.cursor()
+                notify_types_json = json.dumps(notify_types) if notify_types else '["message","delivery","order"]'
                 cursor.execute('''
-                INSERT OR REPLACE INTO message_notifications (cookie_id, channel_id, enabled)
-                VALUES (?, ?, ?)
-                ''', (cookie_id, channel_id, enabled))
+                INSERT OR REPLACE INTO message_notifications (cookie_id, channel_id, enabled, notify_types)
+                VALUES (?, ?, ?, ?)
+                ''', (cookie_id, channel_id, enabled, notify_types_json))
                 self.conn.commit()
-                logger.debug(f"设置消息通知: {cookie_id} -> {channel_id}")
+                logger.debug(f"设置消息通知: {cookie_id} -> {channel_id}, notify_types={notify_types}")
                 return True
             except Exception as e:
                 logger.error(f"设置消息通知失败: {e}")
@@ -2866,7 +3251,7 @@ Cookie数量: {cookie_count}
             try:
                 cursor = self.conn.cursor()
                 cursor.execute('''
-                SELECT mn.id, mn.channel_id, mn.enabled, nc.name, nc.type, nc.config
+                SELECT mn.id, mn.channel_id, mn.enabled, nc.name, nc.type, nc.config, mn.notify_types
                 FROM message_notifications mn
                 JOIN notification_channels nc ON mn.channel_id = nc.id
                 WHERE mn.cookie_id = ? AND nc.enabled = 1
@@ -2875,13 +3260,21 @@ Cookie数量: {cookie_count}
 
                 notifications = []
                 for row in cursor.fetchall():
+                    # 解析notify_types JSON
+                    import json
+                    try:
+                        notify_types = json.loads(row[6]) if row[6] else ["message", "delivery", "order"]
+                    except (json.JSONDecodeError, TypeError):
+                        notify_types = ["message", "delivery", "order"]
+
                     notifications.append({
                         'id': row[0],
                         'channel_id': row[1],
                         'enabled': bool(row[2]),
                         'channel_name': row[3],
                         'channel_type': row[4],
-                        'channel_config': row[5]
+                        'channel_config': row[5],
+                        'notify_types': notify_types
                     })
 
                 return notifications
@@ -5338,24 +5731,24 @@ Cookie数量: {cookie_count}
 
     def batch_update_item_title_price(self, items_data: list) -> int:
         """批量更新商品标题和价格（不更新商品详情）
-        
+
         Args:
             items_data: 商品数据列表，每个元素包含 cookie_id, item_id, item_title, item_price
-        
+
         Returns:
             int: 成功更新的商品数量
         """
         if not items_data:
             return 0
-        
+
         success_count = 0
         try:
             with self.lock:
                 cursor = self.conn.cursor()
-                
+
                 # 使用事务批量处理
                 cursor.execute('BEGIN TRANSACTION')
-                
+
                 for item_data in items_data:
                     try:
                         cookie_id = item_data.get('cookie_id')
@@ -5363,10 +5756,10 @@ Cookie数量: {cookie_count}
                         item_title = item_data.get('item_title', '')
                         item_price = item_data.get('item_price', '')
                         item_category = item_data.get('item_category', '')
-                        
+
                         if not cookie_id or not item_id:
                             continue
-                        
+
                         # 只更新标题、价格和分类，不更新商品详情
                         update_sql = '''
                         UPDATE item_info SET
@@ -5383,18 +5776,18 @@ Cookie数量: {cookie_count}
                             cookie_id,
                             item_id
                         ))
-                        
+
                         if cursor.rowcount > 0:
                             success_count += 1
-                    
+
                     except Exception as item_e:
                         logger.warning(f"批量更新单个商品失败 {item_data.get('item_id', 'unknown')}: {item_e}")
                         continue
-                
+
                 cursor.execute('COMMIT')
                 logger.info(f"批量更新商品标题和价格完成: {success_count}/{len(items_data)} 个商品")
                 return success_count
-        
+
         except Exception as e:
             logger.error(f"批量更新商品标题和价格失败: {e}")
             try:

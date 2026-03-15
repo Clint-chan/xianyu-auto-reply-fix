@@ -25,6 +25,8 @@ class AIReplyEngine:
         # 用于控制同一chat_id消息的串行处理
         self._chat_locks = {}
         self._chat_locks_lock = threading.Lock()
+        # 修复旧格式迁移预设（补充完整角色模板）
+        self._fix_migrated_presets()
     
     def _init_default_prompts(self):
         """初始化默认提示词（用于构建统一提示词）"""
@@ -155,6 +157,19 @@ class AIReplyEngine:
         except (KeyError, IndexError, TypeError) as e:
             logger.error(f"Anthropic API 响应格式错误: {result} - {e}")
             raise Exception(f"Anthropic API 响应格式错误: {result}")
+    def get_default_system_prompt(self) -> str:
+        """返回内置的默认系统提示词，供前端新建预设时预填充"""
+        return self._build_unified_system_prompt(self.default_prompts, {})
+
+    def _fix_migrated_presets(self) -> None:
+        """修复从旧custom_prompts迁移过来的不完整预设，补充完整的角色模板"""
+        try:
+            full_template = self.get_default_system_prompt()
+            # 识别标志：完整模板必然包含"销冠核心法则"；旧迁移预设只有场景片段
+            db_manager.fix_migrated_presets(full_template)
+        except Exception as e:
+            logger.warning(f"修复迁移预设失败（不影响启动）: {e}")
+
     def _build_unified_system_prompt(self, custom_prompts: dict, settings: dict) -> str:
         """
         构建统一的系统提示词
@@ -445,7 +460,26 @@ class AIReplyEngine:
                 
                 # 1. 获取AI设置
                 settings = db_manager.get_ai_reply_settings(cookie_id)
-                custom_prompts = json.loads(settings['custom_prompts']) if settings['custom_prompts'] else {}
+
+                # 优先级：商品级预设 > 账号活跃预设 > custom_prompts字段（向后兼容）> 代码默认值
+                preset = db_manager.get_preset_for_item(cookie_id, item_id)
+                if not preset:
+                    preset = db_manager.get_active_preset(cookie_id)
+                if preset and preset.get('system_prompt'):
+                    _override_system_prompt = preset['system_prompt']
+                    custom_prompts = {}
+                elif preset:
+                    # 旧4字段预设（迁移期兼底层兼容）
+                    _override_system_prompt = None
+                    custom_prompts = {
+                        'price': preset.get('price_prompt', ''),
+                        'tech': preset.get('tech_prompt', ''),
+                        'default': preset.get('default_prompt', ''),
+                        'knowledge_base': preset.get('knowledge_base', ''),
+                    }
+                else:
+                    _override_system_prompt = None
+                    custom_prompts = json.loads(settings['custom_prompts']) if settings.get('custom_prompts') else {}
 
                 # 2. 获取对话历史
                 context = self.get_conversation_context(chat_id, cookie_id)
@@ -457,7 +491,7 @@ class AIReplyEngine:
                 max_discount_amount = settings.get('max_discount_amount', 100)
 
                 # 4. 构建统一的系统提示词（整合意图判断和回复生成）
-                system_prompt = self._build_unified_system_prompt(custom_prompts, settings)
+                system_prompt = _override_system_prompt or self._build_unified_system_prompt(custom_prompts, settings)
 
                 # 5. 构建商品信息
                 item_desc = f"商品标题: {item_info.get('title', '未知')}\n"
