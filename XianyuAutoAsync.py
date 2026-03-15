@@ -110,8 +110,8 @@ class AutoReplyPauseManager:
             from db_manager import db_manager
             pause_minutes = db_manager.get_cookie_pause_duration(cookie_id)
         except Exception as e:
-            logger.error(f"获取账号 {cookie_id} 暂停时间失败: {e}，使用默认10分钟")
-            pause_minutes = 10
+            logger.error(f"获取账号 {cookie_id} 暂停时间失败: {e}，使用默认1分钟")
+            pause_minutes = 1
 
         # 如果暂停时间为0，表示不暂停
         if pause_minutes == 0:
@@ -3583,7 +3583,7 @@ class XianyuLive:
                 existing_item = db_manager.get_item_info(self.cookie_id, item_id)
                 
                 if existing_item:
-                    # 商品已存在，只更新标题和价格，不更新商品详情
+                    # 商品已存在，更新标题、价格和分类
                     batch_update_data.append({
                         'cookie_id': self.cookie_id,
                         'item_id': item_id,
@@ -3592,6 +3592,16 @@ class XianyuLive:
                         'item_category': str(item.get('category_id', ''))
                     })
                     logger.debug(f"商品 {item_id} 已存在，将更新标题和价格")
+
+                    # 若 item_detail 为空或仍是卡片 JSON（尚未获取文字描述），则重新获取
+                    existing_detail = existing_item.get('item_detail', '') or ''
+                    detail_is_card_json = existing_detail.strip().startswith('{')
+                    if not existing_detail.strip() or detail_is_card_json:
+                        items_need_detail.append({
+                            'item_id': item_id,
+                            'item_title': item.get('title', '')
+                        })
+                        logger.debug(f"商品 {item_id} 的详情为空或仍是卡片JSON，将重新获取文字描述")
                 else:
                     # 新商品，保存所有信息
                     batch_new_data.append({
@@ -4321,8 +4331,10 @@ Cookie数量: {cookie_count}
             logger.error(f"格式化模板失败: {e}")
             return template
 
-    async def send_notification(self, send_user_name: str, send_user_id: str, send_message: str, item_id: str = None, chat_id: str = None):
-        """发送消息通知"""
+    async def send_notification(self, send_user_name: str, send_user_id: str, send_message: str, item_id: str = None, chat_id: str = None, notification_type: str = "message"):
+        """发送消息通知
+        notification_type: "message"(买家消息), "delivery"(发货通知), "order"(订单通知)
+        """
         try:
             from db_manager import db_manager
             import aiohttp
@@ -4395,6 +4407,12 @@ Cookie数量: {cookie_count}
 
                 if not notification.get('enabled', True):
                     logger.warning(f"📱 通知渠道 {notification.get('channel_name')} 已禁用，跳过")
+                    continue
+
+                # 检查该渠道是否订阅了当前通知类型
+                channel_notify_types = notification.get('notify_types', ["message", "delivery", "order"])
+                if notification_type not in channel_notify_types:
+                    logger.info(f"📱 通知渠道 {notification.get('channel_name')} 未订阅 {notification_type} 类型通知，跳过")
                     continue
 
                 channel_type = notification.get('channel_type')
@@ -5236,6 +5254,12 @@ Cookie数量: {cookie_count}
             # 发送通知到所有已启用的通知渠道
             for notification in notifications:
                 if notification.get('enabled', False):
+                    # 检查该渠道是否订阅了delivery类型通知
+                    channel_notify_types = notification.get('notify_types', ["message", "delivery", "order"])
+                    if "delivery" not in channel_notify_types:
+                        logger.info(f"📱 通知渠道 {notification.get('channel_name')} 未订阅 delivery 类型通知，跳过")
+                        continue
+
                     channel_type = notification.get('channel_type', 'qq')
                     channel_config = notification.get('channel_config', '')
 
@@ -9039,8 +9063,17 @@ Cookie数量: {cookie_count}
             if send_user_id == self.myid:
                 logger.info(f"[{msg_time}] 【{self.cookie_id}】[{msg_id}] 【手动发出】 商品({item_id}): {send_message}")
 
-                # 暂停该chat_id的自动回复10分钟
+                # 暂停该chat_id的自动回复
                 pause_manager.pause_chat(chat_id, self.cookie_id)
+
+                # 立即取消该chat_id的防抖任务，防止已排队的回复继续发出
+                async with self.message_debounce_lock:
+                    if chat_id in self.message_debounce_tasks:
+                        old_task = self.message_debounce_tasks[chat_id].get('task')
+                        if old_task and not old_task.done():
+                            old_task.cancel()
+                            logger.info(f"【{self.cookie_id}】[{msg_id}] 已取消chat_id {chat_id} 的防抖任务（人工接管）")
+                        del self.message_debounce_tasks[chat_id]
 
                 logger.info(f"【{self.cookie_id}】[{msg_id}] ⏹️ 处理结束（手动发出消息）")
                 return
@@ -9359,6 +9392,17 @@ Cookie数量: {cookie_count}
                         db_manager.update_buyer_nick_by_buyer_id(send_user_id, send_user_name, self.cookie_id)
                     except Exception as e:
                         logger.debug(f"更新买家昵称失败: {self._safe_str(e)}")
+
+            # 检查商品是否属于当前账号（判断是否为买家会话）
+            if item_id and not item_id.startswith("auto_") and item_id != "未知商品":
+                try:
+                    from db_manager import db_manager
+                    item_info = db_manager.get_item_info(self.cookie_id, item_id)
+                    if not item_info:
+                        logger.info(f"【{self.cookie_id}】[{msg_id}] 商品 {item_id} 不属于当前账号，当前为买家身份，跳过自动回复")
+                        return
+                except Exception as e:
+                    logger.warning(f"【{self.cookie_id}】[{msg_id}] 检查商品归属失败: {e}")
 
             # 使用防抖机制处理聊天消息回复
             # 如果用户连续发送消息，等待用户停止发送后再回复最后一条消息
