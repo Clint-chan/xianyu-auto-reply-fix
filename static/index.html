@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>自动回复管理系统</title>
-  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand-mark.svg">
   <!-- 防止主题闪烁：先隐藏页面，设置好主题后再显示 -->
   <style>
     html { visibility: hidden; }
@@ -12,11 +12,12 @@
   </style>
   <script>
     (function() {
-      var savedMode = localStorage.getItem('darkMode');
-      if (savedMode === 'dark') {
+      var savedMode = localStorage.getItem('darkMode') || 'light';
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedMode === 'dark' || (savedMode === 'auto' && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
-      // 主题设置完成，显示页面
+      document.documentElement.setAttribute('data-theme-mode', savedMode);
       document.documentElement.classList.add('theme-ready');
     })();
   </script>
@@ -26,21 +27,33 @@
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
+  <a class="skip-link" href="#appMainContent">跳到主内容</a>
   <!-- 移动端菜单切换按钮 -->
-  <button class="mobile-toggle" onclick="toggleSidebar()">
+  <button class="mobile-toggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="展开或收起导航菜单" onclick="toggleSidebar()">
     <i class="bi bi-list"></i>
   </button>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
   <!-- 侧边栏 -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a href="#" class="sidebar-brand">
-        <i class="bi bi-robot me-2" style="font-size:1.25rem;color:var(--primary-light);"></i>
-        <span>自动回复</span>
+        <img src="/static/brand-mark.svg" alt="自动回复管理系统标识" class="sidebar-brand__logo">
+        <span class="sidebar-brand__text">
+          <strong>自动回复后台</strong>
+          <small>管理控制台</small>
+        </span>
       </a>
-      <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="切换主题（浅色/深色/跟随系统）">
-        <i class="bi bi-moon-fill" id="darkModeIcon"></i>
-      </button>
+      <div class="shell-actions">
+        <button class="dark-mode-toggle" type="button" onclick="toggleDarkMode()" title="切换主题（浅色/深色/跟随系统）" aria-label="切换主题">
+          <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+        </button>
+        <button class="shell-action" type="button" onclick="logout()" aria-label="退出登录">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>退出</span>
+        </button>
+      </div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item" data-menu-id="dashboard">
@@ -124,7 +137,7 @@
       </div>
 
       <!-- 管理员专用菜单 -->
-      <div id="adminMenuSection" style="display: none;">
+      <div id="adminMenuSection" hidden>
         <div class="nav-divider mt-3 mb-2">
           <small class="text-white-50">管理员功能</small>
         </div>
@@ -160,29 +173,11 @@
           <span>关于</span>
         </a>
       </div>
-
-      <!-- 底部分隔符 -->
-      <div class="nav-divider mt-3 mb-2">
-        <small class="text-white-50">系统操作</small>
-      </div>
-      <div class="nav-item">
-        <a href="javascript:void(0)" class="nav-link" onclick="logout()">
-          <i class="bi bi-box-arrow-right"></i>
-          <span>登出</span>
-        </a>
-      </div>
     </nav>
-    <!-- 侧边栏底部折叠按钮 -->
-    <div class="sidebar-footer">
-      <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="折叠/展开侧边栏">
-        <i class="bi bi-chevron-left"></i>
-        <span>收起菜单</span>
-      </button>
-    </div>
   </div>
 
   <!-- 主内容区域 -->
-  <div class="main-content">
+  <div class="main-content" id="appMainContent" tabindex="-1">
     <!-- 仪表盘内容 -->
     <div id="dashboard-section" class="content-section active">
       <div class="content-header">
@@ -282,36 +277,40 @@
         <!-- 添加Cookie卡片 -->
         <div class="card mb-4">
           <div class="card-header">
-            <span><i class="bi bi-plus-circle me-2"></i>添加新账号</span>
+            <span>添加新账号</span>
           </div>
-          <div class="card-body">
+          <div class="card-body action-choice-shell">
             <!-- 添加方式选择 -->
             <div class="row mb-4">
               <div class="col-12">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                  <button type="button" class="btn btn-lg me-md-2 flex-fill qr-login-btn" onclick="showQRCodeLogin()" style="max-width: 300px;">
-                    <i class="bi bi-qr-code me-2"></i>
-                    <span class="fw-bold">扫码登录</span>
-                    <br>
-                    <small class="opacity-75">只有账号不需要人脸的时候推荐使用</small>
+                <div class="action-choice-grid">
+                  <button type="button" class="btn btn-lg qr-login-btn action-choice action-choice--primary" onclick="showQRCodeLogin()">
+                    <span class="action-choice__icon"><i class="bi bi-qr-code"></i></span>
+                    <span class="action-choice__body">
+                      <span class="action-choice__title">扫码登录</span>
+                      <small class="action-choice__desc">只有账号不需要人脸的时候推荐使用</small>
+                    </span>
                   </button>
-                  <button type="button" class="btn btn-outline-primary btn-lg flex-fill password-login-btn" onclick="togglePasswordLogin()" style="max-width: 300px;">
-                    <i class="bi bi-key me-2"></i>
-                    <span class="fw-bold">账号密码登录</span>
-                    <br>
-                    <small class="opacity-75">请务必优先使用账号和密码登录</small>
+                  <button type="button" class="btn btn-outline-primary btn-lg password-login-btn action-choice" onclick="togglePasswordLogin()">
+                    <span class="action-choice__icon"><i class="bi bi-key"></i></span>
+                    <span class="action-choice__body">
+                      <span class="action-choice__title">账号密码登录</span>
+                      <small class="action-choice__desc">请务必优先使用账号和密码登录</small>
+                    </span>
                   </button>
-                  <button type="button" class="btn btn-outline-secondary btn-lg flex-fill manual-input-btn" onclick="toggleManualInput()" style="max-width: 300px;">
-                    <i class="bi bi-keyboard me-2"></i>
-                    <span class="fw-bold">手动输入</span>
-                    <br>
-                    <small class="opacity-75">使用消息界面的cookie</small>
+                  <button type="button" class="btn btn-outline-secondary btn-lg manual-input-btn action-choice" onclick="toggleManualInput()">
+                    <span class="action-choice__icon"><i class="bi bi-keyboard"></i></span>
+                    <span class="action-choice__body">
+                      <span class="action-choice__title">手动输入</span>
+                      <small class="action-choice__desc">使用消息界面的 Cookie</small>
+                    </span>
                   </button>
-                  <button type="button" class="btn btn-outline-warning btn-lg flex-fill refresh-cookie-btn" onclick="toggleRefreshCookieForm()" style="max-width: 300px;">
-                    <i class="bi bi-arrow-repeat me-2"></i>
-                    <span class="fw-bold">刷新Cookie</span>
-                    <br>
-                    <small class="opacity-75">验证账密并刷新已有账号</small>
+                  <button type="button" class="btn btn-outline-warning btn-lg refresh-cookie-btn action-choice action-choice--warning" onclick="toggleRefreshCookieForm()">
+                    <span class="action-choice__icon"><i class="bi bi-arrow-repeat"></i></span>
+                    <span class="action-choice__body">
+                      <span class="action-choice__title">刷新 Cookie</span>
+                      <small class="action-choice__desc">验证账密并刷新已有账号</small>
+                    </span>
                   </button>
                 </div>
               </div>
@@ -423,39 +422,27 @@
 
         <!-- Cookie列表卡片 -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-list-ul me-2"></i>账号列表</span>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-outline-success" onclick="openDefaultReplyManager()">
-                <i class="bi bi-chat-text me-1"></i>默认回复管理
-              </button>
-              <button class="btn btn-sm btn-outline-primary" onclick="loadCookies()">
-                <i class="bi bi-arrow-clockwise me-1"></i>刷新
-              </button>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">账号列表</h5>
+              <small>管理账号 Cookie、开关状态和备注配置</small>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-success" onclick="openDefaultReplyManager()">默认回复管理</button>
+              <button class="btn btn-sm btn-outline-primary" onclick="loadCookies()">刷新</button>
             </div>
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover" id="cookieTable">
+              <table class="table table-hover account-table" id="cookieTable">
                 <thead>
                   <tr>
-                    <th style="width: 9%">账号ID</th>
-                    <th style="width: 14%">Cookie值</th>
-                    <th style="width: 7%">关键词</th>
-                    <th style="width: 7%">状态</th>
-                    <th style="width: 8%">默认回复</th>
-                    <th style="width: 8%">AI回复</th>
-                    <th style="width: 8%">自动确认发货</th>
-                    <th style="width: 10%">自动好评</th>
-                    <th style="width: 9%">备注</th>
-                    <th style="width: 10%">
-                      暂停时间
-                      <i class="bi bi-question-circle ms-1"
-                         data-bs-toggle="tooltip"
-                         data-bs-placement="top"
-                         title="检测到手动发出消息后，自动回复暂停的时间长度（分钟）。设置为0表示不暂停。如果在暂停期间再次手动发出消息，会重新开始计时。"></i>
-                    </th>
-                    <th style="width: 18%">操作</th>
+                    <th style="width: 15%">账号</th>
+                    <th style="width: 18%">Cookie</th>
+                    <th style="width: 19%">回复配置</th>
+                    <th style="width: 22%">功能状态</th>
+                    <th style="width: 14%">备注与暂停</th>
+                    <th style="width: 12%">操作</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -478,24 +465,22 @@
 
       <div class="content-body">
         <!-- 筛选和搜索 -->
-        <div class="card mb-4">
+        <div class="card mb-4 toolbar-card">
           <div class="card-body">
-            <div class="row align-items-end mb-3">
-              <div class="col-md-6">
+            <div class="toolbar-grid">
+              <div class="toolbar-field toolbar-field--grow">
                 <label for="itemCookieFilter" class="form-label">筛选账号</label>
                 <select class="form-select" id="itemCookieFilter" onchange="loadItemsByCookie()">
                   <option value="">所有账号</option>
                 </select>
               </div>
 
-              <div class="col-md-6">
-                <div class="d-flex justify-content-end align-items-end gap-2">
-                  <!-- 页码输入 -->
-                  <div class="d-flex align-items-center gap-2">
-                    <label for="pageNumber" class="form-label mb-0 text-nowrap">页码:</label>
-                    <input type="number" class="form-control" id="pageNumber" placeholder="页码" min="1" value="1" style="width: 80px;">
-                  </div>
-                  <div class="d-flex gap-2">
+              <div class="toolbar-actions">
+                <div class="toolbar-field toolbar-field--compact">
+                  <label for="itemsPageNumber" class="form-label">页码</label>
+                  <input type="number" class="form-control" id="itemsPageNumber" placeholder="页码" min="1" value="1">
+                </div>
+                <div class="toolbar-button-group">
                     <button class="btn btn-success" onclick="getAllItemsFromAccount()">
                       <i class="bi bi-download me-1"></i>获取指定页
                     </button>
@@ -505,30 +490,28 @@
                     <button class="btn btn-primary" onclick="refreshItems()">
                       <i class="bi bi-arrow-clockwise me-1"></i>刷新
                     </button>
-                  </div>
                 </div>
               </div>
-            </div>
-
-            <!-- 搜索结果统计 -->
-            <div id="itemSearchStats" class="text-muted small" style="display: none;">
-              <i class="bi bi-search me-1"></i>
-              <span id="itemSearchStatsText"></span>
             </div>
           </div>
         </div>
 
         <!-- 商品列表 -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-              <input type="text" class="form-control" id="itemSearchInput"
-                     placeholder="搜索商品标题或详情..." style="width: 300px;">
-              <h5 class="mb-0">商品列表(自动发货根据商品标题和商品详情匹配关键字)</h5>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">商品列表</h5>
+              <small>自动发货根据商品标题和商品详情匹配关键字</small>
             </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItems()" id="batchDeleteBtn" disabled>
-              <i class="bi bi-trash"></i> 批量删除
-            </button>
+            <div class="list-panel__tools">
+              <label class="list-search" for="itemSearchInput">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" id="itemSearchInput" placeholder="搜索商品标题或详情...">
+              </label>
+              <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItems()" id="batchDeleteBtn" disabled>
+                <i class="bi bi-trash"></i> 批量删除
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <!-- 搜索统计信息 -->
@@ -620,30 +603,23 @@
 
       <div class="content-body">
         <!-- Cookie筛选 -->
-        <div class="card mb-4">
+        <div class="card mb-4 toolbar-card">
           <div class="card-body">
-            <div class="row align-items-end">
-              <div class="col-md-6">
-                <label for="itemCookieFilter" class="form-label">筛选账号</label>
+            <div class="toolbar-grid">
+              <div class="toolbar-field toolbar-field--grow">
+                <label for="itemReplayCookieFilter" class="form-label">筛选账号</label>
                 <select class="form-select" id="itemReplayCookieFilter" onchange="loadItemsReplayByCookie()">
                   <option value="">所有账号</option>
                 </select>
               </div>
-              <div class="col-md-6">
-                <div class="d-flex justify-content-end align-items-end gap-2">
-                  <!-- 页码输入 -->
-                  <div class="d-flex align-items-center gap-2">
-                    <label for="pageNumber" class="form-label mb-0 text-nowrap">页码:</label>
-                    <input type="number" class="form-control" id="pageNumber" placeholder="页码" min="1" value="1" style="width: 80px;">
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-success" onclick="showItemReplayEdit()">
-                      添加商品回复
+              <div class="toolbar-actions">
+                <div class="toolbar-button-group">
+                  <button class="btn btn-success" onclick="showItemReplayEdit()">
+                    <i class="bi bi-plus-lg me-1"></i>添加商品回复
                     </button>
                     <button class="btn btn-primary" onclick="refreshItemReplayS()">
                       <i class="bi bi-arrow-clockwise me-1"></i>刷新
                     </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -652,11 +628,16 @@
 
         <!-- 商品列表 -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">商品列表(用于设置商品的默认回复信息)</h5>
-            <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItemReplies()">
-              <i class="bi bi-trash"></i> 批量删除
-            </button>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">商品回复列表</h5>
+              <small>用于设置商品的默认回复信息</small>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItemReplies()">
+                <i class="bi bi-trash"></i> 批量删除
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -752,51 +733,56 @@
         <p class="text-muted mb-0">查看和管理所有订单信息</p>
       </div>
       <div class="content-body">
-        <!-- Cookie筛选器 -->
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <label class="form-label">筛选账号</label>
-            <select class="form-select" id="orderCookieFilter" onchange="loadOrdersByCookie()">
-              <option value="">所有账号</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">订单状态</label>
-            <select class="form-select" id="orderStatusFilter" onchange="filterOrders()">
-              <option value="">所有状态</option>
-              <option value="processing">处理中</option>
-              <option value="pending_payment">待付款</option>
-              <option value="pending_delivery">待发货</option>
-              <option value="shipped">已发货</option>
-              <option value="success">交易成功</option>
-              <option value="refunding">退款中</option>
-              <option value="refunded">退款成功</option>
-              <option value="closed">交易关闭</option>
-              <option value="unknown">未知</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">&nbsp;</label>
-            <div class="d-flex gap-2">
-              <button class="btn btn-outline-primary" onclick="refreshOrders()">
-                <i class="bi bi-arrow-clockwise"></i> 刷新
-              </button>
-              <button class="btn btn-outline-secondary" onclick="clearOrderFilters()">
-                <i class="bi bi-x-circle"></i> 清空筛选
-              </button>
+        <div class="card mb-4 toolbar-card">
+          <div class="card-body">
+            <div class="toolbar-grid toolbar-grid--triple">
+              <div class="toolbar-field">
+                <label class="form-label" for="orderCookieFilter">筛选账号</label>
+                <select class="form-select" id="orderCookieFilter" onchange="loadOrdersByCookie()">
+                  <option value="">所有账号</option>
+                </select>
+              </div>
+              <div class="toolbar-field">
+                <label class="form-label" for="orderStatusFilter">订单状态</label>
+                <select class="form-select" id="orderStatusFilter" onchange="filterOrders()">
+                  <option value="">所有状态</option>
+                  <option value="processing">处理中</option>
+                  <option value="pending_payment">待付款</option>
+                  <option value="pending_delivery">待发货</option>
+                  <option value="shipped">已发货</option>
+                  <option value="success">交易成功</option>
+                  <option value="refunding">退款中</option>
+                  <option value="refunded">退款成功</option>
+                  <option value="closed">交易关闭</option>
+                  <option value="unknown">未知</option>
+                </select>
+              </div>
+              <div class="toolbar-actions toolbar-actions--end">
+                <div class="toolbar-button-group">
+                  <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                  </button>
+                  <button class="btn btn-outline-secondary" onclick="clearOrderFilters()">
+                    <i class="bi bi-x-circle"></i> 清空筛选
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- 订单列表 -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-              <input type="text" class="form-control" id="orderSearchInput"
-                     placeholder="搜索订单ID、商品ID、买家ID或昵称..." style="width: 300px;">
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
               <h5 class="mb-0">订单列表</h5>
+              <small>支持按订单、商品、买家和状态快速筛选</small>
             </div>
-            <div class="d-flex gap-2">
+            <div class="list-panel__tools">
+              <label class="list-search" for="orderSearchInput">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" id="orderSearchInput" placeholder="搜索订单 ID、商品 ID、买家 ID 或昵称...">
+              </label>
               <button class="btn btn-sm btn-outline-primary" onclick="batchRefreshOrders()" id="batchRefreshOrdersBtn" disabled>
                 <i class="bi bi-arrow-clockwise"></i> 批量刷新
               </button>
@@ -2365,17 +2351,17 @@
           </div>
         </div>
 
-        <!-- 第二行：登录与注册设置 (仅管理员可见，占满两列) -->
+        <!-- 第二行：访问设置 (仅管理员可见，占满两列) -->
         <div id="login-info-settings" class="row mt-4" style="display: none;">
           <div class="col-12">
             <div class="card">
               <div class="card-header">
-                <i class="bi bi-gear me-2"></i>登录与注册设置
+                <i class="bi bi-shield-lock me-2"></i>访问设置
                 <span class="badge bg-warning ms-2">管理员专用</span>
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="registrationEnabled">
                       <label class="form-check-label" for="registrationEnabled">
@@ -2387,19 +2373,7 @@
                       关闭后，新用户将无法注册账号
                     </div>
                   </div>
-                  <div class="col-md-4">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="showDefaultLoginInfo">
-                      <label class="form-check-label" for="showDefaultLoginInfo">
-                        <strong>显示默认登录信息</strong>
-                      </label>
-                    </div>
-                    <div class="form-text">
-                      <i class="bi bi-info-circle me-1"></i>
-                      登录页面显示默认用户名和密码
-                    </div>
-                  </div>
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="loginCaptchaEnabled">
                       <label class="form-check-label" for="loginCaptchaEnabled">

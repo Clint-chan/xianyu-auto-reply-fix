@@ -1,68 +1,100 @@
-/* 仪表盘样式 */
+/* Dashboard */
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.9rem;
 }
 
-/* ================================
-   【仪表盘菜单】相关样式
-   ================================ */
+.dashboard-stats > .stat-card {
+  grid-column: span 3;
+}
+
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  position: relative;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.25rem;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.stat-card::after {
+  display: none;
 }
 
 .stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  display: flex;
+  border-radius: 14px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  margin-bottom: 0.3rem;
+  box-shadow: none;
 }
 
 .stat-icon.primary {
-  background: rgba(79, 70, 229, 0.1);
+  background: rgba(17, 24, 39, 0.08);
   color: var(--primary-color);
 }
 
 .stat-icon.success {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(5, 150, 105, 0.12);
   color: var(--success-color);
 }
 
 .stat-icon.warning {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(217, 119, 6, 0.12);
   color: var(--warning-color);
 }
 
 .stat-icon.info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
 }
 
 .stat-number {
-  font-size: 2rem;
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 2.5vw, 2.35rem);
+  line-height: 1;
   font-weight: 700;
-  color: var(--dark-color);
-  margin-bottom: 0.5rem;
+  letter-spacing: -0.04em;
+  color: var(--text-color);
 }
 
 .stat-label {
-  color: var(--secondary-color);
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .stat-card {
+  background: var(--card-bg);
+}
+
+@media (max-width: 1199.98px) {
+  .dashboard-stats > .stat-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-stats > .stat-card {
+    grid-column: auto;
+  }
+
+  .stat-card {
+    min-height: 152px;
+  }
 }

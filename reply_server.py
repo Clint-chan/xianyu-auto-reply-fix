@@ -845,23 +845,63 @@ async def register_page():
     if registration_enabled != 'true':
         return HTMLResponse('''
         <!DOCTYPE html>
-        <html>
+        <html lang="zh-CN">
         <head>
             <title>注册已关闭</title>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="icon" type="image/svg+xml" href="/static/brand-mark.svg">
+            <link rel="stylesheet" href="/static/lib/bootstrap/bootstrap.min.css">
+            <link rel="stylesheet" href="/static/lib/bootstrap-icons/bootstrap-icons.css">
+            <link rel="stylesheet" href="/static/css/auth.css">
             <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .message { color: #666; font-size: 18px; }
-                .back-link { margin-top: 20px; }
-                .back-link a { color: #007bff; text-decoration: none; }
+                .auth-closed-card {
+                    max-width: 540px;
+                }
+                .auth-closed-actions .btn {
+                    width: auto;
+                    min-width: 10rem;
+                }
             </style>
         </head>
-        <body>
-            <h2>🚫 注册功能已关闭</h2>
-            <p class="message">系统管理员已关闭用户注册功能</p>
-            <div class="back-link">
-                <a href="/">← 返回首页</a>
-            </div>
+        <body class="auth-page auth-page--register">
+            <main class="auth-shell auth-shell--compact">
+                <section class="auth-showcase">
+                    <a class="auth-showcase__brand" href="/login.html">
+                        <img src="/static/brand-mark.svg" alt="自动回复管理系统标识">
+                        <span>自动回复工作台</span>
+                    </a>
+                    <p class="auth-showcase__eyebrow">
+                        <i class="bi bi-slash-circle"></i>
+                        当前关闭新用户注册
+                    </p>
+                    <h1>注册入口暂时关闭，但现有账号仍可正常登录使用。</h1>
+                    <p>如果你需要继续接入新账号，请先让系统管理员重新开启注册功能，或直接使用现有管理账号登录后台。</p>
+                </section>
+
+                <section class="auth-card auth-closed-card">
+                    <div class="auth-card-header">
+                        <div class="auth-card-brand">
+                            <img src="/static/brand-mark.svg" alt="自动回复管理系统标识">
+                            <div>
+                                <p class="auth-card-eyebrow">注册状态</p>
+                                <h2 class="mb-0">注册已关闭</h2>
+                                <p class="mb-0 mt-2">系统管理员当前禁止创建新用户。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="register-body">
+                        <div class="alert alert-warning mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            如需开通，请联系系统管理员调整“注册开关”后再访问本页面。
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 auth-closed-actions">
+                            <a class="btn btn-primary" href="/login.html">前往登录</a>
+                            <a class="btn btn-outline-primary" href="/">返回首页</a>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </body>
         </html>
         ''', status_code=403)

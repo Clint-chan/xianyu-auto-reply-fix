@@ -4,180 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户注册 - 自动回复管理系统</title>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="icon" type="image/svg+xml" href="/static/brand-mark.svg">
     <link rel="stylesheet" href="/static/lib/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="/static/lib/bootstrap-icons/bootstrap-icons.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
-        .register-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            max-width: 420px;
-            width: 100%;
-            max-height: 95vh;
-            overflow-y: auto;
-        }
-        .register-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.2rem;
-            text-align: center;
-        }
-        .register-header h2 {
-            margin-bottom: 0.3rem;
-            font-size: 1.4rem;
-        }
-        .register-header p {
-            margin-bottom: 0;
-            font-size: 0.85rem;
-        }
-        .register-body {
-            padding: 1.2rem;
-        }
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            padding: 8px 12px;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.2);
-        }
-        .btn-register {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-        .btn-register:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        .btn-code {
-            border-radius: 8px;
-            border: 1px solid #667eea;
-            color: #667eea;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            font-size: 0.85rem;
-        }
-        .btn-code:hover {
-            background: #667eea;
-            color: white;
-        }
-        .btn-code:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 0.8rem;
-        }
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-        .alert {
-            border-radius: 8px;
-            border: none;
-            padding: 0.6rem 1rem;
-            font-size: 0.85rem;
-        }
-        .input-group {
-            margin-bottom: 0.8rem;
-        }
-        .countdown {
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
-        .mb-3 {
-            margin-bottom: 0.8rem !important;
-        }
-        .form-label {
-            margin-bottom: 0.3rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #495057;
-        }
-        .form-text {
-            margin-top: 0.2rem;
-            font-size: 0.75rem;
-        }
-        .captcha-container img {
-            height: 32px !important;
-        }
-
-        /* 响应式优化 */
-        @media (max-height: 700px) {
-            .register-header {
-                padding: 1rem;
-            }
-            .register-header h2 {
-                font-size: 1.2rem;
-                margin-bottom: 0.2rem;
-            }
-            .register-header p {
-                font-size: 0.8rem;
-            }
-            .register-body {
-                padding: 1rem;
-            }
-            .mb-3 {
-                margin-bottom: 0.6rem !important;
-            }
-            .form-control {
-                padding: 6px 10px;
-            }
-            .btn-code {
-                padding: 6px 10px;
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .register-container {
-                margin: 5px;
-                max-width: none;
-            }
-            .row.g-2 > * {
-                padding-left: 0.25rem;
-                padding-right: 0.25rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/auth.css">
 </head>
-<body>
-    <div class="register-container">
-        <div class="register-header">
-            <h2 class="mb-0">
-                <i class="bi bi-person-plus-fill me-2"></i>
-                用户注册
-            </h2>
-            <p class="mb-0 mt-2 opacity-75">创建您的自动回复账号</p>
-        </div>
-        
-        <div class="register-body">
-            <div id="alertContainer"></div>
+<body class="auth-page auth-page--register">
+    <main class="auth-shell auth-shell--compact">
+        <section class="auth-showcase">
+            <a class="auth-showcase__brand" href="/login.html">
+                <img src="/static/brand-mark.svg" alt="自动回复管理系统标识">
+                <span>自动回复工作台</span>
+            </a>
+            <p class="auth-showcase__eyebrow">
+                <i class="bi bi-person-plus"></i>
+                快速开通管理账号
+            </p>
+            <h1>创建新账号后，马上接入自动回复和运营配置。</h1>
+            <p>注册入口保留邮箱验证码和图形验证码双重校验，避免被批量滥用，同时让个人部署也能快速完成初始接入。</p>
+
+            <div class="auth-stat-grid">
+                <div class="auth-stat">
+                    <span>注册校验</span>
+                    <strong>2 层</strong>
+                </div>
+                <div class="auth-stat">
+                    <span>后续入口</span>
+                    <strong>3 种</strong>
+                </div>
+            </div>
+
+            <ul class="auth-feature-list">
+                <li>
+                    <i class="bi bi-envelope-check"></i>
+                    <div>
+                        <strong>邮箱即身份绑定</strong>
+                        <span>验证码和通知都走同一邮箱，后续找回和提醒链路更直接。</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-shield-lock"></i>
+                    <div>
+                        <strong>保留现有安全策略</strong>
+                        <span>图形验证码、邮箱验证码和密码确认逻辑完全兼容现有后端接口。</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-layout-text-window"></i>
+                    <div>
+                        <strong>和登录页同一视觉系统</strong>
+                        <span>登录、注册、后台控制台使用同一套版式和交互语言，减少界面割裂感。</span>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <section class="register-container auth-card">
+            <div class="register-header auth-card-header">
+                <div class="auth-card-brand">
+                    <img src="/static/brand-mark.svg" alt="自动回复管理系统标识">
+                    <div>
+                        <p class="auth-card-eyebrow">新用户接入</p>
+                        <h2 class="mb-0">创建账号</h2>
+                        <p class="mb-0 mt-2">完成邮箱验证后，即可进入后台开始配置自动回复。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="register-body">
+            <div id="alertContainer" aria-live="polite"></div>
             
             <form id="registerForm">
                 <div class="mb-3">
@@ -185,7 +80,7 @@
                         <i class="bi bi-person me-1"></i>用户名
                     </label>
                     <input type="text" class="form-control" id="username" name="username"
-                           placeholder="3-20个字符，支持字母、数字、下划线" required>
+                           placeholder="3-20个字符，支持字母、数字、下划线" autocomplete="username" required>
                 </div>
 
                 <div class="mb-3">
@@ -193,7 +88,7 @@
                         <i class="bi bi-envelope me-1"></i>邮箱地址
                     </label>
                     <input type="email" class="form-control" id="email" name="email"
-                           placeholder="用于接收验证码和重要通知" required>
+                           placeholder="用于接收验证码和重要通知" autocomplete="email" required>
                 </div>
                 
                 <div class="mb-3">
@@ -206,18 +101,16 @@
                                    placeholder="输入4位验证码" maxlength="4" required>
                         </div>
                         <div class="col-5">
-                            <div class="captcha-container" style="position: relative;">
-                                <img id="captchaImage" src="" alt="图形验证码"
-                                     style="width: 100%; height: 32px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;"
-                                     onclick="refreshCaptcha()">
-                                <div id="captchaLoading" class="text-center" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div class="captcha-container captcha-frame">
+                                <img id="captchaImage" class="captcha-image" src="" alt="图形验证码" onclick="refreshCaptcha()">
+                                <div id="captchaLoading" class="text-center captcha-loading">
                                     <div class="spinner-border spinner-border-sm" role="status"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="form-text">
-                        <span id="captchaStatus">请输入图形验证码，点击图片可刷新</span>
+                        <span id="captchaStatus" aria-live="polite">请输入图形验证码，点击图片可刷新</span>
                     </div>
                 </div>
 
@@ -233,7 +126,7 @@
                         </button>
                     </div>
                     <div class="form-text">
-                        <span id="codeStatus">请先验证图形验证码</span>
+                        <span id="codeStatus" aria-live="polite">请先验证图形验证码</span>
                     </div>
                 </div>
 
@@ -242,7 +135,7 @@
                         <i class="bi bi-lock me-1"></i>设置密码
                     </label>
                     <input type="password" class="form-control" id="password" name="password"
-                           placeholder="至少6个字符" required>
+                           placeholder="至少6个字符" autocomplete="new-password" required>
                 </div>
 
                 <div class="mb-3">
@@ -250,7 +143,7 @@
                         <i class="bi bi-lock-fill me-1"></i>确认密码
                     </label>
                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                           placeholder="再次输入密码" required>
+                           placeholder="再次输入密码" autocomplete="new-password" required>
                 </div>
                 
                 <button type="submit" class="btn btn-register btn-primary w-100 mt-2">
@@ -263,7 +156,8 @@
                 <a href="/login.html">立即登录</a>
             </div>
         </div>
-    </div>
+        </section>
+    </main>
 
     <script src="/static/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script>

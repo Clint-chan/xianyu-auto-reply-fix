@@ -2,59 +2,102 @@
    全局变量和基础样式
    ================================ */
 :root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-light: #3b82f6;
+    color-scheme: light;
+    --font-sans: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    --font-display: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+    --primary-color: #111827;
+    --primary-hover: #030712;
+    --primary-light: #64748b;
     --secondary-color: #6b7280;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
+    --success-color: #059669;
+    --danger-color: #dc2626;
+    --warning-color: #d97706;
     --light-color: #f9fafb;
-    --dark-color: #1f2937;
+    --dark-color: #111827;
     --border-color: #e5e7eb;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-    /* 暗色模式变量 */
-    --bg-color: #f8fafc;
-    --bg-secondary: #ffffff;
-    --text-color: #1f2937;
+    --surface-border: #eceff3;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 10px 28px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.08);
+    --shadow-xl: 0 28px 60px rgba(15, 23, 42, 0.1);
+    --focus-ring: 0 0 0 4px rgba(17, 24, 39, 0.08);
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+    --z-sidebar: 1100;
+    --z-backdrop: 1090;
+    --z-toast: 1600;
+    --bg-color: #f9fafb;
+    --bg-secondary: #f3f4f6;
+    --app-bg: #f8fafc;
+    --text-color: #111827;
     --text-secondary: #6b7280;
     --card-bg: #ffffff;
     --input-bg: #ffffff;
-    --input-border: #d1d5db;
-    --table-stripe: rgba(0, 0, 0, 0.02);
+    --input-border: #e5e7eb;
+    --table-stripe: rgba(15, 23, 42, 0.02);
     --modal-bg: #ffffff;
+    --sidebar-gradient: linear-gradient(180deg, #ffffff 0%, #fbfbfc 100%);
+    --sidebar-accent: #111827;
   }
 
-  /* 暗色模式 */
   [data-theme="dark"] {
-    --bg-color: #0f172a;
-    --bg-secondary: #1e293b;
-    --text-color: #f1f5f9;
+    color-scheme: dark;
+    --bg-color: #0b1120;
+    --bg-secondary: #121a2d;
+    --app-bg:
+      linear-gradient(180deg, #0b1120 0%, #111827 100%);
+    --text-color: #e5e7eb;
     --text-secondary: #94a3b8;
-    --card-bg: #1e293b;
-    --input-bg: #334155;
-    --input-border: #475569;
-    --border-color: #334155;
-    --light-color: #1e293b;
-    --dark-color: #f1f5f9;
+    --card-bg: #111827;
+    --input-bg: #0f172a;
+    --input-border: rgba(71, 85, 105, 0.72);
+    --border-color: rgba(71, 85, 105, 0.52);
+    --surface-border: rgba(71, 85, 105, 0.44);
+    --light-color: #111827;
+    --dark-color: #f8fafc;
     --table-stripe: rgba(255, 255, 255, 0.02);
-    --modal-bg: #1e293b;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --modal-bg: #111827;
+    --sidebar-gradient: linear-gradient(180deg, #0f172a 0%, #0b1120 100%);
+    --sidebar-accent: #f8fafc;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.34);
+    --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 28px 60px rgba(0, 0, 0, 0.48);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-color);
+    font-family: var(--font-sans);
+    background: var(--app-bg);
     color: var(--text-color);
     min-height: 100vh;
     padding: 0;
     margin: 0;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  ::selection {
+    background: rgba(36, 88, 230, 0.18);
+    color: inherit;
+  }
+
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   /* 暗色模式下的通用样式覆盖 */
