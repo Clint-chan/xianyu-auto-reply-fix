@@ -372,6 +372,7 @@ check_disk_usage.py
 .env
 .env.*
 !.env.example
+!.env.docker.example
 .env.docker
 
 # === 滑块验证模块配置 ===
@@ -796,3 +797,4 @@ update_backup/
 logs/
 .ace-tool/
 /.claude
+!.env.docker.example

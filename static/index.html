@@ -267,165 +267,203 @@
     <!-- 账号管理内容 -->
     <div id="accounts-section" class="content-section">
       <div class="content-header">
-        <h2 class="mb-0">
-          <i class="bi bi-person-circle me-2"></i>
-          账号管理
-        </h2>
-        <p class="text-muted mb-0">管理账号Cookie信息</p>
+        <h2 class="mb-0">账号管理</h2>
+        <p class="text-muted mb-0">添加账号、维护 Cookie 与回复开关</p>
       </div>
-      <div class="content-body">
-        <!-- 添加Cookie卡片 -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <span>添加新账号</span>
+      <div class="content-body account-overhaul-shell">
+        <div class="account-command-layout">
+          <div class="card account-command-card">
+            <div class="card-header account-command-card__header">
+              <div>
+                <span class="account-section-eyebrow">账号接入</span>
+                <h5 class="mb-0">添加新账号</h5>
+              </div>
+              <p class="mb-0">把接入、验证和维护放到同一个工作台里处理。</p>
+            </div>
+            <div class="card-body action-choice-shell">
+            <div class="account-entry-layout">
+              <div class="action-choice-grid" role="tablist" aria-label="添加账号方式">
+                <button type="button" class="btn btn-lg qr-login-btn action-choice action-choice--primary" data-entry-mode="qr" aria-pressed="true" onclick="showQRCodeLogin()">
+                  <span class="action-choice__eyebrow">推荐方式</span>
+                  <span class="action-choice__body">
+                    <span class="action-choice__title">扫码登录</span>
+                    <small class="action-choice__desc">适合快速接入账号，无需粘贴 Cookie</small>
+                  </span>
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-lg password-login-btn action-choice" data-entry-mode="password" aria-pressed="false" onclick="togglePasswordLogin()">
+                  <span class="action-choice__eyebrow">长期维护</span>
+                  <span class="action-choice__body">
+                    <span class="action-choice__title">账号密码登录</span>
+                    <small class="action-choice__desc">推荐长期维护账号，并支持后续刷新 Cookie</small>
+                  </span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-lg manual-input-btn action-choice" data-entry-mode="manual" aria-pressed="false" onclick="toggleManualInput()">
+                  <span class="action-choice__eyebrow">补录</span>
+                  <span class="action-choice__body">
+                    <span class="action-choice__title">手动录入 Cookie</span>
+                    <small class="action-choice__desc">仅在已有完整 Cookie 时使用</small>
+                  </span>
+                </button>
+                <button type="button" class="btn btn-outline-warning btn-lg refresh-cookie-btn action-choice action-choice--warning" data-entry-mode="refresh" aria-pressed="false" onclick="toggleRefreshCookieForm()">
+                  <span class="action-choice__eyebrow">维护</span>
+                  <span class="action-choice__body">
+                    <span class="action-choice__title">刷新 Cookie</span>
+                    <small class="action-choice__desc">用于修复已有账号 Cookie 失效的问题</small>
+                  </span>
+                </button>
+              </div>
+
+              <div class="account-entry-stage">
+                <div id="accountEntryIntro" class="account-entry-intro">
+                  <span class="account-entry-intro__meta">账号接入工作区</span>
+                  <h3 class="account-entry-intro__title">先选一种接入方式，再完成账号配置</h3>
+                  <p class="account-entry-intro__desc">
+                    扫码适合快速接入，账号密码适合长期维护，手动录入仅用于补录完整 Cookie，刷新 Cookie 用于恢复失效账号。
+                  </p>
+                  <div class="account-entry-quicklist">
+                    <span class="entry-quick-item">推荐优先使用扫码登录或账号密码登录，后续维护更稳定。</span>
+                    <span class="entry-quick-item">手动录入前请确认 Cookie 完整有效，避免写入失效账号。</span>
+                    <span class="entry-quick-item">刷新 Cookie 需要账号已保存登录凭据，否则无法自动重登。</span>
+                    <span class="entry-quick-item">如需处理滑块或人脸验证，系统会自动弹出验证窗口继续流程。</span>
+                  </div>
+                  <div class="account-entry-cta">
+                    <button type="button" class="btn btn-primary" onclick="showQRCodeLogin()">立即扫码登录</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setAccountEntryMode('password')">改用账号密码登录</button>
+                  </div>
+                </div>
+
+                <div id="passwordLoginForm" class="account-entry-panel" style="display: none;">
+                  <div class="account-entry-panel__header">
+                    <div>
+                      <h6>账号密码登录</h6>
+                      <p>系统会自动获取 Cookie，适合长期维护和后续刷新。</p>
+                    </div>
+                    <button type="button" class="btn btn-link btn-sm account-entry-back" onclick="setAccountEntryMode('qr')">返回推荐方式</button>
+                  </div>
+                  <div class="account-entry-notice">使用账号密码登录时，可能需要处理滑块或人脸验证，请保持浏览器可操作。</div>
+                  <form id="passwordLoginFormElement" class="row g-3">
+                    <div class="col-md-4">
+                      <label for="passwordLoginAccountId" class="form-label">账号ID</label>
+                      <input type="text" class="form-control" id="passwordLoginAccountId" placeholder="用于区分账号的唯一标识" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="passwordLoginAccount" class="form-label">登录账号</label>
+                      <input type="text" class="form-control" id="passwordLoginAccount" placeholder="手机号或邮箱" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="passwordLoginPassword" class="form-label">登录密码</label>
+                      <input type="password" class="form-control" id="passwordLoginPassword" placeholder="请输入登录密码" required>
+                    </div>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="passwordLoginShowBrowser" value="1">
+                        <label class="form-check-label" for="passwordLoginShowBrowser">
+                          显示浏览器窗口。如果在服务器环境运行，请保持关闭，避免影响登录流程。
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-12 account-entry-panel__actions">
+                      <button type="submit" class="btn btn-primary">开始登录</button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="setAccountEntryMode('qr')">取消</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div id="manualInputForm" class="account-entry-panel" style="display: none;">
+                  <div class="account-entry-panel__header">
+                    <div>
+                      <h6>手动录入 Cookie</h6>
+                      <p>仅在已经拿到完整 Cookie 时使用，不建议作为常规接入方式。</p>
+                    </div>
+                    <button type="button" class="btn btn-link btn-sm account-entry-back" onclick="setAccountEntryMode('qr')">返回推荐方式</button>
+                  </div>
+                  <div class="account-entry-notice">推荐优先使用扫码登录或账号密码登录，手动录入前请确认 Cookie 内容完整且仍然有效。</div>
+                  <form id="addForm" class="row g-3">
+                    <div class="col-md-4">
+                      <label for="cookieId" class="form-label">账号ID</label>
+                      <input type="text" class="form-control" id="cookieId" placeholder="用于区分账号的唯一标识" required>
+                    </div>
+                    <div class="col-md-8">
+                      <label for="cookieValue" class="form-label">Cookie 值</label>
+                      <input type="text" class="form-control" id="cookieValue" placeholder="粘贴完整 Cookie 字符串" required>
+                    </div>
+                    <div class="col-12 account-entry-panel__actions">
+                      <button type="submit" class="btn btn-primary">添加账号</button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="setAccountEntryMode('qr')">取消</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div id="refreshCookieForm" class="account-entry-panel" style="display: none;">
+                  <div class="account-entry-panel__header">
+                    <div>
+                      <h6>刷新 Cookie</h6>
+                      <p>系统会使用账号已保存的用户名和密码重新登录，恢复失效 Cookie。</p>
+                    </div>
+                    <button type="button" class="btn btn-link btn-sm account-entry-back" onclick="setAccountEntryMode('qr')">返回推荐方式</button>
+                  </div>
+                  <div class="account-entry-notice">请先确认账号已配置正确的登录凭据。刷新过程可能触发滑块或人脸验证。</div>
+                  <form id="refreshCookieFormElement" class="row g-3">
+                    <div class="col-md-6">
+                      <label for="refreshCookieAccountSelect" class="form-label">选择账号</label>
+                      <select class="form-select" id="refreshCookieAccountSelect" required>
+                        <option value="">请选择要刷新的账号</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">账号状态</label>
+                      <div id="refreshCookieAccountStatus" class="account-entry-status">
+                        请先选择账号
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="refreshCookieShowBrowser" value="1">
+                        <label class="form-check-label" for="refreshCookieShowBrowser">
+                          显示浏览器窗口。仅影响本次刷新，不会改变自动刷新的设置。
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-12 account-entry-panel__actions">
+                      <button type="submit" class="btn btn-warning">验证并刷新 Cookie</button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="setAccountEntryMode('qr')">取消</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            </div>
           </div>
-          <div class="card-body action-choice-shell">
-            <!-- 添加方式选择 -->
-            <div class="row mb-4">
-              <div class="col-12">
-                <div class="action-choice-grid">
-                  <button type="button" class="btn btn-lg qr-login-btn action-choice action-choice--primary" onclick="showQRCodeLogin()">
-                    <span class="action-choice__icon"><i class="bi bi-qr-code"></i></span>
-                    <span class="action-choice__body">
-                      <span class="action-choice__title">扫码登录</span>
-                      <small class="action-choice__desc">只有账号不需要人脸的时候推荐使用</small>
-                    </span>
-                  </button>
-                  <button type="button" class="btn btn-outline-primary btn-lg password-login-btn action-choice" onclick="togglePasswordLogin()">
-                    <span class="action-choice__icon"><i class="bi bi-key"></i></span>
-                    <span class="action-choice__body">
-                      <span class="action-choice__title">账号密码登录</span>
-                      <small class="action-choice__desc">请务必优先使用账号和密码登录</small>
-                    </span>
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary btn-lg manual-input-btn action-choice" onclick="toggleManualInput()">
-                    <span class="action-choice__icon"><i class="bi bi-keyboard"></i></span>
-                    <span class="action-choice__body">
-                      <span class="action-choice__title">手动输入</span>
-                      <small class="action-choice__desc">使用消息界面的 Cookie</small>
-                    </span>
-                  </button>
-                  <button type="button" class="btn btn-outline-warning btn-lg refresh-cookie-btn action-choice action-choice--warning" onclick="toggleRefreshCookieForm()">
-                    <span class="action-choice__icon"><i class="bi bi-arrow-repeat"></i></span>
-                    <span class="action-choice__body">
-                      <span class="action-choice__title">刷新 Cookie</span>
-                      <small class="action-choice__desc">验证账密并刷新已有账号</small>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            <!-- 账号密码登录表单（默认隐藏） -->
-            <div id="passwordLoginForm" style="display: none;">
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>提示：</strong>使用账号密码登录，系统将自动获取Cookie。登录过程可能需要处理滑块验证，请耐心等待。
-              </div>
-              <form id="passwordLoginFormElement" class="row g-3">
-                <div class="col-md-4">
-                  <label for="passwordLoginAccountId" class="form-label">账号ID</label>
-                  <input type="text" class="form-control" id="passwordLoginAccountId" placeholder="唯一标识" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="passwordLoginAccount" class="form-label">登录账号</label>
-                  <input type="text" class="form-control" id="passwordLoginAccount" placeholder="手机号或邮箱" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="passwordLoginPassword" class="form-label">登录密码</label>
-                  <input type="password" class="form-control" id="passwordLoginPassword" placeholder="请输入密码" required>
-                </div>
-                <div class="col-12">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="passwordLoginShowBrowser" value="1">
-                    <label class="form-check-label" for="passwordLoginShowBrowser">
-                      显示浏览器窗口（如果使用服务器，请勿打开该开关，会导致登录失败）
-                    </label>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-box-arrow-in-right me-1"></i>开始登录
-                  </button>
-                  <button type="button" class="btn btn-secondary ms-2" onclick="togglePasswordLogin()">
-                    <i class="bi bi-x-circle me-1"></i>取消
-                  </button>
-                </div>
-              </form>
+          <aside class="account-insight-panel">
+            <div class="account-insight-panel__hero">
+              <span class="account-section-eyebrow">工作台说明</span>
+              <h3>账号维护应该像队列，不该像电子表格。</h3>
+              <p>这里把接入方式、筛选、状态判断和维护动作拆成了独立区块，避免一屏里只有密集按钮和横向滚动。</p>
             </div>
-
-            <!-- 手动输入表单（默认隐藏） -->
-            <div id="manualInputForm" style="display: none;">
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>提示：</strong>推荐使用扫码登录，更加安全便捷。如需手动输入，请确保Cookie信息的准确性。
+            <div class="account-insight-list">
+              <div class="account-insight-card">
+                <strong>推荐流程</strong>
+                <span>扫码或账密接入，异常时再刷新 Cookie，最后补备注和暂停策略。</span>
               </div>
-              <form id="addForm" class="row g-3">
-                <div class="col-md-3">
-                  <label for="cookieId" class="form-label">账号ID</label>
-                  <input type="text" class="form-control" id="cookieId" placeholder="唯一标识" required>
-                </div>
-                <div class="col-md-9">
-                  <label for="cookieValue" class="form-label">Cookie值</label>
-                  <input type="text" class="form-control" id="cookieValue" placeholder="完整Cookie字符串" required>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i>添加账号
-                  </button>
-                  <button type="button" class="btn btn-secondary ms-2" onclick="toggleManualInput()">
-                    <i class="bi bi-x-circle me-1"></i>取消
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <!-- 刷新Cookie表单（默认隐藏） -->
-            <div id="refreshCookieForm" style="display: none;">
-              <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>提示：</strong>此功能将使用账号已配置的用户名和密码重新登录，刷新Cookie。请确保账号已配置正确的登录凭据。
+              <div class="account-insight-card">
+                <strong>筛选思路</strong>
+                <span>先看待处理账号，再处理 Cookie 缺失、AI 未开启或已禁用的异常状态。</span>
               </div>
-              <form id="refreshCookieFormElement" class="row g-3">
-                <div class="col-md-6">
-                  <label for="refreshCookieAccountSelect" class="form-label">选择要刷新的账号</label>
-                  <select class="form-select" id="refreshCookieAccountSelect" required>
-                    <option value="">请选择账号...</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">账号状态</label>
-                  <div id="refreshCookieAccountStatus" class="form-control-plaintext text-muted">
-                    请先选择账号
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="refreshCookieShowBrowser" value="1">
-                    <label class="form-check-label" for="refreshCookieShowBrowser">
-                      显示浏览器窗口（仅影响本次刷新，不会改变自动刷新的设置；如果使用服务器，请勿打开该开关）
-                    </label>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-warning">
-                    <i class="bi bi-arrow-repeat me-1"></i>验证并刷新Cookie
-                  </button>
-                  <button type="button" class="btn btn-secondary ms-2" onclick="toggleRefreshCookieForm()">
-                    <i class="bi bi-x-circle me-1"></i>取消
-                  </button>
-                </div>
-              </form>
+              <div class="account-insight-card">
+                <strong>维护目标</strong>
+                <span>每张账号卡只保留一个主动作区和一组状态区，减少来回跳转成本。</span>
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
 
-        <!-- Cookie列表卡片 -->
-        <div class="card">
-          <div class="card-header list-panel__header">
-            <div class="list-panel__title">
+        <div class="card account-workbench-card">
+          <div class="card-header list-panel__header account-workbench-card__header">
+            <div class="list-panel__title account-workbench-card__title">
+              <span class="account-section-eyebrow">账号工作台</span>
               <h5 class="mb-0">账号列表</h5>
-              <small>管理账号 Cookie、开关状态和备注配置</small>
+              <small>按状态筛选、集中维护每个账号的回复配置与运行能力</small>
             </div>
             <div class="list-panel__tools">
               <button class="btn btn-sm btn-outline-success" onclick="openDefaultReplyManager()">默认回复管理</button>
@@ -433,20 +471,28 @@
             </div>
           </div>
           <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover account-table" id="cookieTable">
-                <thead>
-                  <tr>
-                    <th style="width: 15%">账号</th>
-                    <th style="width: 18%">Cookie</th>
-                    <th style="width: 19%">回复配置</th>
-                    <th style="width: 22%">功能状态</th>
-                    <th style="width: 14%">备注与暂停</th>
-                    <th style="width: 12%">操作</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="account-list-toolbar">
+              <div class="account-list-stats" id="accountListStats">
+                <div class="account-stat-card"><span>总账号</span><strong>0</strong></div>
+                <div class="account-stat-card"><span>启用中</span><strong>0</strong></div>
+                <div class="account-stat-card"><span>Cookie 就绪</span><strong>0</strong></div>
+                <div class="account-stat-card"><span>AI 回复</span><strong>0</strong></div>
+              </div>
+              <div class="account-list-controls">
+                <div class="account-search">
+                  <input type="search" class="form-control form-control-sm" id="accountSearchInput" placeholder="搜索账号ID、登录账号或备注">
+                </div>
+                <div class="account-filter-group" id="accountFilterGroup">
+                  <button type="button" class="account-filter-chip is-active" data-filter="all">全部</button>
+                  <button type="button" class="account-filter-chip" data-filter="enabled">已启用</button>
+                  <button type="button" class="account-filter-chip" data-filter="cookie">已配置Cookie</button>
+                  <button type="button" class="account-filter-chip" data-filter="ai">AI已开启</button>
+                  <button type="button" class="account-filter-chip" data-filter="attention">待处理</button>
+                </div>
+              </div>
+            </div>
+            <div class="account-grid-shell">
+              <div id="accountGrid" class="account-grid"></div>
             </div>
           </div>
         </div>
@@ -482,13 +528,13 @@
                 </div>
                 <div class="toolbar-button-group">
                     <button class="btn btn-success" onclick="getAllItemsFromAccount()">
-                      <i class="bi bi-download me-1"></i>获取指定页
+                      获取指定页
                     </button>
                     <button class="btn btn-warning" onclick="getAllItemsFromAccountAll()">
-                      <i class="bi bi-collection me-1"></i>获取所有页
+                      获取所有页
                     </button>
                     <button class="btn btn-primary" onclick="refreshItems()">
-                      <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                      刷新
                     </button>
                 </div>
               </div>
@@ -509,18 +555,17 @@
                 <input type="text" class="form-control" id="itemSearchInput" placeholder="搜索商品标题或详情...">
               </label>
               <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItems()" id="batchDeleteBtn" disabled>
-                <i class="bi bi-trash"></i> 批量删除
+                批量删除
               </button>
             </div>
           </div>
           <div class="card-body">
             <!-- 搜索统计信息 -->
             <div id="itemSearchStats" class="text-muted small mb-2" style="display: none;">
-              <i class="bi bi-search me-1"></i>
               <span id="itemSearchStatsText"></span>
             </div>
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover data-table data-table--items">
                 <thead>
                   <tr>
                     <th style="width: 5%">
@@ -528,13 +573,13 @@
                     </th>
                     <th style="width: 10%">账号ID</th>
                     <th style="width: 10%">商品ID</th>
-                    <th style="width: 16%">商品标题</th>
-                    <th style="width: 18%">商品详情</th>
-                    <th style="width: 18%">商品价格</th>
+                    <th style="width: 15%">商品标题</th>
+                    <th style="width: 17%">商品详情</th>
+                    <th style="width: 10%">商品价格</th>
                     <th style="width: 8%">多规格</th>
-                    <th style="width: 8%">多数量发货</th>
+                    <th style="width: 9%">多数量发货</th>
                     <th style="width: 10%">更新时间</th>
-                    <th style="width: 15%">操作</th>
+                    <th style="width: 16%">操作</th>
                   </tr>
                 </thead>
                 <tbody id="itemsTableBody">
@@ -615,10 +660,10 @@
               <div class="toolbar-actions">
                 <div class="toolbar-button-group">
                   <button class="btn btn-success" onclick="showItemReplayEdit()">
-                    <i class="bi bi-plus-lg me-1"></i>添加商品回复
+                    添加商品回复
                     </button>
                     <button class="btn btn-primary" onclick="refreshItemReplayS()">
-                      <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                      刷新
                     </button>
                 </div>
               </div>
@@ -635,13 +680,13 @@
             </div>
             <div class="list-panel__tools">
               <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteItemReplies()">
-                <i class="bi bi-trash"></i> 批量删除
+                批量删除
               </button>
             </div>
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover data-table data-table--replies">
                 <thead>
                   <tr>
                     <th style="width: 5%">
@@ -653,7 +698,7 @@
                     <th style="width: 20%">商品内容</th>
                     <th style="width: 18%">回复内容</th>
                     <th style="width: 10%">更新时间</th>
-                    <th style="width: 15%">操作</th>
+                    <th style="width: 16%">操作</th>
                   </tr>
                 </thead>
                 <tbody id="itemReplaysTableBody">
@@ -715,7 +760,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
           <button type="button" class="btn btn-primary" onclick="saveItemReply()">
-            <i class="bi bi-check-circle me-1"></i>保存
+            保存
           </button>
         </div>
       </div>
@@ -760,10 +805,10 @@
               <div class="toolbar-actions toolbar-actions--end">
                 <div class="toolbar-button-group">
                   <button class="btn btn-outline-primary" onclick="refreshOrders()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                    刷新
                   </button>
                   <button class="btn btn-outline-secondary" onclick="clearOrderFilters()">
-                    <i class="bi bi-x-circle"></i> 清空筛选
+                    清空筛选
                   </button>
                 </div>
               </div>
@@ -784,21 +829,20 @@
                 <input type="text" class="form-control" id="orderSearchInput" placeholder="搜索订单 ID、商品 ID、买家 ID 或昵称...">
               </label>
               <button class="btn btn-sm btn-outline-primary" onclick="batchRefreshOrders()" id="batchRefreshOrdersBtn" disabled>
-                <i class="bi bi-arrow-clockwise"></i> 批量刷新
+                批量刷新
               </button>
               <button class="btn btn-sm btn-outline-danger" onclick="batchDeleteOrders()" id="batchDeleteOrdersBtn" disabled>
-                <i class="bi bi-trash"></i> 批量删除
+                批量删除
               </button>
             </div>
           </div>
           <div class="card-body">
             <!-- 搜索统计信息 -->
             <div id="orderSearchStats" class="text-muted small mb-2" style="display: none;">
-              <i class="bi bi-search me-1"></i>
               <span id="orderSearchStatsText"></span>
             </div>
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover data-table data-table--orders">
                 <thead>
                   <tr>
                     <th style="width: 4%">
@@ -813,7 +857,7 @@
                     <th style="width: 8%">金额</th>
                     <th style="width: 8%">状态</th>
                     <th style="width: 10%">账号ID</th>
-                    <th style="width: 12%">操作</th>
+                    <th style="width: 16%">操作</th>
                   </tr>
                 </thead>
                 <tbody id="ordersTableBody">
@@ -990,38 +1034,34 @@
         <p class="text-muted mb-0">管理虚拟商品的卡券数据，支持API、固定文字和批量数据</p>
       </div>
       <div class="content-body">
-        <!-- 卡券列表 -->
-        <div class="row">
-          <div class="col-md-8">
-            <div class="card">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">卡券列表</h5>
-                <button class="btn btn-primary btn-sm" onclick="showAddCardModal()">
-                  <i class="bi bi-plus-lg me-1"></i>添加卡券
-                </button>
+        <div class="row g-4 align-items-start">
+          <div class="col-xl-8">
+            <div class="card list-panel">
+              <div class="card-header list-panel__header">
+                <div class="list-panel__title">
+                  <h5 class="mb-0">卡券列表</h5>
+                  <p class="mb-0">管理发货资源、规格信息和卡券状态</p>
+                </div>
+                <div class="list-panel__tools">
+                  <button class="btn btn-primary btn-sm" onclick="showAddCardModal()">添加卡券</button>
+                </div>
               </div>
-              <div class="card-body">
+              <div class="card-body p-0">
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table class="table table-hover data-table data-table--cards">
                     <thead>
                       <tr>
                         <th>卡券名称</th>
-                        <th>类型</th>
-                        <th>规格信息</th>
-                        <th>数据量</th>
-                        <th>延时时间</th>
+                        <th>类型与规格</th>
+                        <th>数据情况</th>
+                        <th>发货设置</th>
                         <th>状态</th>
-                        <th>创建时间</th>
                         <th>操作</th>
                       </tr>
                     </thead>
                     <tbody id="cardsTableBody">
                       <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">
-                          <i class="bi bi-credit-card fs-1 d-block mb-3"></i>
-                          <h5>暂无卡券数据</h5>
-                          <p class="mb-0">点击"添加卡券"开始创建您的第一个卡券</p>
-                        </td>
+                        <td colspan="6" class="empty-state">暂无卡券数据，点击“添加卡券”开始创建。</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1029,34 +1069,28 @@
               </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="card">
+          <div class="col-xl-4">
+            <div class="card summary-card">
               <div class="card-header">
-                <h5 class="mb-0">统计信息</h5>
+                <h5 class="mb-0">卡券概览</h5>
               </div>
               <div class="card-body">
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                <div class="summary-stack">
+                  <div class="summary-row">
                     <span>总卡券数</span>
-                    <span class="badge bg-primary" id="totalCards">0</span>
+                    <strong id="totalCards">0</strong>
                   </div>
-                </div>
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>API类型</span>
-                    <span class="badge bg-info" id="apiCards">0</span>
+                    <strong id="apiCards">0</strong>
                   </div>
-                </div>
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>固定文字</span>
-                    <span class="badge bg-success" id="textCards">0</span>
+                    <strong id="textCards">0</strong>
                   </div>
-                </div>
-                <div class="stat-item">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>批量数据</span>
-                    <span class="badge bg-warning" id="dataCards">0</span>
+                    <strong id="dataCards">0</strong>
                   </div>
                 </div>
               </div>
@@ -1076,37 +1110,34 @@
         <p class="text-muted mb-0">根据商品关键字自动匹配卡券进行发货</p>
       </div>
       <div class="content-body">
-        <!-- 发货规则列表 -->
-        <div class="row">
-          <div class="col-md-8">
-            <div class="card">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">发货规则</h5>
-                <button class="btn btn-primary btn-sm" onclick="showAddDeliveryRuleModal()">
-                  <i class="bi bi-plus-lg me-1"></i>添加规则
-                </button>
+        <div class="row g-4 align-items-start">
+          <div class="col-xl-8">
+            <div class="card list-panel">
+              <div class="card-header list-panel__header">
+                <div class="list-panel__title">
+                  <h5 class="mb-0">发货规则</h5>
+                  <p class="mb-0">按商品或关键字关联卡券，统一管理自动发货逻辑</p>
+                </div>
+                <div class="list-panel__tools">
+                  <button class="btn btn-primary btn-sm" onclick="showAddDeliveryRuleModal()">添加规则</button>
+                </div>
               </div>
-              <div class="card-body">
+              <div class="card-body p-0">
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table class="table table-hover data-table data-table--delivery">
                     <thead>
                       <tr>
-                        <th>商品关键字</th>
-                        <th>匹配卡券</th>
+                        <th>商品规则</th>
+                        <th>关联卡券</th>
                         <th>卡券类型</th>
-                        <!-- <th>发货数量</th> 隐藏发货数量列 -->
+                        <th>发货情况</th>
                         <th>状态</th>
-                        <th>已发货次数</th>
                         <th>操作</th>
                       </tr>
                     </thead>
                     <tbody id="deliveryRulesTableBody">
                       <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">
-                          <i class="bi bi-truck fs-1 d-block mb-3"></i>
-                          <h5>暂无发货规则</h5>
-                          <p class="mb-0">点击"添加规则"开始配置自动发货规则</p>
-                        </td>
+                        <td colspan="6" class="empty-state">暂无发货规则，点击“添加规则”开始配置。</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1114,34 +1145,28 @@
               </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="card">
+          <div class="col-xl-4">
+            <div class="card summary-card">
               <div class="card-header">
-                <h5 class="mb-0">发货统计</h5>
+                <h5 class="mb-0">发货概览</h5>
               </div>
               <div class="card-body">
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                <div class="summary-stack">
+                  <div class="summary-row">
                     <span>总规则数</span>
-                    <span class="badge bg-primary" id="totalRules">0</span>
+                    <strong id="totalRules">0</strong>
                   </div>
-                </div>
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>启用规则</span>
-                    <span class="badge bg-success" id="activeRules">0</span>
+                    <strong id="activeRules">0</strong>
                   </div>
-                </div>
-                <div class="stat-item mb-3">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>今日发货</span>
-                    <span class="badge bg-info" id="todayDeliveries">0</span>
+                    <strong id="todayDeliveries">0</strong>
                   </div>
-                </div>
-                <div class="stat-item">
-                  <div class="d-flex justify-content-between">
+                  <div class="summary-row">
                     <span>总发货量</span>
-                    <span class="badge bg-warning" id="totalDeliveries">0</span>
+                    <strong id="totalDeliveries">0</strong>
                   </div>
                 </div>
               </div>
@@ -1161,177 +1186,67 @@
         <p class="text-muted mb-0">管理消息通知渠道，支持QQ通知等多种方式</p>
       </div>
       <div class="content-body">
-        <!-- 通知渠道类型选择 -->
         <div class="card mb-4">
-          <div class="card-header">
-            <span><i class="bi bi-plus-circle me-2"></i>添加通知渠道</span>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">添加通知渠道</h5>
+              <p class="mb-0">先选择渠道类型，再填写对应的机器人、Webhook 或邮件参数。</p>
+            </div>
           </div>
           <div class="card-body">
-            <div class="alert alert-info mb-4">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>选择通知方式：</strong>点击下方按钮选择您要配置的通知渠道类型
-            </div>
-
-            <!-- 通知渠道类型按钮 -->
-            <div class="row g-2">
-              <!-- <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('qq')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-chat-dots-fill text-primary"></i>
-                    </div>
-                    <h6 class="card-title">QQ通知</h6>
-                    <p class="card-text text-muted">QQ机器人消息</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div> -->
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('dingtalk')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-bell-fill text-info"></i>
-                    </div>
-                    <h6 class="card-title">钉钉通知</h6>
-                    <p class="card-text text-muted">钉钉机器人消息</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-info btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('feishu')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-chat-square-text-fill text-warning"></i>
-                    </div>
-                    <h6 class="card-title">飞书通知</h6>
-                    <p class="card-text text-muted">飞书机器人消息</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-warning btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('bark')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-phone-fill text-dark"></i>
-                    </div>
-                    <h6 class="card-title">Bark通知</h6>
-                    <p class="card-text text-muted">iOS推送通知</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-dark btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('email')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-envelope-fill text-success"></i>
-                    </div>
-                    <h6 class="card-title">邮件通知</h6>
-                    <p class="card-text text-muted">SMTP邮件发送</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-success btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('webhook')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-link-45deg text-warning"></i>
-                    </div>
-                    <h6 class="card-title">Webhook</h6>
-                    <p class="card-text text-muted">自定义HTTP请求</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-warning btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('wechat')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-wechat text-success"></i>
-                    </div>
-                    <h6 class="card-title">微信通知</h6>
-                    <p class="card-text text-muted">企业微信机器人</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-success btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="card h-100 channel-type-card" onclick="showAddChannelModal('telegram')">
-                  <div class="card-body text-center">
-                    <div class="channel-icon">
-                      <i class="bi bi-telegram text-primary"></i>
-                    </div>
-                    <h6 class="card-title">Telegram</h6>
-                    <p class="card-text text-muted">Telegram机器人</p>
-                    <div class="mt-auto">
-                      <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>配置
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="channel-type-grid">
+              <button type="button" class="channel-type-tile channel-type-tile--info" onclick="showAddChannelModal('dingtalk')">
+                <span class="channel-type-tile__title">钉钉通知</span>
+                <span class="channel-type-tile__desc">钉钉机器人消息</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--amber" onclick="showAddChannelModal('feishu')">
+                <span class="channel-type-tile__title">飞书通知</span>
+                <span class="channel-type-tile__desc">飞书机器人消息</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--dark" onclick="showAddChannelModal('bark')">
+                <span class="channel-type-tile__title">Bark 通知</span>
+                <span class="channel-type-tile__desc">iOS 推送通知</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--green" onclick="showAddChannelModal('email')">
+                <span class="channel-type-tile__title">邮件通知</span>
+                <span class="channel-type-tile__desc">SMTP 邮件发送</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--amber" onclick="showAddChannelModal('webhook')">
+                <span class="channel-type-tile__title">Webhook</span>
+                <span class="channel-type-tile__desc">自定义 HTTP 请求</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--green" onclick="showAddChannelModal('wechat')">
+                <span class="channel-type-tile__title">微信通知</span>
+                <span class="channel-type-tile__desc">企业微信机器人</span>
+              </button>
+              <button type="button" class="channel-type-tile channel-type-tile--blue" onclick="showAddChannelModal('telegram')">
+                <span class="channel-type-tile__title">Telegram</span>
+                <span class="channel-type-tile__desc">Telegram 机器人</span>
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- 通知渠道列表 -->
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-list-ul me-2"></i>通知渠道列表</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationChannels()">
-              <i class="bi bi-arrow-clockwise me-1"></i>刷新
-            </button>
+        <div class="card list-panel">
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">通知渠道列表</h5>
+              <p class="mb-0">查看已配置渠道的名称、类型、配置摘要和启用状态。</p>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationChannels()">刷新</button>
+            </div>
           </div>
-          <div class="card-body">
+          <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover" id="channelsTable">
+              <table class="table table-hover data-table data-table--channels" id="channelsTable">
                 <thead>
                   <tr>
-                    <th style="width: 10%">ID</th>
-                    <th style="width: 25%">名称</th>
-                    <th style="width: 15%">类型</th>
-                    <th style="width: 20%">配置</th>
-                    <th style="width: 10%">状态</th>
-                    <th style="width: 20%">操作</th>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>配置摘要</th>
+                    <th>状态</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="channelsTableBody">
@@ -1354,102 +1269,94 @@
         <p class="text-muted mb-0">为每个账号配置消息通知渠道</p>
       </div>
       <div class="content-body">
-        <!-- 账号通知渠道绑定 -->
         <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-link-45deg me-2"></i>账号通知渠道绑定</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationBindings()">
-              <i class="bi bi-arrow-clockwise me-1"></i>刷新
-            </button>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">账号通知绑定</h5>
+              <p class="mb-0">选择账号后，勾选该账号需要接收的通知渠道和通知类型。</p>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationBindings()">刷新</button>
+            </div>
           </div>
           <div class="card-body">
-            <p class="text-muted mb-3">选择账号并勾选需要接收通知的渠道，保存后该账号的通知将发送到对应渠道</p>
             <div class="row g-3 align-items-end mb-3">
               <div class="col-md-6">
-                <label class="form-label"><i class="bi bi-person-circle me-1"></i>选择账号</label>
+                <label class="form-label">选择账号</label>
                 <select class="form-select" id="notifBindAccountSelect" onchange="onNotifBindAccountChange()">
-                  <option value="">🔍 请选择要配置通知的账号...</option>
+                  <option value="">请选择要配置通知的账号</option>
                 </select>
               </div>
               <div class="col-md-6 d-flex gap-2">
-                <button class="btn btn-primary" id="saveNotifBindingsBtn" onclick="saveNotificationBindings()" disabled>
-                  <i class="bi bi-check-lg me-1"></i>保存绑定
-                </button>
-                <button class="btn btn-outline-secondary" onclick="loadNotifBindAccountList()">
-                  <i class="bi bi-arrow-clockwise me-1"></i>刷新账号
-                </button>
+                <button class="btn btn-primary" id="saveNotifBindingsBtn" onclick="saveNotificationBindings()" disabled>保存绑定</button>
+                <button class="btn btn-outline-secondary" onclick="loadNotifBindAccountList()">刷新账号</button>
               </div>
             </div>
-            <!-- 渠道复选框列表 -->
             <div id="notifChannelCheckboxes">
-              <div class="text-center text-muted py-3">
-                <i class="bi bi-arrow-up-circle fs-4 d-block mb-2"></i>
-                请先选择账号
-              </div>
+              <div class="empty-state empty-state--compact">请先选择账号。</div>
             </div>
           </div>
         </div>
 
-        <!-- 通知样式配置 -->
         <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-palette me-2"></i>通知样式配置</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationTemplates()">
-              <i class="bi bi-arrow-clockwise me-1"></i>刷新
-            </button>
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">通知模板</h5>
+              <p class="mb-0">统一管理不同通知场景的消息模板、变量和预览。</p>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-primary" onclick="loadNotificationTemplates()">刷新</button>
+            </div>
           </div>
           <div class="card-body">
-            <p class="text-muted mb-3">自定义不同类型通知的消息样式，支持变量替换和实时预览</p>
-
-            <!-- 通知类型标签页 -->
             <ul class="nav nav-tabs" id="notificationTemplateTabs" role="tablist">
               <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="message-template-tab" data-bs-toggle="tab"
                         data-bs-target="#message-template" type="button" role="tab"
                         aria-controls="message-template" aria-selected="true">
-                  <i class="bi bi-chat-left-text me-1"></i>消息通知
+                  消息通知
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="token-template-tab" data-bs-toggle="tab"
                         data-bs-target="#token-template" type="button" role="tab"
                         aria-controls="token-template" aria-selected="false">
-                  <i class="bi bi-key me-1"></i>Token刷新
+                  Token刷新
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="delivery-template-tab" data-bs-toggle="tab"
                         data-bs-target="#delivery-template" type="button" role="tab"
                         aria-controls="delivery-template" aria-selected="false">
-                  <i class="bi bi-box-seam me-1"></i>自动发货
+                  自动发货
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="slider_success-template-tab" data-bs-toggle="tab"
                         data-bs-target="#slider_success-template" type="button" role="tab"
                         aria-controls="slider_success-template" aria-selected="false">
-                  <i class="bi bi-check-circle me-1"></i>滑块成功
+                  滑块成功
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="face_verify-template-tab" data-bs-toggle="tab"
                         data-bs-target="#face_verify-template" type="button" role="tab"
                         aria-controls="face_verify-template" aria-selected="false">
-                  <i class="bi bi-person-bounding-box me-1"></i>人脸验证
+                  人脸验证
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="password_login_success-template-tab" data-bs-toggle="tab"
                         data-bs-target="#password_login_success-template" type="button" role="tab"
                         aria-controls="password_login_success-template" aria-selected="false">
-                  <i class="bi bi-key me-1"></i>密码登录成功
+                  密码登录成功
                 </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="cookie_refresh_success-template-tab" data-bs-toggle="tab"
                         data-bs-target="#cookie_refresh_success-template" type="button" role="tab"
                         aria-controls="cookie_refresh_success-template" aria-selected="false">
-                  <i class="bi bi-arrow-repeat me-1"></i>刷新Cookie成功
+                  刷新Cookie成功
                 </button>
               </li>
             </ul>
@@ -1459,7 +1366,7 @@
               <div class="tab-pane fade show active" id="message-template" role="tabpanel" aria-labelledby="message-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('message')">
@@ -1500,7 +1407,7 @@
               <div class="tab-pane fade" id="token-template" role="tabpanel" aria-labelledby="token-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('token_refresh')">
@@ -1538,7 +1445,7 @@
               <div class="tab-pane fade" id="delivery-template" role="tabpanel" aria-labelledby="delivery-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('delivery')">
@@ -1579,7 +1486,7 @@
               <div class="tab-pane fade" id="slider_success-template" role="tabpanel" aria-labelledby="slider_success-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('slider_success')">
@@ -1615,7 +1522,7 @@
               <div class="tab-pane fade" id="face_verify-template" role="tabpanel" aria-labelledby="face_verify-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('face_verify')">
@@ -1653,7 +1560,7 @@
               <div class="tab-pane fade" id="password_login_success-template" role="tabpanel" aria-labelledby="password_login_success-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('password_login_success')">
@@ -1690,7 +1597,7 @@
               <div class="tab-pane fade" id="cookie_refresh_success-template" role="tabpanel" aria-labelledby="cookie_refresh_success-template-tab">
                 <div class="row">
                   <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2 template-editor-toolbar">
                       <label class="form-label mb-0"><strong>模板编辑器</strong></label>
                       <div>
                         <button class="btn btn-sm btn-outline-info me-1" onclick="testNotificationTemplate('cookie_refresh_success')">
@@ -1726,23 +1633,25 @@
           </div>
         </div>
 
-        <!-- 账号通知配置 -->
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-gear me-2"></i>账号通知配置</span>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadMessageNotifications()">
-              <i class="bi bi-arrow-clockwise me-1"></i>刷新
-            </button>
+        <div class="card list-panel">
+          <div class="card-header list-panel__header">
+            <div class="list-panel__title">
+              <h5 class="mb-0">账号通知配置</h5>
+              <p class="mb-0">查看每个账号当前绑定的通知渠道和启用状态。</p>
+            </div>
+            <div class="list-panel__tools">
+              <button class="btn btn-sm btn-outline-primary" onclick="loadMessageNotifications()">刷新</button>
+            </div>
           </div>
-          <div class="card-body">
+          <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover" id="notificationsTable">
+              <table class="table table-hover data-table data-table--notifications" id="notificationsTable">
                 <thead>
                   <tr>
-                    <th style="width: 20%">账号ID</th>
-                    <th style="width: 30%">通知渠道</th>
-                    <th style="width: 15%">状态</th>
-                    <th style="width: 35%">操作</th>
+                    <th>账号</th>
+                    <th>已绑定渠道</th>
+                    <th>状态</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="notificationsTableBody">
@@ -2919,77 +2828,56 @@
   <!-- 扫码登录模态框 -->
   <div class="modal fade" id="qrCodeLoginModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-qr-code me-2"></i>扫码登录账号
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-content account-process-modal">
+        <div class="modal-header">
+          <h5 class="modal-title">扫码登录账号</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body text-center py-4">
-          <!-- 步骤指引 -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <div class="d-flex justify-content-center align-items-center">
-                <div class="step-item me-3">
-                  <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">1</div>
-                  <small class="d-block mt-1">打开APP</small>
-                </div>
-                <i class="bi bi-arrow-right text-muted me-3"></i>
-                <div class="step-item me-3">
-                  <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">2</div>
-                  <small class="d-block mt-1">扫描二维码</small>
-                </div>
-                <i class="bi bi-arrow-right text-muted me-3"></i>
-                <div class="step-item">
-                  <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">3</div>
-                  <small class="d-block mt-1">自动添加账号</small>
-                </div>
-              </div>
+        <div class="modal-body account-process-body">
+          <div class="account-process-intro">
+            <span class="account-process-intro__meta">扫码接入</span>
+            <h6 class="account-process-intro__title">使用手机 APP 扫描二维码，系统会自动接入账号</h6>
+            <p class="account-process-intro__desc">扫码完成后保持当前窗口，系统会自动检测登录状态并保存账号信息。</p>
+            <div class="account-process-steps">
+              <span class="process-step-pill">打开 APP</span>
+              <span class="process-step-pill">扫描二维码</span>
+              <span class="process-step-pill">等待自动接入</span>
             </div>
           </div>
 
           <!-- 二维码区域 -->
-          <div id="qrCodeContainer">
-            <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <div id="qrCodeContainer" class="account-process-stage">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
               <span class="visually-hidden">生成二维码中...</span>
             </div>
             <p class="text-muted fs-5 mb-2">正在生成二维码...</p>
-            <div class="alert alert-warning border-0 bg-light-warning d-inline-block qr-loading-tip">
-              <i class="bi bi-clock me-2 text-warning"></i>
-              <small class="text-warning fw-bold">二维码生成较慢，请耐心等待</small>
+            <div class="account-process-tip qr-loading-tip">
+              二维码生成较慢时请稍等，通常会在几秒内更新。
             </div>
           </div>
-          <div id="qrCodeImage" style="display: none;">
+          <div id="qrCodeImage" class="account-process-stage" style="display: none;">
             <div class="qr-code-wrapper p-3 bg-light rounded-3 d-inline-block mb-3">
               <img id="qrCodeImg" src="" alt="登录二维码" class="img-fluid" style="max-width: 280px;">
             </div>
-            <h6 class="text-success mb-2">
-              <i class="bi bi-phone me-2"></i>请使用APP扫描二维码
-            </h6>
-            <div class="alert alert-info border-0 bg-light">
-              <i class="bi bi-info-circle me-2 text-info"></i>
-              <small>扫码后请等待页面提示，系统会自动获取并保存您的账号信息</small>
+            <h6 class="account-process-stage__title">请使用 APP 扫描二维码</h6>
+            <div class="account-process-tip">
+              扫码后请等待页面提示，系统会自动获取并保存您的账号信息。
             </div>
           </div>
 
           <!-- 状态显示 -->
-          <div id="qrCodeStatus" class="mt-3">
+          <div id="qrCodeStatus" class="account-process-status">
             <div class="d-flex align-items-center justify-content-center">
-              <div class="spinner-border spinner-border-sm text-success me-2" role="status" style="display: none;" id="statusSpinner">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status" style="display: none;" id="statusSpinner">
                 <span class="visually-hidden">检查中...</span>
               </div>
               <span id="statusText" class="text-muted">等待扫码...</span>
             </div>
           </div>
         </div>
-        <div class="modal-footer bg-light">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle me-1"></i>关闭
-          </button>
-          <button type="button" class="btn btn-success" onclick="refreshQRCode()" id="refreshQRBtn">
-            <i class="bi bi-arrow-clockwise me-1"></i>重新生成二维码
-          </button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary" onclick="refreshQRCode()" id="refreshQRBtn">重新生成二维码</button>
         </div>
       </div>
     </div>
@@ -3835,10 +3723,11 @@
               <small class="form-text text-muted">未选择商品时使用关键字兜底匹配</small>
             </div>
             <div class="mb-3">
-              <label class="form-label">匹配卡券 <span class="text-danger">*</span></label>
-              <select class="form-select" id="selectedCard" required>
-                <option value="">请选择卡券</option>
-              </select>
+              <label class="form-label">匹配卡券规格 <span class="text-danger">*</span></label>
+              <div id="deliveryRuleCardContainer" class="delivery-card-picker">
+                <small class="text-muted">加载中...</small>
+              </div>
+              <small class="form-text text-muted">同一条规则可同时绑定多个规格卡券，系统会按订单规格自动匹配；未识别规格时使用首个卡券兜底</small>
             </div>
             <input type="hidden" id="deliveryCount" value="1">
             <div class="mb-3">
@@ -3890,10 +3779,11 @@
               <small class="form-text text-muted">未选择商品时使用关键字兜底匹配</small>
             </div>
             <div class="mb-3">
-              <label class="form-label">匹配卡券 <span class="text-danger">*</span></label>
-              <select class="form-select" id="editSelectedCard" required>
-                <option value="">请选择卡券</option>
-              </select>
+              <label class="form-label">匹配卡券规格 <span class="text-danger">*</span></label>
+              <div id="editDeliveryRuleCardContainer" class="delivery-card-picker">
+                <small class="text-muted">加载中...</small>
+              </div>
+              <small class="form-text text-muted">可以在同一条规则下挂多个规格卡券，编辑时会保留原有映射</small>
             </div>
             <input type="hidden" id="editDeliveryCount" value="1">
             <div class="mb-3">
@@ -4338,108 +4228,100 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-pencil-square me-2"></i>
-            编辑账号信息 - <span id="editAccountIdDisplay"></span>
-          </h5>
+          <h5 class="modal-title">编辑账号信息</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="accountEditForm">
             <input type="hidden" id="editAccountId">
-            
-            <div class="mb-3">
-              <label class="form-label">Cookie <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="editAccountCookie" rows="3" placeholder="输入Cookie值" required></textarea>
-              <div class="form-text">账号的Cookie值，用于身份认证</div>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">用户名</label>
-              <input type="text" class="form-control" id="editAccountUsername" placeholder="输入用户名（可选）">
-              <div class="form-text">用于密码登录的用户名</div>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">密码</label>
-              <input type="password" class="form-control" id="editAccountPassword" placeholder="输入密码（可选）">
-              <div class="form-text">用于密码登录的密码</div>
-            </div>
-            
-            <div class="mb-3">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="editAccountShowBrowser">
-                <label class="form-check-label" for="editAccountShowBrowser">
-                  显示浏览器
-                  <i class="bi bi-info-circle text-info ms-1" data-bs-toggle="tooltip" title="使用用户名密码登录的时候浏览器可见，仅限Windows源码部署打开该开关"></i>
-                </label>
+            <div class="account-edit-shell">
+              <div class="account-edit-summary">
+                <span class="account-edit-summary__meta">当前账号</span>
+                <h6 class="account-edit-summary__title" id="editAccountIdDisplay"></h6>
+                <p class="account-edit-summary__desc">这里维护账号的 Cookie、账密和代理配置。优先保证 Cookie 与登录凭据准确，再决定是否使用代理。</p>
               </div>
-              <div class="form-text text-warning">
-                <i class="bi bi-exclamation-triangle me-1"></i>
-                使用用户名密码登录的时候浏览器可见，仅限Windows源码部署打开该开关，开关打开密码登录会停留5分钟，防止第一次登录需要人脸，成功一次之后后续可关闭开关
-              </div>
-            </div>
 
-            <!-- 代理配置 -->
-            <hr class="my-4">
-            <h6 class="mb-3">
-              <i class="bi bi-globe me-2"></i>代理配置
-              <span class="badge bg-info ms-2">IP隔离</span>
-            </h6>
-            
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label class="form-label">代理类型</label>
-                <select class="form-select" id="editProxyType" onchange="toggleProxyFields()">
-                  <option value="none">不使用代理</option>
-                  <option value="http">HTTP代理</option>
-                  <option value="https">HTTPS代理</option>
-                  <option value="socks5">SOCKS5代理</option>
-                </select>
+              <div class="account-edit-section">
+                <div class="account-edit-section__header">
+                  <h6>账号凭据</h6>
+                  <p>用于账号认证、账密登录和后续刷新 Cookie。</p>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Cookie <span class="text-danger">*</span></label>
+                  <textarea class="form-control" id="editAccountCookie" rows="4" placeholder="输入完整 Cookie 值" required></textarea>
+                  <div class="form-text">Cookie 为必填项，建议保持完整可用。</div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">登录账号</label>
+                    <input type="text" class="form-control" id="editAccountUsername" placeholder="手机号或邮箱">
+                    <div class="form-text">用于账密登录和自动刷新 Cookie。</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">登录密码</label>
+                    <input type="password" class="form-control" id="editAccountPassword" placeholder="输入密码（可选）">
+                    <div class="form-text">仅在使用账密登录时需要。</div>
+                  </div>
+                </div>
+
+                <div class="account-edit-switch">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editAccountShowBrowser">
+                    <label class="form-check-label" for="editAccountShowBrowser">
+                      账密登录时显示浏览器窗口
+                    </label>
+                  </div>
+                  <div class="form-text">仅建议在 Windows 源码部署并且首次登录可能需要人工验证时开启。成功一次后可关闭。</div>
+                </div>
               </div>
-              <div class="col-md-5" id="proxyHostGroup" style="display: none;">
-                <label class="form-label">代理地址</label>
-                <input type="text" class="form-control" id="editProxyHost" placeholder="例如: 127.0.0.1">
+
+              <div class="account-edit-section">
+                <div class="account-edit-section__header">
+                  <h6>代理配置</h6>
+                  <p>为账号设置独立出口，降低账号关联风险。未使用代理时保持“不使用代理”。</p>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">代理类型</label>
+                    <select class="form-select" id="editProxyType" onchange="toggleProxyFields()">
+                      <option value="none">不使用代理</option>
+                      <option value="http">HTTP代理</option>
+                      <option value="https">HTTPS代理</option>
+                      <option value="socks5">SOCKS5代理</option>
+                    </select>
+                  </div>
+                  <div class="col-md-5" id="proxyHostGroup" style="display: none;">
+                    <label class="form-label">代理地址</label>
+                    <input type="text" class="form-control" id="editProxyHost" placeholder="例如 127.0.0.1">
+                  </div>
+                  <div class="col-md-3" id="proxyPortGroup" style="display: none;">
+                    <label class="form-label">代理端口</label>
+                    <input type="number" class="form-control" id="editProxyPort" placeholder="例如 1080">
+                  </div>
+                </div>
+
+                <div class="row g-3" id="proxyAuthGroup" style="display: none;">
+                  <div class="col-md-6">
+                    <label class="form-label">代理用户名</label>
+                    <input type="text" class="form-control" id="editProxyUser" placeholder="如代理需要认证再填写">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">代理密码</label>
+                    <input type="password" class="form-control" id="editProxyPass" placeholder="如代理需要认证再填写">
+                  </div>
+                </div>
+
+                <div class="account-edit-tip">配置代理后，此账号的所有网络请求都会通过代理服务器发送，实现 IP 隔离。</div>
               </div>
-              <div class="col-md-3" id="proxyPortGroup" style="display: none;">
-                <label class="form-label">代理端口</label>
-                <input type="number" class="form-control" id="editProxyPort" placeholder="例如: 1080">
-              </div>
-            </div>
-            
-            <div class="row mb-3" id="proxyAuthGroup" style="display: none;">
-              <div class="col-md-6">
-                <label class="form-label">代理用户名（可选）</label>
-                <input type="text" class="form-control" id="editProxyUser" placeholder="代理认证用户名">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">代理密码（可选）</label>
-                <input type="password" class="form-control" id="editProxyPass" placeholder="代理认证密码">
-              </div>
-            </div>
-            
-            <div class="form-text mb-3">
-              <i class="bi bi-shield-check me-1"></i>
-              配置代理后，此账号的所有网络请求将通过代理服务器进行，实现IP隔离，降低账号关联风险
-            </div>
-            
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>提示：</strong>
-              <ul class="mb-0 mt-2">
-                <li>Cookie是必填项，其他字段可选</li>
-                <li>配置用户名和密码后，系统可自动通过密码登录刷新Cookie</li>
-                <li>使用用户名密码登录的时候浏览器可见，仅限Windows源码部署打开该开关</li>
-                <li><strong>代理配置：</strong>为每个账号设置独立代理，可实现IP隔离，降低账号关联风险</li>
-              </ul>
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="button" class="btn btn-primary" onclick="saveAccountEdit()">
-            <i class="bi bi-check-lg me-1"></i>保存
-          </button>
+          <button type="button" class="btn btn-primary" id="saveAccountEditBtn" onclick="saveAccountEdit()">保存</button>
         </div>
       </div>
     </div>
@@ -4448,23 +4330,19 @@
   <!-- 滑块验证模态框 -->
   <div class="modal fade" id="captchaVerifyModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-warning">
-          <h5 class="modal-title">
-            <i class="bi bi-shield-exclamation me-2"></i>
-            需要滑块验证
-          </h5>
+      <div class="modal-content account-process-modal">
+        <div class="modal-header">
+          <h5 class="modal-title">需要滑块验证</h5>
         </div>
-        <div class="modal-body p-0">
-          <div class="alert alert-info m-3 mb-0">
-            <i class="bi bi-info-circle me-2"></i>
-            <strong>提示：</strong>检测到滑块验证，请完成滑块验证后继续搜索。验证成功后将自动关闭此窗口。
+        <div class="modal-body account-process-body account-process-body--flush">
+          <div class="account-process-banner">
+            检测到滑块验证，请在下方完成验证。验证成功后系统会自动继续当前流程。
           </div>
           <iframe id="captchaIframe" 
                   style="width: 100%; height: 600px; border: none;"
                   sandbox="allow-same-origin allow-scripts allow-forms">
           </iframe>
-          <div id="captchaLoadingIndicator" class="text-center py-5">
+          <div id="captchaLoadingIndicator" class="text-center py-5 account-process-stage">
             <div class="spinner-border text-primary mb-3" role="status">
               <span class="visually-hidden">加载中...</span>
             </div>

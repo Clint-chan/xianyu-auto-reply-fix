@@ -1754,25 +1754,182 @@ async function fetchJSON(url, opts = {}) {
 // 【账号管理菜单】相关功能
 // ================================
 
+const ACCOUNT_ENTRY_FORM_IDS = {
+    password: 'passwordLoginForm',
+    manual: 'manualInputForm',
+    refresh: 'refreshCookieForm'
+};
+
+let currentAccountFilter = 'all';
+
+function getAccountRecord(accountId) {
+    return document.querySelector(`.account-record[data-cookie-id="${accountId}"]`);
+}
+
+function getAccountCapabilityToggle(accountId, role) {
+    const record = getAccountRecord(accountId);
+    if (!record) return null;
+    return record.querySelector(`[data-role="${role}"] input[type="checkbox"]`);
+}
+
+function renderAccountListStats(accounts = []) {
+    const statsContainer = document.getElementById('accountListStats');
+    if (!statsContainer) return;
+
+    const total = accounts.length;
+    const enabledCount = accounts.filter(account => account.enabled === undefined ? true : account.enabled).length;
+    const cookieReadyCount = accounts.filter(account => Boolean(account.value)).length;
+    const aiEnabledCount = accounts.filter(account => Boolean(account.aiReply?.ai_enabled)).length;
+
+    statsContainer.innerHTML = `
+        <div class="account-stat-card">
+            <span>总账号</span>
+            <strong>${total}</strong>
+        </div>
+        <div class="account-stat-card">
+            <span>启用中</span>
+            <strong>${enabledCount}</strong>
+        </div>
+        <div class="account-stat-card">
+            <span>Cookie 就绪</span>
+            <strong>${cookieReadyCount}</strong>
+        </div>
+        <div class="account-stat-card">
+            <span>AI 回复</span>
+            <strong>${aiEnabledCount}</strong>
+        </div>
+    `;
+}
+
+function matchesAccountRowFilter(row, filterValue) {
+    switch (filterValue) {
+        case 'enabled':
+            return row.dataset.enabled === 'true';
+        case 'cookie':
+            return row.dataset.cookieReady === 'true';
+        case 'ai':
+            return row.dataset.aiEnabled === 'true';
+        case 'attention':
+            return row.dataset.cookieReady !== 'true' || row.dataset.enabled !== 'true' || row.dataset.aiEnabled !== 'true';
+        case 'all':
+        default:
+            return true;
+    }
+}
+
+function updateAccountFilterEmptyState(hasVisibleRows) {
+    const grid = document.getElementById('accountGrid');
+    if (!grid) return;
+
+    let emptyState = grid.querySelector('[data-role="account-filter-empty"]');
+    if (hasVisibleRows) {
+        if (emptyState) emptyState.remove();
+        return;
+    }
+
+    if (!emptyState) {
+        emptyState = document.createElement('div');
+        emptyState.dataset.role = 'account-filter-empty';
+        emptyState.className = 'account-empty-state';
+        emptyState.innerHTML = `
+            <h5 class="mb-2">没有匹配的账号</h5>
+            <p class="mb-0">可以清空筛选条件，或者切换到其他筛选标签继续处理。</p>
+        `;
+        grid.appendChild(emptyState);
+    }
+}
+
+function applyAccountTableFilters() {
+    const grid = document.getElementById('accountGrid');
+    if (!grid) return;
+
+    const searchInput = document.getElementById('accountSearchInput');
+    const query = (searchInput?.value || '').trim().toLowerCase();
+    const rows = Array.from(grid.querySelectorAll('.account-record'));
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const filterMatched = matchesAccountRowFilter(row, currentAccountFilter);
+        const searchMatched = !query || (row.dataset.search || '').includes(query);
+        const visible = filterMatched && searchMatched;
+        row.hidden = !visible;
+
+        if (visible) {
+            visibleCount += 1;
+        }
+    });
+
+    updateAccountFilterEmptyState(visibleCount > 0 || rows.length === 0);
+}
+
+function setAccountFilter(filterValue = 'all') {
+    currentAccountFilter = filterValue;
+    const chips = document.querySelectorAll('#accountFilterGroup .account-filter-chip');
+
+    chips.forEach(chip => {
+        chip.classList.toggle('is-active', chip.dataset.filter === filterValue);
+    });
+
+    applyAccountTableFilters();
+}
+
+function setAccountEntryMode(mode = 'qr') {
+    const targetMode = mode || 'qr';
+    const buttons = document.querySelectorAll('#accounts-section [data-entry-mode]');
+
+    buttons.forEach(button => {
+        const isActive = button.dataset.entryMode === targetMode;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    const intro = document.getElementById('accountEntryIntro');
+    if (intro) {
+        intro.style.display = targetMode === 'qr' ? 'flex' : 'none';
+    }
+
+    Object.entries(ACCOUNT_ENTRY_FORM_IDS).forEach(([formMode, formId]) => {
+        const panel = document.getElementById(formId);
+        if (panel) {
+            panel.style.display = formMode === targetMode ? 'block' : 'none';
+        }
+    });
+}
+
+function setRefreshCookieAccountStatus(message, state = 'default') {
+    const statusDiv = document.getElementById('refreshCookieAccountStatus');
+    if (!statusDiv) return;
+
+    statusDiv.textContent = message;
+    statusDiv.className = 'account-entry-status';
+
+    if (state === 'ready') {
+        statusDiv.classList.add('is-ready');
+    } else if (state === 'processing') {
+        statusDiv.classList.add('is-processing');
+    } else if (state === 'error') {
+        statusDiv.classList.add('is-error');
+    }
+}
+
 // 加载Cookie列表
 async function loadCookies() {
     try {
         toggleLoading(true);
-        const tbody = document.querySelector('#cookieTable tbody');
-        tbody.innerHTML = '';
+        const grid = document.getElementById('accountGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
 
         const cookieDetails = await fetchJSON(apiBase + '/cookies/details');
 
         if (cookieDetails.length === 0) {
-            tbody.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center py-4 text-muted empty-state">
-            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-            <h5>暂无账号</h5>
-            <p class="mb-0">请添加新的账号开始使用</p>
-            </td>
-        </tr>
-        `;
+            renderAccountListStats([]);
+            grid.innerHTML = `
+                <div class="account-empty-state account-empty-state--initial">
+                    <h5 class="mb-2">暂无账号</h5>
+                    <p class="mb-0">先在上方选择一种方式接入账号，再回到这里统一维护。</p>
+                </div>
+            `;
             return;
         }
 
@@ -1828,6 +1985,8 @@ async function loadCookies() {
             })
         );
 
+        renderAccountListStats(accountsWithKeywords);
+
         accountsWithKeywords.forEach(cookie => {
             const isEnabled = cookie.enabled === undefined ? true : cookie.enabled;
             const autoConfirm = cookie.auto_confirm === undefined ? true : cookie.auto_confirm;
@@ -1847,123 +2006,163 @@ async function loadCookies() {
             const keywordBadgeClass = cookie.keywordCount > 0 ? 'is-success' : 'is-neutral';
             const defaultReplyBadgeClass = cookie.defaultReply.enabled ? 'is-success' : 'is-neutral';
             const aiReplyBadgeClass = aiReplyEnabled ? 'is-warning' : 'is-neutral';
-            const tr = document.createElement('tr');
-            tr.className = `account-row ${isEnabled ? 'enabled' : 'disabled'}`;
-            tr.dataset.cookieId = cookie.id;
+            const capabilityItems = [
+                {
+                    role: 'account-status',
+                    name: '账号启用',
+                    helper: '控制该账号是否参与自动回复',
+                    enabled: isEnabled,
+                    title: isEnabled ? '点击禁用' : '点击启用',
+                    handler: `toggleAccountStatus('${accountIdJs}', this.checked)`
+                },
+                {
+                    role: 'ai-reply',
+                    name: 'AI 回复',
+                    helper: '控制账号是否使用 AI 生成回复',
+                    enabled: aiReplyEnabled,
+                    title: aiReplyEnabled ? '点击关闭 AI 回复' : '点击开启 AI 回复',
+                    handler: `toggleAIEnabled('${accountIdJs}', this)`
+                },
+                {
+                    role: 'auto-confirm',
+                    name: '自动发货',
+                    helper: '自动确认发货或自动发码',
+                    enabled: autoConfirm,
+                    title: autoConfirm ? '点击关闭自动确认发货' : '点击开启自动确认发货',
+                    handler: `toggleAutoConfirm('${accountIdJs}', this.checked)`
+                },
+                {
+                    role: 'auto-comment',
+                    name: '自动好评',
+                    helper: '订单完成后自动发送评价',
+                    enabled: autoComment,
+                    title: autoComment ? '点击关闭自动好评' : '点击开启自动好评',
+                    handler: `toggleAutoComment('${accountIdJs}', this.checked)`
+                }
+            ];
+            const capabilityHtml = capabilityItems.map(item => `
+                <div class="capability-item" data-role="${item.role}">
+                    <div class="capability-copy">
+                        <span class="capability-name">${item.name}</span>
+                        <span class="capability-helper">${item.helper}</span>
+                    </div>
+                    <div class="capability-controls">
+                        <label class="status-toggle" title="${item.title}">
+                            <input type="checkbox" ${item.enabled ? 'checked' : ''} onchange="${item.handler}">
+                            <span class="status-slider"></span>
+                        </label>
+                        <span class="status-badge ${item.enabled ? 'enabled' : 'disabled'}">${item.enabled ? '开启' : '关闭'}</span>
+                    </div>
+                </div>
+            `).join('');
+            const card = document.createElement('article');
+            card.className = `account-record ${isEnabled ? 'enabled' : 'disabled'}`;
+            card.dataset.cookieId = cookie.id;
+            card.dataset.enabled = isEnabled ? 'true' : 'false';
+            card.dataset.cookieReady = cookieValue ? 'true' : 'false';
+            card.dataset.aiEnabled = aiReplyEnabled ? 'true' : 'false';
+            card.dataset.search = [
+                cookie.id,
+                cookie.username || '',
+                cookie.remark || '',
+                cookie.defaultReply.reply_content || ''
+            ].join(' ').toLowerCase();
 
-            tr.innerHTML = `
-        <td>
-            <div class="account-summary">
-                <strong class="account-summary__id">${accountId}</strong>
-                <span class="account-summary__state ${isEnabled ? '' : 'is-disabled'}">
-                    ${isEnabled ? '已启用' : '已禁用'}
-                </span>
-                <span class="account-summary__meta">${username}</span>
-                <span class="account-summary__hint">
-                    ${isEnabled ? '该账号会参与自动回复流程' : '该账号已暂停参与自动回复'}
-                </span>
-            </div>
-        </td>
-        <td>
-            <div class="account-cookie">
-                <div class="cookie-value account-cookie__value" title="${cookieValue ? '完整 Cookie 已隐藏显示，可点击复制按钮复制' : '账号尚未配置 Cookie'}">
-                    ${cookiePreview}
-                </div>
-                <div class="account-cookie__meta">
-                    ${cookieValue ? `已配置 ${cookieValue.length} 个字符` : '可通过扫码、账密或手动输入补全'}
-                </div>
-                <div class="account-cookie__actions">
-                    ${cookieValue ? `<button class="account-link-btn" type="button" onclick="copyCookie('${accountIdJs}', '${cookieValueJs}')">复制 Cookie</button>` : ''}
-                </div>
-            </div>
-        </td>
-        <td>
-            <div class="reply-summary">
-                <div class="reply-summary__badges">
-                    <span class="summary-badge ${keywordBadgeClass}">${cookie.keywordCount} 个关键词</span>
-                    <span class="summary-badge ${defaultReplyBadgeClass}">${cookie.defaultReply.enabled ? '默认回复开启' : '默认回复关闭'}</span>
-                    <span class="summary-badge ${aiReplyBadgeClass} summary-badge--ai" data-role="ai-summary">${aiReplyEnabled ? 'AI 回复开启' : 'AI 回复关闭'}</span>
-                </div>
-                <div class="account-cookie__actions">
-                    <button class="account-link-btn" type="button" data-action="auto-reply" onclick="goToAutoReply('${accountIdJs}')">关键词设置</button>
-                    <button class="account-link-btn" type="button" data-action="ai-prompts" onclick="goToAIPrompts('${accountIdJs}')">AI 提示词</button>
-                </div>
-            </div>
-        </td>
-        <td>
-            <div class="capability-stack">
-                <div class="capability-item" data-role="account-status">
-                    <span class="capability-name">账号启用</span>
-                    <div class="capability-controls">
-                        <label class="status-toggle" title="${isEnabled ? '点击禁用' : '点击启用'}">
-                            <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleAccountStatus('${accountIdJs}', this.checked)">
-                            <span class="status-slider"></span>
-                        </label>
-                        <span class="status-badge ${isEnabled ? 'enabled' : 'disabled'}">${isEnabled ? '开启' : '关闭'}</span>
+            card.innerHTML = `
+            <div class="account-record__main">
+                <div class="account-record__header">
+                    <div class="account-summary">
+                        <div class="account-summary__top">
+                            <strong class="account-summary__id">${accountId}</strong>
+                            <span class="account-summary__state ${isEnabled ? '' : 'is-disabled'}">
+                                ${isEnabled ? '已启用' : '已禁用'}
+                            </span>
+                        </div>
+                        <span class="account-summary__meta">${username}</span>
+                        <span class="account-summary__hint">
+                            ${isEnabled ? '该账号处于运行中，可参与自动回复与自动发货流程。' : '该账号已停用，所有自动化链路都会跳过它。'}
+                        </span>
+                    </div>
+                    <div class="account-record__actions">
+                        <button class="btn btn-sm btn-dark" type="button" onclick="editCookieInline('${accountIdJs}', '${cookieValueJs}')">编辑账号</button>
+                        <button class="btn btn-sm btn-outline-danger" type="button" onclick="delCookie('${accountIdJs}')">删除</button>
                     </div>
                 </div>
-                <div class="capability-item" data-role="ai-reply">
-                    <span class="capability-name">AI 回复</span>
-                    <div class="capability-controls">
-                        <label class="status-toggle" title="${aiReplyEnabled ? '点击关闭 AI 回复' : '点击开启 AI 回复'}">
-                            <input type="checkbox" ${aiReplyEnabled ? 'checked' : ''} onchange="toggleAIEnabled('${accountIdJs}', this)">
-                            <span class="status-slider"></span>
-                        </label>
-                        <span class="status-badge ${aiReplyEnabled ? 'enabled' : 'disabled'}">${aiReplyEnabled ? '开启' : '关闭'}</span>
-                    </div>
-                </div>
-                <div class="capability-item" data-role="auto-confirm">
-                    <span class="capability-name">自动发货</span>
-                    <div class="capability-controls">
-                        <label class="status-toggle" title="${autoConfirm ? '点击关闭自动确认发货' : '点击开启自动确认发货'}">
-                            <input type="checkbox" ${autoConfirm ? 'checked' : ''} onchange="toggleAutoConfirm('${accountIdJs}', this.checked)">
-                            <span class="status-slider"></span>
-                        </label>
-                        <span class="status-badge ${autoConfirm ? 'enabled' : 'disabled'}">${autoConfirm ? '开启' : '关闭'}</span>
-                    </div>
-                </div>
-                <div class="capability-item" data-role="auto-comment">
-                    <span class="capability-name">自动好评</span>
-                    <div class="capability-controls">
-                        <label class="status-toggle" title="${autoComment ? '点击关闭自动好评' : '点击开启自动好评'}">
-                            <input type="checkbox" ${autoComment ? 'checked' : ''} onchange="toggleAutoComment('${accountIdJs}', this.checked)">
-                            <span class="status-slider"></span>
-                        </label>
-                        <span class="status-badge ${autoComment ? 'enabled' : 'disabled'}">${autoComment ? '开启' : '关闭'}</span>
-                    </div>
+
+                <div class="account-record__layout">
+                    <section class="account-panel account-panel--credentials">
+                        <span class="account-panel__label">登录与凭据</span>
+                        <div class="account-cookie">
+                            <div class="cookie-value account-cookie__value" title="${cookieValue ? '完整 Cookie 已隐藏显示，可点击复制按钮复制' : '账号尚未配置 Cookie'}">
+                                ${cookiePreview}
+                            </div>
+                            <div class="account-cookie__meta">
+                                ${cookieValue ? `已配置 Cookie，长度 ${cookieValue.length} 个字符` : '未配置 Cookie，可通过扫码、账密或手动录入补全'}
+                            </div>
+                            <div class="account-cookie__actions">
+                                ${cookieValue ? `<button class="account-link-btn" type="button" onclick="copyCookie('${accountIdJs}', '${cookieValueJs}')">复制 Cookie</button>` : ''}
+                                <button class="account-link-btn" type="button" onclick="editCookieInline('${accountIdJs}', '${cookieValueJs}')">编辑凭据</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="account-panel account-panel--reply">
+                        <span class="account-panel__label">回复策略</span>
+                        <div class="reply-summary">
+                            <div class="reply-summary__badges">
+                                <span class="summary-badge ${keywordBadgeClass}">${cookie.keywordCount} 个关键词</span>
+                                <span class="summary-badge ${defaultReplyBadgeClass}">${cookie.defaultReply.enabled ? '默认回复开启' : '默认回复关闭'}</span>
+                                <span class="summary-badge ${aiReplyBadgeClass} summary-badge--ai" data-role="ai-summary">${aiReplyEnabled ? 'AI 回复开启' : 'AI 回复关闭'}</span>
+                            </div>
+                            <div class="reply-summary__copy">
+                                关键词、默认回复、AI 提示词和默认策略入口都集中在这里。
+                            </div>
+                            <div class="account-cookie__actions">
+                                <button class="account-link-btn" type="button" data-action="auto-reply" onclick="goToAutoReply('${accountIdJs}')">关键词设置</button>
+                                <button class="account-link-btn" type="button" data-action="ai-prompts" onclick="goToAIPrompts('${accountIdJs}')">AI 提示词</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="account-panel account-panel--switches">
+                        <span class="account-panel__label">运行开关</span>
+                        <div class="capability-stack">
+                            ${capabilityHtml}
+                        </div>
+                    </section>
+
+                    <section class="account-panel account-panel--maintenance">
+                        <span class="account-panel__label">维护操作</span>
+                        <div class="account-maintenance">
+                            <div class="account-note-grid">
+                                <div class="account-note-card">
+                                    <span class="account-note__label">备注</span>
+                                    <div class="remark-cell" data-cookie-id="${accountIdAttr}">
+                                        ${renderRemarkDisplay(cookie.id, remark)}
+                                    </div>
+                                </div>
+                                <div class="account-note-card">
+                                    <span class="account-note__label">暂停时长</span>
+                                    <div class="pause-duration-cell" data-cookie-id="${accountIdAttr}">
+                                        ${renderPauseDurationDisplay(cookie.id, pauseDuration)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="account-note__row">
+                                <button class="account-link-btn" type="button" onclick="showCommentTemplates('${accountIdJs}')">好评模板</button>
+                                <button class="account-link-btn" type="button" onclick="showFaceVerification('${accountIdJs}')">人脸验证</button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
-        </td>
-        <td>
-            <div class="account-note">
-                <div class="account-note__row">
-                    <div class="remark-cell" data-cookie-id="${accountIdAttr}">
-                        ${renderRemarkDisplay(cookie.id, remark)}
-                    </div>
-                </div>
-                <div class="account-note__row">
-                    <div class="pause-duration-cell" data-cookie-id="${accountIdAttr}">
-                        ${renderPauseDurationDisplay(cookie.id, pauseDuration)}
-                    </div>
-                </div>
-                <div class="account-note__row">
-                    <button class="account-link-btn" type="button" onclick="showCommentTemplates('${accountIdJs}')">好评模板</button>
-                </div>
-            </div>
-        </td>
-        <td>
-            <div class="table-action-group">
-                <button class="btn btn-sm btn-outline-secondary" type="button" onclick="showFaceVerification('${accountIdJs}')">人脸验证</button>
-                <button class="btn btn-sm btn-outline-primary" type="button" onclick="editCookieInline('${accountIdJs}', '${cookieValueJs}')">编辑账号</button>
-                <button class="btn btn-sm btn-outline-danger" type="button" onclick="delCookie('${accountIdJs}')">删除账号</button>
-            </div>
-        </td>
         `;
-            tbody.appendChild(tr);
+            grid.appendChild(card);
         });
 
         // 重新初始化工具提示
         initTooltips();
+        applyAccountTableFilters();
 
     } catch (err) {
         // 错误已在fetchJSON中处理
@@ -2244,6 +2443,8 @@ async function saveAccountEdit() {
     const username = document.getElementById('editAccountUsername').value.trim();
     const password = document.getElementById('editAccountPassword').value.trim();
     const showBrowser = document.getElementById('editAccountShowBrowser').checked;
+    const saveBtn = document.getElementById('saveAccountEditBtn');
+    const originalSaveText = saveBtn ? saveBtn.textContent : '';
 
     // 代理配置
     const proxyType = document.getElementById('editProxyType').value;
@@ -2271,6 +2472,10 @@ async function saveAccountEdit() {
 
     try {
         toggleLoading(true);
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+        }
 
         // 保存账号基本信息
         await fetchJSON(apiBase + `/cookie/${id}/account-info`, {
@@ -2309,6 +2514,10 @@ async function saveAccountEdit() {
         console.error('保存账号信息失败:', err);
         showToast(`保存失败: ${err.message || '未知错误'}`, 'danger');
     } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalSaveText || '保存';
+        }
         toggleLoading(false);
     }
 }
@@ -2441,15 +2650,18 @@ async function toggleAccountStatus(accountId, enabled) {
 
 // 更新账号行的状态显示
 function updateAccountRowStatus(accountId, enabled) {
-    const toggle = document.querySelector(`tr[data-cookie-id="${accountId}"] [data-role="account-status"] input[type="checkbox"]`);
+    const toggle = getAccountCapabilityToggle(accountId, 'account-status');
     if (!toggle) return;
 
-    const row = toggle.closest('tr');
+    const row = getAccountRecord(accountId);
+    if (!row) return;
+
     const statusBadge = row.querySelector('[data-role="account-status"] .status-badge');
     const stateLabel = row.querySelector('.account-summary__state');
     const hintLabel = row.querySelector('.account-summary__hint');
 
-    row.className = `account-row ${enabled ? 'enabled' : 'disabled'}`;
+    row.className = `account-record ${enabled ? 'enabled' : 'disabled'}`;
+    row.dataset.enabled = enabled ? 'true' : 'false';
 
     if (statusBadge) {
         statusBadge.className = `status-badge ${enabled ? 'enabled' : 'disabled'}`;
@@ -2518,7 +2730,7 @@ async function toggleAutoConfirm(accountId, enabled) {
 
 // 更新自动确认发货行状态
 function updateAutoConfirmRowStatus(accountId, enabled) {
-    const row = document.querySelector(`tr[data-cookie-id="${accountId}"]`);
+    const row = getAccountRecord(accountId);
     if (!row) return;
 
     const statusBadge = row.querySelector('[data-role="auto-confirm"] .status-badge');
@@ -2582,7 +2794,7 @@ async function toggleAutoComment(accountId, enabled) {
 
 // 更新自动好评行状态
 function updateAutoCommentRowStatus(accountId, enabled) {
-    const row = document.querySelector(`tr[data-cookie-id="${accountId}"]`);
+    const row = getAccountRecord(accountId);
     if (!row) return;
 
     const statusBadge = row.querySelector('[data-role="auto-comment"] .status-badge');
@@ -2626,28 +2838,26 @@ async function showCommentTemplates(accountId) {
         // 生成模板列表HTML
         let templatesHtml = '';
         if (templates.length === 0) {
-            templatesHtml = '<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-1 d-block mb-2"></i>暂无好评模板，请添加</div>';
+            templatesHtml = '<div class="empty-state empty-state--compact">暂无好评模板，请先添加。</div>';
         } else {
-            templatesHtml = templates.map(template => `
-                <div class="card mb-2 ${template.is_active ? 'border-success' : ''}">
-                    <div class="card-body py-2 px-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <strong class="me-2">${escapeHtml(template.name)}</strong>
-                                    ${template.is_active ? '<span class="badge bg-success">使用中</span>' : ''}
-                                </div>
-                                <p class="mb-0 text-muted small" style="white-space: pre-wrap; max-height: 60px; overflow: hidden;">${escapeHtml(template.content)}</p>
+            templatesHtml = `<div class="template-manager-list">${templates.map(template => `
+                <div class="template-manager-item${template.is_active ? ' is-active' : ''}">
+                    <div class="template-manager-item__head">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <strong>${escapeHtml(template.name)}</strong>
+                                ${template.is_active ? '<span class="badge bg-success">使用中</span>' : ''}
                             </div>
-                            <div class="btn-group btn-group-sm ms-2">
-                                ${!template.is_active ? `<button class="btn btn-outline-success" onclick="activateCommentTemplate('${accountId}', ${template.id})" title="使用此模板"><i class="bi bi-check-circle"></i></button>` : ''}
-                                <button class="btn btn-outline-primary" onclick="editCommentTemplate(${template.id}, '${escapeHtml(template.name)}', '${escapeHtml(template.content)}')" title="编辑"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-outline-danger" onclick="deleteCommentTemplate('${accountId}', ${template.id})" title="删除"><i class="bi bi-trash"></i></button>
-                            </div>
+                            <div class="template-manager-item__copy">${escapeHtml(template.content)}</div>
+                        </div>
+                        <div class="action-cluster">
+                            ${!template.is_active ? `<button class="btn btn-sm btn-outline-success" onclick="activateCommentTemplate('${escapeJsString(accountId)}', ${template.id})">启用</button>` : ''}
+                            <button class="btn btn-sm btn-outline-primary" onclick="editCommentTemplate(${template.id}, '${escapeJsString(template.name)}', '${escapeJsString(template.content)}')">编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCommentTemplate('${escapeJsString(accountId)}', ${template.id})">删除</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>`;
         }
 
         // 显示模态框
@@ -2656,16 +2866,12 @@ async function showCommentTemplates(accountId) {
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="commentTemplatesModalLabel">
-                                <i class="bi bi-star-fill text-warning me-2"></i>好评模板管理 - ${accountId}
-                            </h5>
+                            <h5 class="modal-title" id="commentTemplatesModalLabel">好评模板管理 - ${escapeHtml(accountId)}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <button class="btn btn-primary" onclick="showAddCommentTemplateForm()">
-                                    <i class="bi bi-plus-circle me-1"></i>添加模板
-                                </button>
+                                <button class="btn btn-primary" onclick="showAddCommentTemplateForm()">添加模板</button>
                             </div>
                             <div id="addTemplateForm" class="card mb-3" style="display: none;">
                                 <div class="card-body">
@@ -3114,6 +3320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('cookieId').value = '';
             document.getElementById('cookieValue').value = '';
             showToast(`账号 "${id}" 添加成功`);
+            setAccountEntryMode('qr');
             loadCookies();
         } catch (err) {
             // 错误已在fetchJSON中处理
@@ -3125,6 +3332,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (passwordLoginForm) {
         passwordLoginForm.addEventListener('submit', handlePasswordLogin);
     }
+
+    const accountSearchInput = document.getElementById('accountSearchInput');
+    if (accountSearchInput) {
+        accountSearchInput.addEventListener('input', applyAccountTableFilters);
+    }
+
+    document.querySelectorAll('#accountFilterGroup .account-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => setAccountFilter(chip.dataset.filter || 'all'));
+    });
 
     // 增强的键盘快捷键和用户体验
     // textarea 中 Enter 允许换行，Ctrl+Enter 提交
@@ -3539,7 +3755,7 @@ async function toggleAIEnabled(accountId, checkbox) {
 }
 
 function updateAIReplyRowStatus(accountId, enabled) {
-    const row = document.querySelector(`tr[data-cookie-id="${accountId}"]`);
+    const row = getAccountRecord(accountId);
     if (!row) return;
 
     const statusBadge = row.querySelector('[data-role="ai-reply"] .status-badge');
@@ -4596,11 +4812,7 @@ function renderNotificationChannels(channels) {
     if (channels.length === 0) {
         tbody.innerHTML = `
         <tr>
-        <td colspan="6" class="text-center py-4 text-muted">
-            <i class="bi bi-bell fs-1 d-block mb-3"></i>
-            <h5>暂无通知渠道</h5>
-            <p class="mb-0">点击上方按钮添加通知渠道</p>
-        </td>
+        <td colspan="5" class="empty-state">暂无通知渠道，点击上方卡片创建。</td>
         </tr>
     `;
         return;
@@ -4632,44 +4844,39 @@ function renderNotificationChannels(channels) {
 
             if (configEntries.length > 0) {
                 configDisplay = configEntries.map(([key, value]) => {
-                    // 隐藏敏感信息
+                    const stringValue = String(value ?? '');
                     if (key.includes('password') || key.includes('token') || key.includes('secret')) {
-                        return `${key}: ****`;
+                        return `${escapeHtml(key)}: ****`;
                     }
-                    // 截断过长的值
-                    const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value;
-                    return `${key}: ${displayValue}`;
+                    const displayValue = stringValue.length > 36 ? stringValue.substring(0, 36) + '...' : stringValue;
+                    return `${escapeHtml(key)}: ${escapeHtml(displayValue)}`;
                 }).join('<br>');
             } else {
-                configDisplay = channel.config || '无配置';
+                configDisplay = escapeHtml(channel.config || '无配置');
             }
         } catch (e) {
-            // 兼容旧格式
-            configDisplay = channel.config || '无配置';
-            if (configDisplay.length > 30) {
-                configDisplay = configDisplay.substring(0, 30) + '...';
+            configDisplay = String(channel.config || '无配置');
+            if (configDisplay.length > 36) {
+                configDisplay = configDisplay.substring(0, 36) + '...';
             }
+            configDisplay = escapeHtml(configDisplay);
         }
 
         tr.innerHTML = `
-        <td><strong class="text-primary">${channel.id}</strong></td>
         <td>
-        <div class="d-flex align-items-center">
-            <i class="bi ${typeConfig ? typeConfig.icon : 'bi-bell'} me-2 text-${typeColor}"></i>
-            ${channel.name}
-        </div>
+        <span class="cell-main">${escapeHtml(channel.name || `渠道 ${channel.id}`)}</span>
+        <span class="cell-sub">ID #${escapeHtml(String(channel.id))}</span>
         </td>
-        <td><span class="badge bg-${typeColor}">${typeDisplay}</span></td>
-        <td><small class="text-muted">${configDisplay}</small></td>
+        <td>
+        <span class="badge bg-${typeColor}">${escapeHtml(typeDisplay)}</span>
+        <span class="cell-sub">${escapeHtml(channel.type || '')}</span>
+        </td>
+        <td><span class="cell-block">${configDisplay}</span></td>
         <td>${statusBadge}</td>
         <td>
-        <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="editNotificationChannel(${channel.id})" title="编辑">
-            <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationChannel(${channel.id})" title="删除">
-            <i class="bi bi-trash"></i>
-            </button>
+        <div class="action-cluster">
+            <button class="btn btn-sm btn-outline-primary" onclick="editNotificationChannel(${channel.id})">编辑</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationChannel(${channel.id})">删除</button>
         </div>
         </td>
     `;
@@ -4874,7 +5081,7 @@ async function loadNotifBindAccountList() {
         const accounts = await response.json();
         const select = document.getElementById('notifBindAccountSelect');
         const currentValue = select.value;
-        select.innerHTML = '<option value="">🔍 请选择要配置通知的账号...</option>';
+        select.innerHTML = '<option value="">请选择要配置通知的账号</option>';
         accounts.forEach(accountId => {
             const opt = document.createElement('option');
             opt.value = accountId;
@@ -4895,7 +5102,7 @@ async function onNotifBindAccountChange() {
     const saveBtn = document.getElementById('saveNotifBindingsBtn');
 
     if (!accountId) {
-        container.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-arrow-up-circle fs-4 d-block mb-2"></i>请先选择账号</div>';
+        container.innerHTML = '<div class="empty-state empty-state--compact">请先选择账号。</div>';
         saveBtn.disabled = true;
         return;
     }
@@ -4923,7 +5130,7 @@ async function onNotifBindAccountChange() {
         const boundChannelIds = new Set(Object.keys(bindingsMap).map(Number));
 
         if (enabledChannels.length === 0) {
-            container.innerHTML = '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>暂无已启用的通知渠道，请先到"通知渠道管理"页面添加渠道</div>';
+            container.innerHTML = '<div class="empty-state empty-state--compact">暂无已启用的通知渠道，请先到“通知渠道管理”中添加渠道。</div>';
             saveBtn.disabled = true;
             return;
         }
@@ -4936,7 +5143,7 @@ async function onNotifBindAccountChange() {
         ];
 
         // 渲染渠道复选框列表
-        let html = '<div class="list-group">';
+        let html = '<div class="binding-channel-list">';
         enabledChannels.forEach(channel => {
             const checked = boundChannelIds.has(channel.id) ? 'checked' : '';
             const binding = bindingsMap[channel.id];
@@ -4947,7 +5154,6 @@ async function onNotifBindAccountChange() {
             if (channelType === 'ding_talk') channelType = 'dingtalk';
             if (channelType === 'lark') channelType = 'feishu';
             const typeConfig = channelTypeConfigs[channelType];
-            const icon = typeConfig ? typeConfig.icon : 'bi-bell';
             const color = typeConfig ? typeConfig.color : 'secondary';
             const typeLabel = typeConfig ? typeConfig.title : channel.type;
 
@@ -4962,21 +5168,18 @@ async function onNotifBindAccountChange() {
             }).join('');
 
             html += `
-            <div class="list-group-item" style="cursor:pointer;">
-                <div class="d-flex align-items-center gap-3">
+            <div class="binding-channel-item">
+                <div class="binding-channel-item__header">
                     <input class="form-check-input flex-shrink-0" type="checkbox" value="${channel.id}" ${checked}
                            id="notifBind_ch_${channel.id}" style="font-size:1.2em;">
-                    <div class="d-flex align-items-center gap-2 flex-grow-1">
-                        <i class="bi ${icon} text-${color}" style="font-size:1.3em;"></i>
-                        <div>
-                            <strong>${channel.name}</strong>
-                            <span class="badge bg-${color} ms-2">${typeLabel}</span>
-                        </div>
+                    <div class="binding-channel-item__meta">
+                        <strong>${escapeHtml(channel.name)}</strong>
+                        <span class="badge bg-${color}">${escapeHtml(typeLabel)}</span>
                     </div>
                     <span class="badge ${checked ? 'bg-success' : 'bg-secondary'}" id="notifBind_badge_${channel.id}">${checked ? '已绑定' : '未绑定'}</span>
                 </div>
-                <div class="mt-2 ms-4 ps-2 notif-types-row" id="notifTypes_${channel.id}" style="${checked ? '' : 'opacity:0.5;pointer-events:none;'}">
-                    <small class="text-muted me-2">通知类型:</small>${notifyTypesHtml}
+                <div class="binding-channel-item__types notif-types-row" id="notifTypes_${channel.id}" style="${checked ? '' : 'opacity:0.5;pointer-events:none;'}">
+                    <small class="text-muted me-2">通知类型</small>${notifyTypesHtml}
                 </div>
             </div>`;
         });
@@ -5401,11 +5604,7 @@ function renderMessageNotifications(accounts, notifications) {
     if (accounts.length === 0) {
         tbody.innerHTML = `
         <tr>
-        <td colspan="4" class="text-center py-4 text-muted">
-            <i class="bi bi-chat-dots fs-1 d-block mb-3"></i>
-            <h5>暂无账号数据</h5>
-            <p class="mb-0">请先添加账号</p>
-        </td>
+        <td colspan="4" class="empty-state">暂无账号数据，请先添加账号。</td>
         </tr>
     `;
         return;
@@ -5418,7 +5617,7 @@ function renderMessageNotifications(accounts, notifications) {
         let channelsList = '';
         if (accountNotifications.length > 0) {
             channelsList = accountNotifications.map(n =>
-                `<span class="badge bg-${n.enabled ? 'success' : 'secondary'} me-1">${n.channel_name}</span>`
+                `<span class="badge bg-${n.enabled ? 'success' : 'secondary'}">${escapeHtml(n.channel_name)}</span>`
             ).join('');
         } else {
             channelsList = '<span class="text-muted">未配置</span>';
@@ -5429,18 +5628,17 @@ function renderMessageNotifications(accounts, notifications) {
             '<span class="badge bg-secondary">禁用</span>';
 
         tr.innerHTML = `
-        <td><strong class="text-primary">${accountId}</strong></td>
-        <td>${channelsList}</td>
+        <td>
+        <span class="cell-main">${escapeHtml(accountId)}</span>
+        <span class="cell-sub">${accountNotifications.length > 0 ? `已绑定 ${accountNotifications.length} 个渠道` : '未绑定通知渠道'}</span>
+        </td>
+        <td><div class="cell-tags">${channelsList}</div></td>
         <td>${status}</td>
         <td>
-        <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="configAccountNotification('${accountId}')" title="配置">
-            <i class="bi bi-gear"></i> 配置
-            </button>
+        <div class="action-cluster">
+            <button class="btn btn-sm btn-outline-primary" onclick="configAccountNotification('${escapeJsString(accountId)}')">配置</button>
             ${accountNotifications.length > 0 ? `
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteAccountNotification('${accountId}')" title="删除配置">
-            <i class="bi bi-trash"></i>
-            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteAccountNotification('${escapeJsString(accountId)}')">清空配置</button>
             ` : ''}
         </div>
         </td>
@@ -5618,11 +5816,7 @@ function renderCardsList(cards) {
     if (cards.length === 0) {
         tbody.innerHTML = `
         <tr>
-        <td colspan="8" class="text-center py-4 text-muted">
-            <i class="bi bi-credit-card fs-1 d-block mb-3"></i>
-            <h5>暂无卡券数据</h5>
-            <p class="mb-0">点击"添加卡券"开始创建您的第一个卡券</p>
-        </td>
+        <td colspan="6" class="empty-state">暂无卡券数据，点击“添加卡券”开始创建。</td>
         </tr>
     `;
         return;
@@ -5674,45 +5868,56 @@ function renderCardsList(cards) {
         // 延时时间显示
         const delayDisplay = card.delay_seconds > 0 ?
             `${card.delay_seconds}秒` :
-            '<span class="text-muted">立即</span>';
+            '立即';
 
         // 规格信息显示
-        let specDisplay = '<span class="text-muted">普通卡券</span>';
+        let specDisplay = '<span class="cell-sub">普通卡券</span>';
         if (card.is_multi_spec && card.spec_name && card.spec_value) {
-            let specInfo = `${card.spec_name}: ${card.spec_value}`;
+            const specLines = [`${card.spec_name}: ${card.spec_value}`];
             if (card.spec_name_2 && card.spec_value_2) {
-                specInfo += `<br>${card.spec_name_2}: ${card.spec_value_2}`;
+                specLines.push(`${card.spec_name_2}: ${card.spec_value_2}`);
             }
-            specDisplay = `<span class="badge bg-primary">${specInfo}</span>`;
+            specDisplay = `<span class="cell-block">${specLines.map(line => escapeHtml(line)).join('<br>')}</span>`;
+        }
+
+        const createdAt = card.created_at
+            ? new Date(card.created_at).toLocaleString('zh-CN')
+            : '未知时间';
+
+        let dataSummary = '固定内容';
+        if (card.type === 'api' || card.type === 'yifan_api') {
+            dataSummary = '实时接口';
+        } else if (card.type === 'data') {
+            dataSummary = `${dataCount} 条可发放数据`;
+        } else if (card.type === 'image') {
+            dataSummary = '单张图片资源';
         }
 
         tr.innerHTML = `
         <td>
-        <div class="fw-bold">${card.name}</div>
-        ${card.description ? `<small class="text-muted">${card.description}</small>` : ''}
+        <span class="cell-main">${escapeHtml(card.name)}</span>
+        ${card.description ? `<span class="cell-sub">${escapeHtml(card.description)}</span>` : `<span class="cell-sub">创建于 ${escapeHtml(createdAt)}</span>`}
+        ${card.description ? `<span class="cell-sub">创建于 ${escapeHtml(createdAt)}</span>` : ''}
         </td>
-        <td>${typeBadge}</td>
-        <td>${specDisplay}</td>
-        <td>${dataCount}</td>
-        <td>${delayDisplay}</td>
+        <td>
+        <div class="cell-tags">${typeBadge}</div>
+        <div class="mt-2">${specDisplay}</div>
+        </td>
+        <td>
+        <span class="cell-main">${escapeHtml(String(dataCount))}</span>
+        <span class="cell-sub">${escapeHtml(dataSummary)}</span>
+        </td>
+        <td>
+        <span class="cell-main">${escapeHtml(delayDisplay)}</span>
+        <span class="cell-sub">${card.is_multi_spec ? '支持多规格发货' : '普通卡券发货'}</span>
+        </td>
         <td>${statusBadge}</td>
         <td>
-        <small class="text-muted">${new Date(card.created_at).toLocaleString('zh-CN')}</small>
-        </td>
-        <td>
-        <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="editCard(${card.id})" title="编辑">
-            <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="copyCard(${card.id})" title="复制">
-            <i class="bi bi-copy"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-info" onclick="testCard(${card.id})" title="测试">
-            <i class="bi bi-play"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteCard(${card.id})" title="删除">
-            <i class="bi bi-trash"></i>
-            </button>
+        <div class="action-cluster">
+            <button class="btn btn-sm btn-outline-primary" onclick="editCard(${card.id})">编辑</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyCard(${card.id})">复制</button>
+            <button class="btn btn-sm btn-outline-info" onclick="testCard(${card.id})">测试</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteCard(${card.id})">删除</button>
         </div>
         </td>
     `;
@@ -6346,7 +6551,7 @@ async function loadDeliveryRules() {
             updateDeliveryStats(rules);
 
             // 同时加载卡券列表用于下拉选择
-            loadCardsForSelect();
+            loadCardsForSelect('deliveryRuleCardContainer');
         } else {
             showToast('加载发货规则失败', 'danger');
         }
@@ -6363,11 +6568,7 @@ function renderDeliveryRulesList(rules) {
     if (rules.length === 0) {
         tbody.innerHTML = `
         <tr>
-        <td colspan="7" class="text-center py-4 text-muted">
-            <i class="bi bi-truck fs-1 d-block mb-3"></i>
-            <h5>暂无发货规则</h5>
-            <p class="mb-0">点击"添加规则"开始配置自动发货规则</p>
-        </td>
+        <td colspan="6" class="empty-state">暂无发货规则，点击“添加规则”开始配置。</td>
         </tr>
     `;
         return;
@@ -6377,65 +6578,93 @@ function renderDeliveryRulesList(rules) {
 
     rules.forEach(rule => {
         const tr = document.createElement('tr');
+        const relatedCards = Array.isArray(rule.related_cards) && rule.related_cards.length > 0
+            ? rule.related_cards
+            : (rule.card_id ? [{
+                id: rule.card_id,
+                name: rule.card_name,
+                type: rule.card_type,
+                is_multi_spec: rule.is_multi_spec,
+                spec_name: rule.spec_name,
+                spec_value: rule.spec_value,
+                spec_name_2: rule.spec_name_2,
+                spec_value_2: rule.spec_value_2
+            }] : []);
 
         // 状态标签
         const statusBadge = rule.enabled ?
             '<span class="badge bg-success">启用</span>' :
             '<span class="badge bg-secondary">禁用</span>';
 
-        // 卡券类型标签
-        let cardTypeBadge = '<span class="badge bg-secondary">未知</span>';
-        if (rule.card_type) {
-            switch (rule.card_type) {
+        const buildCardTypeBadge = (cardType) => {
+            switch (cardType) {
                 case 'api':
-                    cardTypeBadge = '<span class="badge bg-info">API接口</span>';
-                    break;
+                    return '<span class="badge bg-info">API接口</span>';
                 case 'yifan_api':
-                    cardTypeBadge = '<span class="badge bg-purple">亦凡卡劵API</span>';
-                    break;
+                    return '<span class="badge bg-purple">亦凡卡劵API</span>';
                 case 'text':
-                    cardTypeBadge = '<span class="badge bg-success">固定文字</span>';
-                    break;
+                    return '<span class="badge bg-success">固定文字</span>';
                 case 'data':
-                    cardTypeBadge = '<span class="badge bg-warning">批量数据</span>';
-                    break;
+                    return '<span class="badge bg-warning">批量数据</span>';
                 case 'image':
-                    cardTypeBadge = '<span class="badge bg-primary">图片</span>';
-                    break;
+                    return '<span class="badge bg-primary">图片</span>';
+                default:
+                    return '<span class="badge bg-secondary">未知</span>';
             }
-        }
+        };
+
+        const boundItemsCount = (() => {
+            try {
+                const itemIds = rule.item_ids ? JSON.parse(rule.item_ids) : [];
+                return Array.isArray(itemIds) ? itemIds.length : 0;
+            } catch (e) {
+                return 0;
+            }
+        })();
+
+        const cardSummaryHtml = relatedCards.length > 0
+            ? relatedCards.map(card => {
+                const specLines = [];
+                if (card.is_multi_spec && card.spec_name && card.spec_value) {
+                    specLines.push(`${card.spec_name}: ${card.spec_value}`);
+                }
+                if (card.spec_name_2 && card.spec_value_2) {
+                    specLines.push(`${card.spec_name_2}: ${card.spec_value_2}`);
+                }
+                return `
+                    <span class="cell-block">
+                        <strong>${escapeHtml(card.name || '未知卡券')}</strong><br>
+                        ${specLines.length > 0 ? escapeHtml(specLines.join(' / ')) : '普通卡券'}
+                    </span>
+                `;
+            }).join('')
+            : '<span class="cell-sub">未绑定卡券</span>';
+
+        const cardTypeHtml = relatedCards.length > 0
+            ? `<div class="cell-tags">${relatedCards.map(card => buildCardTypeBadge(card.type)).join('')}</div>
+               <span class="cell-sub mt-2">共绑定 ${relatedCards.length} 个卡券规格</span>`
+            : buildCardTypeBadge(rule.card_type);
 
         tr.innerHTML = `
         <td>
-        <div class="fw-bold">${rule.keyword}</div>
-        ${rule.description ? `<small class="text-muted">${rule.description}</small>` : ''}
+        <span class="cell-main">${escapeHtml(rule.keyword || '(商品绑定)')}</span>
+        <span class="cell-sub">${escapeHtml(rule.description || (boundItemsCount > 0 ? `已绑定 ${boundItemsCount} 个商品` : '使用关键字匹配发货'))}</span>
         </td>
         <td>
-        <div>
-            <span class="badge bg-primary">${rule.card_name || '未知卡券'}</span>
-            ${rule.is_multi_spec && rule.spec_name && rule.spec_value ?
-                `<br><small class="text-muted mt-1 d-block"><i class="bi bi-tags"></i> ${rule.spec_name}: ${rule.spec_value}${rule.spec_name_2 && rule.spec_value_2 ? `<br><i class="bi bi-tags"></i> ${rule.spec_name_2}: ${rule.spec_value_2}` : ''}</small>` :
-                ''}
-        </div>
+        <span class="cell-main">${relatedCards.length > 1 ? `已关联 ${relatedCards.length} 个卡券规格` : escapeHtml(rule.card_name || '未知卡券')}</span>
+        <div class="mt-2">${cardSummaryHtml}</div>
         </td>
-        <td>${cardTypeBadge}</td>
-        <!-- 隐藏发货数量列 -->
-        <!-- <td><span class="badge bg-info">${rule.delivery_count || 1}</span></td> -->
+        <td>${cardTypeHtml}</td>
+        <td>
+        <span class="cell-main">已发货 ${escapeHtml(String(rule.delivery_times || 0))} 次</span>
+        <span class="cell-sub">${boundItemsCount > 0 ? `绑定商品 ${boundItemsCount} 个` : '按关键字自动匹配'}</span>
+        </td>
         <td>${statusBadge}</td>
         <td>
-        <span class="badge bg-warning">${rule.delivery_times || 0}</span>
-        </td>
-        <td>
-        <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="editDeliveryRule(${rule.id})" title="编辑">
-            <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-info" onclick="testDeliveryRule(${rule.id})" title="测试">
-            <i class="bi bi-play"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteDeliveryRule(${rule.id})" title="删除">
-            <i class="bi bi-trash"></i>
-            </button>
+        <div class="action-cluster">
+            <button class="btn btn-sm btn-outline-primary" onclick="editDeliveryRule(${rule.id})">编辑</button>
+            <button class="btn btn-sm btn-outline-info" onclick="testDeliveryRule(${rule.id})">测试</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteDeliveryRule(${rule.id})">删除</button>
         </div>
         </td>
     `;
@@ -6481,7 +6710,7 @@ async function refreshTodayDeliveryCount() {
 // 显示添加发货规则模态框
 function showAddDeliveryRuleModal() {
     document.getElementById('addDeliveryRuleForm').reset();
-    loadCardsForSelect();
+    loadCardsForSelect('deliveryRuleCardContainer');
     loadItemsForRuleSelect('ruleItemsContainer');
     const modal = new bootstrap.Modal(document.getElementById('addDeliveryRuleModal'));
     modal.show();
@@ -6524,7 +6753,83 @@ async function loadItemsForRuleSelect(containerId, selectedIds = []) {
 }
 
 // 加载卡券列表用于下拉选择
-async function loadCardsForSelect() {
+function getDeliveryRuleCardTypeLabel(cardType) {
+    switch (cardType) {
+        case 'api':
+            return 'API';
+        case 'text':
+            return '固定文字';
+        case 'data':
+            return '批量数据';
+        case 'image':
+            return '图片';
+        case 'yifan_api':
+            return '亦凡卡劵API';
+        default:
+            return '未知类型';
+    }
+}
+
+function renderDeliveryRuleCardOptions(containerId, cards, selectedCardIds = []) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!Array.isArray(cards) || cards.length === 0) {
+        container.innerHTML = '<small class="text-muted">暂无可用卡券，请先到卡券管理创建并启用卡券</small>';
+        return;
+    }
+
+    const selectedSet = new Set((selectedCardIds || []).map(id => String(id)));
+    container.innerHTML = cards.map((card, index) => {
+        const specParts = [];
+        if (card.is_multi_spec && card.spec_name && card.spec_value) {
+            specParts.push(`${card.spec_name}: ${card.spec_value}`);
+        }
+        if (card.spec_name_2 && card.spec_value_2) {
+            specParts.push(`${card.spec_name_2}: ${card.spec_value_2}`);
+        }
+        const specText = specParts.length > 0 ? specParts.join(' / ') : '普通卡券';
+        const checked = selectedSet.has(String(card.id)) ? 'checked' : '';
+        return `
+            <label class="delivery-card-option" for="${containerId}_card_${card.id}">
+                <input class="form-check-input delivery-rule-card-check" type="checkbox" value="${card.id}" id="${containerId}_card_${card.id}" ${checked}>
+                <span class="delivery-card-option__main">
+                    <span class="delivery-card-option__title">${escapeHtml(card.name || '未命名卡券')}</span>
+                    <span class="delivery-card-option__meta">${escapeHtml(specText)}</span>
+                    <span class="delivery-card-option__tags">
+                        <span class="badge bg-light text-dark">${escapeHtml(getDeliveryRuleCardTypeLabel(card.type))}</span>
+                        ${index === 0 ? '<span class="badge bg-dark">默认兜底</span>' : ''}
+                    </span>
+                </span>
+            </label>
+        `;
+    }).join('');
+}
+
+function getSelectedDeliveryRuleCardIds(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} .delivery-rule-card-check:checked`))
+        .map(input => parseInt(input.value, 10))
+        .filter(Number.isFinite);
+}
+
+function normalizeDeliveryRuleCardIds(rule) {
+    if (Array.isArray(rule?.related_cards) && rule.related_cards.length > 0) {
+        return rule.related_cards.map(card => card.id).filter(Boolean);
+    }
+    if (rule?.card_ids) {
+        try {
+            const parsed = typeof rule.card_ids === 'string' ? JSON.parse(rule.card_ids) : rule.card_ids;
+            if (Array.isArray(parsed)) {
+                return parsed.map(id => parseInt(id, 10)).filter(Number.isFinite);
+            }
+        } catch (error) {
+            console.warn('解析发货规则 card_ids 失败:', error);
+        }
+    }
+    return rule?.card_id ? [parseInt(rule.card_id, 10)].filter(Number.isFinite) : [];
+}
+
+async function loadCardsForSelect(containerId, selectedCardIds = []) {
     try {
         const response = await fetch(`${apiBase}/cards`, {
             headers: {
@@ -6534,52 +6839,7 @@ async function loadCardsForSelect() {
 
         if (response.ok) {
             const cards = await response.json();
-            const select = document.getElementById('selectedCard');
-
-            // 清空现有选项
-            select.innerHTML = '<option value="">请选择卡券</option>';
-
-            cards.forEach(card => {
-                if (card.enabled) { // 只显示启用的卡券
-                    const option = document.createElement('option');
-                    option.value = card.id;
-
-                    // 构建显示文本
-                    let displayText = card.name;
-
-                    // 添加类型信息
-                    let typeText;
-                    switch (card.type) {
-                        case 'api':
-                            typeText = 'API';
-                            break;
-                        case 'text':
-                            typeText = '固定文字';
-                            break;
-                        case 'data':
-                            typeText = '批量数据';
-                            break;
-                        case 'image':
-                            typeText = '图片';
-                            break;
-                        default:
-                            typeText = '未知类型';
-                    }
-                    displayText += ` (${typeText})`;
-
-                    // 添加规格信息
-                    if (card.is_multi_spec && card.spec_name && card.spec_value) {
-                        let specInfo = `${card.spec_name}:${card.spec_value}`;
-                        if (card.spec_name_2 && card.spec_value_2) {
-                            specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
-                        }
-                        displayText += ` [${specInfo}]`;
-                    }
-
-                    option.textContent = displayText;
-                    select.appendChild(option);
-                }
-            });
+            renderDeliveryRuleCardOptions(containerId, cards.filter(card => card.enabled), selectedCardIds);
         }
     } catch (error) {
         console.error('加载卡券选项失败:', error);
@@ -6590,7 +6850,7 @@ async function loadCardsForSelect() {
 async function saveDeliveryRule() {
     try {
         const keyword = document.getElementById('productKeyword').value;
-        const cardId = document.getElementById('selectedCard').value;
+        const cardIds = getSelectedDeliveryRuleCardIds('deliveryRuleCardContainer');
         const deliveryCount = document.getElementById('deliveryCount').value || 1;
         const enabled = document.getElementById('ruleEnabled').checked;
         const description = document.getElementById('ruleDescription').value;
@@ -6599,8 +6859,8 @@ async function saveDeliveryRule() {
         const checkedItems = document.querySelectorAll('#ruleItemsContainer .rule-item-check:checked');
         const itemIds = Array.from(checkedItems).map(cb => cb.value);
 
-        if (!cardId) {
-            showToast('请选择卡券', 'warning');
+        if (cardIds.length === 0) {
+            showToast('请至少选择一个卡券规格', 'warning');
             return;
         }
         if (itemIds.length === 0 && !keyword) {
@@ -6610,7 +6870,8 @@ async function saveDeliveryRule() {
 
         const ruleData = {
             keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
-            card_id: parseInt(cardId),
+            card_id: cardIds[0],
+            card_ids: cardIds,
             delivery_count: parseInt(deliveryCount),
             enabled: enabled,
             description: description,
@@ -7087,7 +7348,7 @@ async function testCard(cardId) {
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-${icon} me-2"></i>${title}</h5>
+                    <h5 class="modal-title">${escapeHtml(title)}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
                   <div class="modal-body">
@@ -7165,9 +7426,8 @@ async function editDeliveryRule(ruleId) {
             try { selectedItemIds = rule.item_ids ? JSON.parse(rule.item_ids) : []; } catch (e) { }
             await loadItemsForRuleSelect('editRuleItemsContainer', selectedItemIds);
 
-            // 加载卡券选项并设置当前选中的卡券
-            await loadCardsForEditSelect();
-            document.getElementById('editSelectedCard').value = rule.card_id;
+            const selectedCardIds = normalizeDeliveryRuleCardIds(rule);
+            await loadCardsForEditSelect(selectedCardIds);
 
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('editDeliveryRuleModal'));
@@ -7182,66 +7442,8 @@ async function editDeliveryRule(ruleId) {
 }
 
 // 加载卡券列表用于编辑时的下拉选择
-async function loadCardsForEditSelect() {
-    try {
-        const response = await fetch(`${apiBase}/cards`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const cards = await response.json();
-            const select = document.getElementById('editSelectedCard');
-
-            // 清空现有选项
-            select.innerHTML = '<option value="">请选择卡券</option>';
-
-            cards.forEach(card => {
-                if (card.enabled) { // 只显示启用的卡券
-                    const option = document.createElement('option');
-                    option.value = card.id;
-
-                    // 构建显示文本
-                    let displayText = card.name;
-
-                    // 添加类型信息
-                    let typeText;
-                    switch (card.type) {
-                        case 'api':
-                            typeText = 'API';
-                            break;
-                        case 'text':
-                            typeText = '固定文字';
-                            break;
-                        case 'data':
-                            typeText = '批量数据';
-                            break;
-                        case 'image':
-                            typeText = '图片';
-                            break;
-                        default:
-                            typeText = '未知类型';
-                    }
-                    displayText += ` (${typeText})`;
-
-                    // 添加规格信息
-                    if (card.is_multi_spec && card.spec_name && card.spec_value) {
-                        let specInfo = `${card.spec_name}:${card.spec_value}`;
-                        if (card.spec_name_2 && card.spec_value_2) {
-                            specInfo += `, ${card.spec_name_2}:${card.spec_value_2}`;
-                        }
-                        displayText += ` [${specInfo}]`;
-                    }
-
-                    option.textContent = displayText;
-                    select.appendChild(option);
-                }
-            });
-        }
-    } catch (error) {
-        console.error('加载卡券选项失败:', error);
-    }
+async function loadCardsForEditSelect(selectedCardIds = []) {
+    return loadCardsForSelect('editDeliveryRuleCardContainer', selectedCardIds);
 }
 
 // 更新发货规则
@@ -7249,7 +7451,7 @@ async function updateDeliveryRule() {
     try {
         const ruleId = document.getElementById('editRuleId').value;
         const keyword = document.getElementById('editProductKeyword').value;
-        const cardId = document.getElementById('editSelectedCard').value;
+        const cardIds = getSelectedDeliveryRuleCardIds('editDeliveryRuleCardContainer');
         const deliveryCount = document.getElementById('editDeliveryCount').value || 1;
         const enabled = document.getElementById('editRuleEnabled').checked;
         const description = document.getElementById('editRuleDescription').value;
@@ -7258,8 +7460,8 @@ async function updateDeliveryRule() {
         const checkedItems = document.querySelectorAll('#editRuleItemsContainer .rule-item-check:checked');
         const itemIds = Array.from(checkedItems).map(cb => cb.value);
 
-        if (!cardId) {
-            showToast('请选择卡券', 'warning');
+        if (cardIds.length === 0) {
+            showToast('请至少选择一个卡券规格', 'warning');
             return;
         }
         if (itemIds.length === 0 && !keyword) {
@@ -7269,7 +7471,8 @@ async function updateDeliveryRule() {
 
         const ruleData = {
             keyword: keyword || (itemIds.length > 0 ? '(商品绑定)' : ''),
-            card_id: parseInt(cardId),
+            card_id: cardIds[0],
+            card_ids: cardIds,
             delivery_count: parseInt(deliveryCount),
             enabled: enabled,
             description: description,
@@ -8318,7 +8521,7 @@ async function loadCookieFilter(id) {
             if (accounts.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = '❌ 暂无账号';
+                option.textContent = '暂无账号';
                 option.disabled = true;
                 select.appendChild(option);
                 return;
@@ -8338,7 +8541,7 @@ async function loadCookieFilter(id) {
             enabledAccounts.forEach(account => {
                 const option = document.createElement('option');
                 option.value = account.id;
-                option.textContent = `🟢 ${account.id}`;
+                option.textContent = account.id;
                 select.appendChild(option);
             });
 
@@ -8356,7 +8559,7 @@ async function loadCookieFilter(id) {
                 disabledAccounts.forEach(account => {
                     const option = document.createElement('option');
                     option.value = account.id;
-                    option.textContent = `🔴 ${account.id} (已禁用)`;
+                    option.textContent = `${account.id} · 已禁用`;
                     select.appendChild(option);
                 });
             }
@@ -8479,6 +8682,14 @@ function displayCurrentPageItems() {
     const currentPageItems = filteredItemsData.slice(startIndex, endIndex);
 
     const itemsHtml = currentPageItems.map(item => {
+        const cookieIdText = escapeHtml(item.cookie_id);
+        const itemIdText = escapeHtml(item.item_id);
+        const cookieIdAttr = escapeAttribute(item.cookie_id);
+        const itemIdAttr = escapeAttribute(item.item_id);
+        const cookieIdJs = escapeJsString(item.cookie_id);
+        const itemIdJs = escapeJsString(item.item_id);
+        const itemTitleJs = escapeJsString(item.item_title || item.item_id || '');
+
         // 处理商品标题显示
         let itemTitleDisplay = item.item_title || '未设置';
         if (itemTitleDisplay.length > 30) {
@@ -8503,39 +8714,53 @@ function displayCurrentPageItems() {
         const multiQuantityDeliveryDisplay = isMultiQuantityDelivery ?
             '<span class="badge bg-success">已开启</span>' :
             '<span class="badge bg-secondary">已关闭</span>';
+        const presetAssigned = Boolean(_itemPresetMap[`${item.cookie_id}:${item.item_id}`]);
 
         return `
             <tr>
             <td>
-                <input type="checkbox" name="itemCheckbox"
-                        data-cookie-id="${escapeHtml(item.cookie_id)}"
-                        data-item-id="${escapeHtml(item.item_id)}"
+                <input type="checkbox" class="table-check" name="itemCheckbox"
+                        data-cookie-id="${cookieIdAttr}"
+                        data-item-id="${itemIdAttr}"
                         onchange="updateSelectAllState()">
             </td>
-            <td>${escapeHtml(item.cookie_id)}</td>
-            <td>${escapeHtml(item.item_id)}</td>
-            <td title="${escapeHtml(item.item_title || '未设置')}">${escapeHtml(itemTitleDisplay)}</td>
-            <td title="${escapeHtml(getItemDetailText(item.item_detail || ''))}">${escapeHtml(itemDetailDisplay)}</td>
-            <td>${escapeHtml(item.item_price || '未设置')}</td>
-            <td>${multiSpecDisplay}</td>
-            <td>${multiQuantityDeliveryDisplay}</td>
-            <td>${formatDateTime(item.updated_at)}</td>
             <td>
-                <div class="btn-group" role="group">
-                <button class="btn btn-sm btn-outline-primary" onclick="editItem('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}')" title="编辑详情">
-                    <i class="bi bi-pencil"></i>
+                <span class="cell-main">${cookieIdText}</span>
+            </td>
+            <td>
+                <span class="cell-main">${itemIdText}</span>
+            </td>
+            <td title="${escapeAttribute(item.item_title || '未设置')}">
+                <span class="cell-main">${escapeHtml(itemTitleDisplay)}</span>
+                <span class="cell-sub">${escapeHtml(item.item_title || '未设置')}</span>
+            </td>
+            <td title="${escapeAttribute(getItemDetailText(item.item_detail || ''))}">
+                <span class="cell-block">${escapeHtml(itemDetailDisplay)}</span>
+            </td>
+            <td>
+                <span class="cell-main">${escapeHtml(item.item_price || '未设置')}</span>
+            </td>
+            <td><div class="cell-tags">${multiSpecDisplay}</div></td>
+            <td><div class="cell-tags">${multiQuantityDeliveryDisplay}</div></td>
+            <td>
+                <span class="cell-sub">${formatDateTime(item.updated_at)}</span>
+            </td>
+            <td>
+                <div class="action-cluster" role="group">
+                <button class="btn btn-sm btn-outline-primary" onclick="editItem('${cookieIdJs}', '${itemIdJs}')" title="编辑详情">
+                    编辑
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', '${escapeHtml(item.item_title || item.item_id)}')" title="删除">
-                    <i class="bi bi-trash"></i>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${cookieIdJs}', '${itemIdJs}', '${itemTitleJs}')" title="删除">
+                    删除
                 </button>
-                <button class="btn btn-sm ${isMultiSpec ? 'btn-warning' : 'btn-success'}" onclick="toggleItemMultiSpec('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', ${!isMultiSpec})" title="${isMultiSpec ? '关闭多规格' : '开启多规格'}">
-                    <i class="bi ${isMultiSpec ? 'bi-toggle-on' : 'bi-toggle-off'}"></i>
+                <button class="btn btn-sm ${isMultiSpec ? 'btn-warning' : 'btn-success'}" onclick="toggleItemMultiSpec('${cookieIdJs}', '${itemIdJs}', ${!isMultiSpec})" title="${isMultiSpec ? '关闭多规格' : '开启多规格'}">
+                    ${isMultiSpec ? '关闭多规格' : '开启多规格'}
                 </button>
-                <button class="btn btn-sm ${isMultiQuantityDelivery ? 'btn-warning' : 'btn-success'}" onclick="toggleItemMultiQuantityDelivery('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', ${!isMultiQuantityDelivery})" title="${isMultiQuantityDelivery ? '关闭多数量发货' : '开启多数量发货'}">
-                    <i class="bi ${isMultiQuantityDelivery ? 'bi-box-arrow-down' : 'bi-box-arrow-up'}"></i>
+                <button class="btn btn-sm ${isMultiQuantityDelivery ? 'btn-warning' : 'btn-success'}" onclick="toggleItemMultiQuantityDelivery('${cookieIdJs}', '${itemIdJs}', ${!isMultiQuantityDelivery})" title="${isMultiQuantityDelivery ? '关闭多数量发货' : '开启多数量发货'}">
+                    ${isMultiQuantityDelivery ? '关闭多数量' : '开启多数量'}
                 </button>
-                <button class="btn btn-sm ${_itemPresetMap[`${item.cookie_id}:${item.item_id}`] ? 'btn-primary' : 'btn-outline-secondary'}" onclick="openItemPresetModal('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', '${escapeHtml(item.item_title || item.item_id)}')" title="${_itemPresetMap[`${item.cookie_id}:${item.item_id}`] ? '已指定：' + _itemPresetMap[`${item.cookie_id}:${item.item_id}`] : '指定AI提示词（使用账号默认）'}">
-                    <i class="bi bi-robot"></i>
+                <button class="btn btn-sm ${presetAssigned ? 'btn-primary' : 'btn-outline-secondary'}" onclick="openItemPresetModal('${cookieIdJs}', '${itemIdJs}', '${itemTitleJs}')" title="${presetAssigned ? '已指定 AI 提示词' : '指定 AI 提示词（使用账号默认）'}">
+                    ${presetAssigned ? '已指定 AI' : '指定 AI'}
                 </button>
                 </div>
             </td>
@@ -9109,7 +9334,7 @@ async function loadCookieFilterPlus(id) {
             if (accounts.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = '❌ 暂无账号';
+                option.textContent = '暂无账号';
                 option.disabled = true;
                 select.appendChild(option);
                 return;
@@ -9129,7 +9354,7 @@ async function loadCookieFilterPlus(id) {
             enabledAccounts.forEach(account => {
                 const option = document.createElement('option');
                 option.value = account.id;
-                option.textContent = `🟢 ${account.id}`;
+                option.textContent = account.id;
                 select.appendChild(option);
             });
 
@@ -9147,7 +9372,7 @@ async function loadCookieFilterPlus(id) {
                 disabledAccounts.forEach(account => {
                     const option = document.createElement('option');
                     option.value = account.id;
-                    option.textContent = `🔴 ${account.id} (已禁用)`;
+                    option.textContent = `${account.id} · 已禁用`;
                     select.appendChild(option);
                 });
             }
@@ -9222,9 +9447,9 @@ function displayItemReplays(items) {
     const tbody = document.getElementById('itemReplaysTableBody');
 
     if (!items || items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无商品数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无商品数据</td></tr>';
         // 重置选择状态
-        const selectAllCheckbox = document.getElementById('selectAllItems');
+        const selectAllCheckbox = document.getElementById('selectAllItemReplay');
         if (selectAllCheckbox) {
             selectAllCheckbox.checked = false;
             selectAllCheckbox.indeterminate = false;
@@ -9234,6 +9459,14 @@ function displayItemReplays(items) {
     }
 
     const itemsHtml = items.map(item => {
+        const cookieIdText = escapeHtml(item.cookie_id);
+        const itemIdText = escapeHtml(item.item_id);
+        const cookieIdAttr = escapeAttribute(item.cookie_id);
+        const itemIdAttr = escapeAttribute(item.item_id);
+        const cookieIdJs = escapeJsString(item.cookie_id);
+        const itemIdJs = escapeJsString(item.item_id);
+        const itemTitleJs = escapeJsString(item.item_title || item.item_id || '');
+
         // 处理商品标题显示
         let itemTitleDisplay = item.item_title || '未设置';
         if (itemTitleDisplay.length > 30) {
@@ -9261,24 +9494,27 @@ function displayItemReplays(items) {
         return `
         <tr>
          <td>
-            <input type="checkbox" name="itemCheckbox"
-                    data-cookie-id="${escapeHtml(item.cookie_id)}"
-                    data-item-id="${escapeHtml(item.item_id)}"
+            <input type="checkbox" class="table-check" name="itemCheckbox"
+                    data-cookie-id="${cookieIdAttr}"
+                    data-item-id="${itemIdAttr}"
                     onchange="updateSelectAllState()">
         </td>
-        <td>${escapeHtml(item.cookie_id)}</td>
-        <td>${escapeHtml(item.item_id)}</td>
-        <td title="${escapeHtml(item.item_title || '未设置')}">${escapeHtml(itemTitleDisplay)}</td>
-        <td title="${escapeHtml(item.item_detail || '未设置')}">${escapeHtml(itemDetailDisplay)}</td>
-        <td title="${escapeHtml(item.reply_content || '未设置')}">${escapeHtml(item.reply_content)}</td>
-        <td>${formatDateTime(item.updated_at)}</td>
+        <td><span class="cell-main">${cookieIdText}</span></td>
+        <td><span class="cell-main">${itemIdText}</span></td>
+        <td title="${escapeAttribute(item.item_title || '未设置')}">
+            <span class="cell-main">${escapeHtml(itemTitleDisplay)}</span>
+            <span class="cell-sub">${escapeHtml(item.item_title || '未设置')}</span>
+        </td>
+        <td title="${escapeAttribute(item.item_detail || '未设置')}"><span class="cell-block">${escapeHtml(itemDetailDisplay)}</span></td>
+        <td title="${escapeAttribute(item.reply_content || '未设置')}"><span class="cell-block">${escapeHtml(item.reply_content || '未设置')}</span></td>
+        <td><span class="cell-sub">${formatDateTime(item.updated_at)}</span></td>
         <td>
-            <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="editItemReply('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}')" title="编辑详情">
-                <i class="bi bi-pencil"></i>
+            <div class="action-cluster" role="group">
+            <button class="btn btn-sm btn-outline-primary" onclick="editItemReply('${cookieIdJs}', '${itemIdJs}')" title="编辑详情">
+                编辑
             </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteItemReply('${escapeHtml(item.cookie_id)}', '${escapeHtml(item.item_id)}', '${escapeHtml(item.item_title || item.item_id)}')" title="删除">
-                <i class="bi bi-trash"></i>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteItemReply('${cookieIdJs}', '${itemIdJs}', '${itemTitleJs}')" title="删除">
+                删除
             </button>
             </div>
         </td>
@@ -9290,7 +9526,7 @@ function displayItemReplays(items) {
     tbody.innerHTML = itemsHtml;
 
     // 重置选择状态
-    const selectAllCheckbox = document.getElementById('selectAllItems');
+    const selectAllCheckbox = document.getElementById('selectAllItemReplay');
     if (selectAllCheckbox) {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
@@ -9928,69 +10164,41 @@ async function importKeywords() {
 // 切换手动输入表单显示/隐藏
 function toggleManualInput() {
     const manualForm = document.getElementById('manualInputForm');
-    const passwordForm = document.getElementById('passwordLoginForm');
-    const refreshForm = document.getElementById('refreshCookieForm');
+    if (!manualForm) return;
+
     if (manualForm.style.display === 'none') {
-        // 隐藏账号密码登录表单
-        if (passwordForm) {
-            passwordForm.style.display = 'none';
-        }
-        // 隐藏刷新Cookie表单
-        if (refreshForm) {
-            refreshForm.style.display = 'none';
-        }
-        manualForm.style.display = 'block';
-        // 清空表单
-        document.getElementById('addForm').reset();
+        setAccountEntryMode('manual');
+        document.getElementById('addForm')?.reset();
     } else {
-        manualForm.style.display = 'none';
+        setAccountEntryMode('qr');
     }
 }
 
 // 切换账号密码登录表单显示/隐藏
 function togglePasswordLogin() {
     const passwordForm = document.getElementById('passwordLoginForm');
-    const manualForm = document.getElementById('manualInputForm');
-    const refreshForm = document.getElementById('refreshCookieForm');
+    if (!passwordForm) return;
+
     if (passwordForm.style.display === 'none') {
-        // 隐藏手动输入表单
-        if (manualForm) {
-            manualForm.style.display = 'none';
-        }
-        // 隐藏刷新Cookie表单
-        if (refreshForm) {
-            refreshForm.style.display = 'none';
-        }
-        passwordForm.style.display = 'block';
-        // 清空表单
-        document.getElementById('passwordLoginFormElement').reset();
+        setAccountEntryMode('password');
+        document.getElementById('passwordLoginFormElement')?.reset();
     } else {
-        passwordForm.style.display = 'none';
+        setAccountEntryMode('qr');
     }
 }
 
 // 切换刷新Cookie表单显示/隐藏
 function toggleRefreshCookieForm() {
     const refreshForm = document.getElementById('refreshCookieForm');
-    const manualForm = document.getElementById('manualInputForm');
-    const passwordForm = document.getElementById('passwordLoginForm');
+    if (!refreshForm) return;
 
     if (refreshForm.style.display === 'none') {
-        // 隐藏其他表单
-        if (manualForm) {
-            manualForm.style.display = 'none';
-        }
-        if (passwordForm) {
-            passwordForm.style.display = 'none';
-        }
-        refreshForm.style.display = 'block';
-        // 清空表单
-        document.getElementById('refreshCookieFormElement').reset();
-        document.getElementById('refreshCookieAccountStatus').innerHTML = '请先选择账号';
-        // 加载账号列表到下拉框
+        setAccountEntryMode('refresh');
+        document.getElementById('refreshCookieFormElement')?.reset();
+        setRefreshCookieAccountStatus('请先选择账号');
         loadRefreshCookieAccountList();
     } else {
-        refreshForm.style.display = 'none';
+        setAccountEntryMode('qr');
     }
 }
 
@@ -10027,10 +10235,10 @@ async function loadRefreshCookieAccountList() {
 
 // 刷新Cookie账号选择变化时显示状态
 document.addEventListener('DOMContentLoaded', function () {
+    setAccountEntryMode('qr');
     const select = document.getElementById('refreshCookieAccountSelect');
     if (select) {
         select.addEventListener('change', function () {
-            const statusDiv = document.getElementById('refreshCookieAccountStatus');
             const selectedOption = this.options[this.selectedIndex];
 
             if (this.value) {
@@ -10038,12 +10246,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const username = selectedOption.dataset.username;
 
                 if (hasCredentials) {
-                    statusDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>已配置用户名: ${username}</span>`;
+                    setRefreshCookieAccountStatus(`已配置登录账号：${username}`, 'ready');
                 } else {
-                    statusDiv.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>未配置用户名和密码，无法刷新</span>`;
+                    setRefreshCookieAccountStatus('未配置用户名和密码，无法刷新 Cookie', 'error');
                 }
             } else {
-                statusDiv.innerHTML = '请先选择账号';
+                setRefreshCookieAccountStatus('请先选择账号');
             }
         });
     }
@@ -10112,10 +10320,7 @@ async function handleRefreshCookie(event) {
 
 // 更新刷新Cookie状态显示
 function updateRefreshCookieStatus(message) {
-    const statusDiv = document.getElementById('refreshCookieAccountStatus');
-    if (statusDiv) {
-        statusDiv.innerHTML = `<span class="text-info"><i class="bi bi-hourglass-split me-1"></i>${message}</span>`;
-    }
+    setRefreshCookieAccountStatus(message, 'processing');
 }
 
 // 轮询检查刷新Cookie状态
@@ -10166,8 +10371,7 @@ function startRefreshCookiePolling(sessionId, cookieId) {
                     refreshCookieCheckInterval = null;
                     toggleLoading(false);
                     showToast(`账号 ${cookieId} Cookie刷新成功！`, 'success');
-                    // 隐藏表单
-                    document.getElementById('refreshCookieForm').style.display = 'none';
+                    setAccountEntryMode('qr');
                     // 刷新账号列表
                     loadCookies();
                     break;
@@ -10332,7 +10536,7 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
     // 更新模态框标题
     const modalTitle = document.getElementById('passwordLoginQRModalLabel');
     if (modalTitle) {
-        modalTitle.innerHTML = '<i class="bi bi-shield-exclamation text-warning me-2"></i>平台验证';
+        modalTitle.textContent = '平台验证';
     }
 
     // 获取或创建模态框实例
@@ -10344,49 +10548,63 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
 
     // 隐藏加载容器
     const qrContainer = document.getElementById('passwordLoginQRContainer');
+    const screenshotImg = document.getElementById('passwordLoginScreenshotImg');
+    const screenshotContainer = document.getElementById('passwordLoginScreenshotContainer');
+    const linkButton = document.getElementById('passwordLoginVerificationLink');
+    const linkContainer = document.getElementById('passwordLoginLinkContainer');
+    const statusText = document.getElementById('passwordLoginQRStatusText');
+
     if (qrContainer) {
         qrContainer.style.display = 'none';
     }
 
-    // 优先显示截图，如果没有截图则显示链接
-    const screenshotImg = document.getElementById('passwordLoginScreenshotImg');
-    const linkButton = document.getElementById('passwordLoginVerificationLink');
-    const statusText = document.getElementById('passwordLoginQRStatusText');
+    if (screenshotContainer) {
+        screenshotContainer.style.display = 'none';
+    }
+
+    if (linkContainer) {
+        linkContainer.style.display = 'none';
+    }
 
     if (screenshotPath) {
-        // 显示截图
+        if (screenshotContainer) {
+            screenshotContainer.style.display = 'flex';
+        }
+
         if (screenshotImg) {
             screenshotImg.src = `/${screenshotPath}?t=${new Date().getTime()}`;
             screenshotImg.style.display = 'block';
         }
 
-        // 隐藏链接按钮
         if (linkButton) {
             linkButton.style.display = 'none';
         }
 
-        // 更新状态文本
         if (statusText) {
             statusText.textContent = '需要人脸验证，请使用手机APP扫描下方二维码完成验证';
         }
     } else if (verificationUrl) {
-        // 隐藏截图
         if (screenshotImg) {
             screenshotImg.style.display = 'none';
         }
 
-        // 显示链接按钮
+        if (linkContainer) {
+            linkContainer.style.display = 'flex';
+        }
+
         if (linkButton) {
             linkButton.href = verificationUrl;
             linkButton.style.display = 'inline-block';
         }
 
-        // 更新状态文本
         if (statusText) {
             statusText.textContent = '需要平台验证，请点击下方按钮跳转到验证页面';
         }
     } else {
-        // 都没有，显示等待
+        if (qrContainer) {
+            qrContainer.style.display = 'flex';
+        }
+
         if (screenshotImg) {
             screenshotImg.style.display = 'none';
         }
@@ -10403,38 +10621,55 @@ function showPasswordLoginQRCode(verificationUrl, screenshotPath) {
 function createPasswordLoginQRModal() {
     const modalHtml = `
         <div class="modal fade" id="passwordLoginQRModal" tabindex="-1" aria-labelledby="passwordLoginQRModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content account-process-modal">
                     <div class="modal-header">
                         <h5 class="modal-title" id="passwordLoginQRModalLabel">
-                            <i class="bi bi-shield-exclamation text-warning me-2"></i>平台验证
+                            平台验证
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body text-center">
-                        <p id="passwordLoginQRStatusText" class="text-muted mb-3">
-                            需要人脸验证，请等待验证信息...
-                        </p>
-                        
-                        <!-- 截图显示区域 -->
-                        <div id="passwordLoginScreenshotContainer" class="mb-3 d-flex justify-content-center">
-                            <img id="passwordLoginScreenshotImg" src="" alt="人脸验证二维码" 
-                                 class="img-fluid" style="display: none; max-width: 400px; height: auto; border: 2px solid #ddd; border-radius: 8px;">
+                    <div class="modal-body account-process-body">
+                        <div class="account-process-intro">
+                            <span class="account-process-intro__meta">平台校验</span>
+                            <h6 class="account-process-intro__title">请在手机端完成平台验证，当前登录流程会自动继续</h6>
+                            <p class="account-process-intro__desc">如果页面展示了二维码，请直接扫码；如果平台返回的是验证链接，也可以从下方按钮跳转处理。</p>
+                            <div class="account-process-steps">
+                                <span class="process-step-pill">查看验证信息</span>
+                                <span class="process-step-pill">手机完成校验</span>
+                                <span class="process-step-pill">等待系统继续登录</span>
+                            </div>
                         </div>
-                        
-                        <!-- 验证链接按钮（回退方案） -->
-                        <div id="passwordLoginLinkContainer" class="mt-4">
-                            <a id="passwordLoginVerificationLink" href="#" target="_blank" 
-                               class="btn btn-warning btn-lg" style="display: none;">
-                                <i class="bi bi-shield-check me-2"></i>
-                                跳转人脸验证
+
+                        <div id="passwordLoginQRContainer" class="account-process-stage">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="text-muted mb-0">正在等待平台返回验证信息...</p>
+                        </div>
+
+                        <div id="passwordLoginScreenshotContainer" class="account-process-stage" style="display: none;">
+                            <div class="qr-code-wrapper">
+                                <img id="passwordLoginScreenshotImg" src="" alt="平台验证二维码" class="img-fluid" style="display: none;">
+                            </div>
+                            <h6 class="account-process-stage__title">请使用手机 APP 完成验证</h6>
+                        </div>
+
+                        <div id="passwordLoginLinkContainer" class="account-process-stage" style="display: none;">
+                            <h6 class="account-process-stage__title">点击跳转到平台验证页面</h6>
+                            <a id="passwordLoginVerificationLink" href="#" target="_blank" class="btn btn-primary account-process-link" style="display: none;">
+                                打开验证页面
                             </a>
                         </div>
-                        
-                        <div class="alert alert-info mt-3">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <small>验证完成后，系统将自动检测并继续登录流程</small>
+
+                        <div class="account-process-status">
+                            <span id="passwordLoginQRStatusText" class="text-muted">
+                                需要人脸验证，请等待验证信息...
+                            </span>
                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
                     </div>
                 </div>
             </div>
@@ -10454,8 +10689,7 @@ function handlePasswordLoginSuccess(data) {
 
     showToast(`账号 ${data.account_id} 登录成功！`, 'success');
 
-    // 隐藏表单
-    togglePasswordLogin();
+    setAccountEntryMode('qr');
 
     // 刷新账号列表
     loadCookies();
@@ -10500,7 +10734,7 @@ function resetPasswordLoginForm() {
     const submitBtn = document.querySelector('#passwordLoginFormElement button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>开始登录';
+        submitBtn.innerHTML = '开始登录';
     }
 }
 
@@ -10511,6 +10745,7 @@ let qrCodeSessionId = null;
 
 // 显示扫码登录模态框
 function showQRCodeLogin() {
+    setAccountEntryMode('qr');
     const modal = new bootstrap.Modal(document.getElementById('qrCodeLoginModal'));
     modal.show();
 
@@ -12064,6 +12299,23 @@ function displayOrders() {
 function createOrderRow(order) {
     const statusClass = getOrderStatusClass(order.order_status);
     const statusText = getOrderStatusText(order.order_status);
+    const orderIdText = escapeHtml(order.order_id || '-');
+    const orderIdAttr = escapeAttribute(order.order_id || '-');
+    const itemIdText = escapeHtml(order.item_id || '-');
+    const itemIdAttr = escapeAttribute(order.item_id || '-');
+    const buyerIdText = escapeHtml(order.buyer_id || '-');
+    const buyerIdAttr = escapeAttribute(order.buyer_id || '-');
+    const buyerNickText = escapeHtml(order.buyer_nick || '-');
+    const buyerNickAttr = escapeAttribute(order.buyer_nick || '-');
+    const cookieIdText = escapeHtml(order.cookie_id || '-');
+    const cookieIdAttr = escapeAttribute(order.cookie_id || '-');
+    const orderIdJs = escapeJsString(order.order_id || '');
+    const specLineOne = order.spec_name && order.spec_value
+        ? `${escapeHtml(order.spec_name)}: ${escapeHtml(order.spec_value)}`
+        : '无规格信息';
+    const specLineTwo = order.spec_name_2 && order.spec_value_2
+        ? `${escapeHtml(order.spec_name_2)}: ${escapeHtml(order.spec_value_2)}`
+        : '';
 
     // 判断是否可以手动发货（允许多次发货，除了交易关闭的订单）
     const canDeliver = !['closed', 'refunded'].includes(order.order_status);
@@ -12071,59 +12323,49 @@ function createOrderRow(order) {
     return `
         <tr>
             <td>
-                <input type="checkbox" class="order-checkbox" value="${order.order_id}">
+                <input type="checkbox" class="order-checkbox table-check" value="${orderIdAttr}">
             </td>
             <td>
-                <span class="text-truncate d-inline-block" style="max-width: 120px;" title="${order.order_id}">
-                    ${order.order_id}
+                <span class="cell-main" title="${orderIdAttr}">${orderIdText}</span>
+            </td>
+            <td>
+                <span class="cell-main" title="${itemIdAttr}">${itemIdText}</span>
+            </td>
+            <td>
+                <span class="cell-main" title="${buyerIdAttr}">${buyerIdText}</span>
+            </td>
+            <td>
+                <span class="cell-main" title="${buyerNickAttr}">${buyerNickText}</span>
+            </td>
+            <td>
+                <span class="cell-block">
+                    ${specLineOne}
+                    ${specLineTwo ? `<br>${specLineTwo}` : ''}
                 </span>
             </td>
+            <td><span class="cell-main">${escapeHtml(order.quantity || '-')}</span></td>
             <td>
-                <span class="text-truncate d-inline-block" style="max-width: 100px;" title="${order.item_id || ''}">
-                    ${order.item_id || '-'}
-                </span>
-            </td>
-            <td>
-                <span class="text-truncate d-inline-block" style="max-width: 80px;" title="${order.buyer_id || ''}">
-                    ${order.buyer_id || '-'}
-                </span>
-            </td>
-            <td>
-                <span class="text-truncate d-inline-block" style="max-width: 100px;" title="${order.buyer_nick || ''}">
-                    ${order.buyer_nick || '-'}
-                </span>
-            </td>
-            <td>
-                ${order.spec_name && order.spec_value ?
-            `<small class="text-muted">${order.spec_name}:</small><br>${order.spec_value}${order.spec_name_2 && order.spec_value_2 ? `<br><small class="text-muted">${order.spec_name_2}:</small><br>${order.spec_value_2}` : ''}` :
-            '-'
-        }
-            </td>
-            <td>${order.quantity || '-'}</td>
-            <td>
-                <span class="text-success fw-bold">¥${order.amount || '0.00'}</span>
+                <span class="cell-main text-success">¥${escapeHtml(order.amount || '0.00')}</span>
             </td>
             <td>
                 <span class="badge ${statusClass}">${statusText}</span>
             </td>
             <td>
-                <span class="text-truncate d-inline-block" style="max-width: 80px;" title="${order.cookie_id || ''}">
-                    ${order.cookie_id || '-'}
-                </span>
+                <span class="cell-main" title="${cookieIdAttr}">${cookieIdText}</span>
             </td>
             <td>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-success btn-sm" onclick="manualDeliverOrder('${order.order_id}')" title="手动发货" ${canDeliver ? '' : 'disabled'}>
-                        <i class="bi bi-truck"></i>
+                <div class="action-cluster" role="group">
+                    <button class="btn btn-outline-success btn-sm" onclick="manualDeliverOrder('${orderIdJs}')" title="手动发货" ${canDeliver ? '' : 'disabled'}>
+                        手动发货
                     </button>
-                    <button class="btn btn-outline-info btn-sm" onclick="refreshOrderStatus('${order.order_id}')" title="刷新状态">
-                        <i class="bi bi-arrow-repeat"></i>
+                    <button class="btn btn-outline-info btn-sm" onclick="refreshOrderStatus('${orderIdJs}')" title="刷新状态">
+                        刷新状态
                     </button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="showOrderDetail('${order.order_id}')" title="查看详情">
-                        <i class="bi bi-eye"></i>
+                    <button class="btn btn-outline-primary btn-sm" onclick="showOrderDetail('${orderIdJs}')" title="查看详情">
+                        查看详情
                     </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="deleteOrder('${order.order_id}')" title="删除">
-                        <i class="bi bi-trash"></i>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteOrder('${orderIdJs}')" title="删除">
+                        删除
                     </button>
                 </div>
             </td>
@@ -15532,7 +15774,7 @@ function showAccountFaceVerificationModal(accountId, screenshot) {
     // 更新模态框标题
     const modalTitle = document.getElementById('passwordLoginQRModalLabel');
     if (modalTitle) {
-        modalTitle.innerHTML = `<i class="bi bi-shield-exclamation text-warning me-2"></i>人脸验证 - 账号 ${accountId}`;
+        modalTitle.textContent = `人脸验证 - 账号 ${accountId}`;
     }
 
     // 显示截图
@@ -15584,36 +15826,31 @@ async function showVersionInfo(version) {
     if (versionInfo?.versionHistory && versionInfo.versionHistory.length > 0) {
         versionHistoryHtml = versionInfo.versionHistory.map((item, index) => {
             const isLatest = index === 0;
-            const bgClass = isLatest ? 'background: linear-gradient(135deg, #e8f5e9, #c8e6c9);' : 'background: #f8f9fa;';
-            const borderColor = isLatest ? 'border-left: 4px solid #28a745;' : 'border-left: 4px solid #dee2e6;';
-            const badgeStyle = isLatest ? 'background: linear-gradient(135deg, #28a745, #20c997); color: #fff;' : 'background: #6c757d; color: #fff;';
-
             return `
-                <div class="mb-3 p-3 rounded-3" style="${bgClass} ${borderColor}">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="version-history-item${isLatest ? ' is-current' : ''}">
+                    <div class="version-history-item__head">
                         <div>
-                            <span class="badge me-2" style="${badgeStyle} font-size: 14px; padding: 6px 12px;">${item.version}</span>
-                            ${isLatest ? '<span class="badge bg-success" style="font-size: 12px;">最新</span>' : ''}
+                            <span class="badge bg-dark me-2">${escapeHtml(item.version)}</span>
+                            ${isLatest ? '<span class="badge bg-success">最新</span>' : ''}
                         </div>
-                        ${item.date ? `<small style="color: #888; font-size: 13px;"><i class="bi bi-calendar3 me-1"></i>${item.date}</small>` : ''}
+                        ${item.date ? `<small class="text-muted">${escapeHtml(item.date)}</small>` : ''}
                     </div>
-                    <ul class="mb-0 ps-3" style="font-size: 14px; line-height: 1.8; color: #444;">
-                        ${item.updates.map(u => `<li>${u}</li>`).join('')}
+                    <ul class="version-history-item__updates">
+                        ${item.updates.map(u => `<li>${escapeHtml(u)}</li>`).join('')}
                     </ul>
                 </div>
             `;
         }).join('');
     } else {
-        // 兜底：使用默认的版本历史
         versionHistoryHtml = `
-            <div class="mb-3 p-3 rounded-3" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-left: 4px solid #28a745;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="version-history-item is-current">
+                <div class="version-history-item__head">
                     <div>
-                        <span class="badge me-2" style="background: linear-gradient(135deg, #28a745, #20c997); color: #fff; font-size: 14px; padding: 6px 12px;">${version}</span>
-                        <span class="badge bg-success" style="font-size: 12px;">当前</span>
+                        <span class="badge bg-dark me-2">${escapeHtml(version)}</span>
+                        <span class="badge bg-success">当前</span>
                     </div>
                 </div>
-                <ul class="mb-0 ps-3" style="font-size: 14px; line-height: 1.8; color: #444;">
+                <ul class="version-history-item__updates">
                     <li>当前使用的版本</li>
                 </ul>
             </div>
@@ -15623,51 +15860,29 @@ async function showVersionInfo(version) {
     const modalHtml = `
         <div class="modal fade" id="versionInfoModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                <div class="modal-content" style="border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
-                    <div class="modal-header py-3" style="background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%); border: none;">
-                        <h5 class="modal-title" style="color: #fff; font-weight: 600; font-size: 18px;">
-                            <i class="bi bi-info-circle me-2"></i>版本信息
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">版本信息</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body py-4" style="background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 100%); max-height: 70vh;">
-                        <!-- 当前版本 -->
-                        <div class="mb-4">
-                            <h6 style="color: #444; font-size: 16px; font-weight: 600;"><i class="bi bi-tag me-2"></i>当前版本</h6>
-                            <div class="p-3 rounded-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                                <h4 class="mb-0" style="color: #5a67d8; font-size: 24px;">${version}</h4>
-                            </div>
+                    <div class="modal-body">
+                        <div class="modal-section">
+                            <span class="modal-section__label">当前版本</span>
+                            <div class="modal-section__value">${escapeHtml(version)}</div>
                         </div>
-                        
-                        <!-- 版本介绍 -->
-                        <div class="mb-4">
-                            <h6 style="color: #444; font-size: 16px; font-weight: 600;"><i class="bi bi-star me-2"></i>版本介绍</h6>
-                            <div class="p-3 rounded-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                                <div style="font-size: 15px; line-height: 1.7; color: #555;">
-                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                    <strong>说明</strong>：${intro}
-                                </div>
-                            </div>
+                        <div class="modal-section">
+                            <span class="modal-section__label">版本介绍</span>
+                            <div class="modal-section__copy">${escapeHtml(intro)}</div>
                         </div>
-                        
-                        <!-- 更新日志 -->
-                        <div class="mb-3">
-                            <h6 style="color: #444; font-size: 16px; font-weight: 600;"><i class="bi bi-clock-history me-2"></i>更新日志</h6>
-                            <div class="rounded-3 p-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); max-height: 350px; overflow-y: auto;">
+                        <div class="modal-section">
+                            <span class="modal-section__label">更新日志</span>
+                            <div class="version-history-list">
                                 ${versionHistoryHtml}
                             </div>
                         </div>
-                        
-                        <!-- 页脚 -->
-                        <div class="text-center mt-4">
-                            <small style="color: #888; font-size: 14px;">
-                                <i class="bi bi-github me-1"></i>
-                                自动回复助手 | 让客服工作更轻松
-                            </small>
-                        </div>
                     </div>
-                    <div class="modal-footer py-3" style="background: #fff; border-top: 1px solid #e8ecf0;">
-                        <button type="button" class="btn" style="background: #6c757d; color: #fff; font-size: 15px; padding: 8px 24px;" data-bs-dismiss="modal">关闭</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                     </div>
                 </div>
             </div>
@@ -15742,7 +15957,7 @@ async function performHotUpdate() {
     // 禁用按钮，显示加载状态
     if (hotUpdateBtn) {
         hotUpdateBtn.disabled = true;
-        hotUpdateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i>检查更新中...';
+        hotUpdateBtn.textContent = '检查更新中...';
     }
 
     try {
@@ -15823,7 +16038,7 @@ function resetHotUpdateBtn() {
     const hotUpdateBtn = document.getElementById('hotUpdateBtn');
     if (hotUpdateBtn) {
         hotUpdateBtn.disabled = false;
-        hotUpdateBtn.innerHTML = '<i class="bi bi-cloud-download me-1"></i>一键热更新';
+        hotUpdateBtn.textContent = '一键热更新';
     }
 }
 
@@ -15833,67 +16048,56 @@ function resetHotUpdateBtn() {
 async function showHotUpdateConfirmDialog(updateInfo) {
     return new Promise((resolve) => {
         const filesInfo = updateInfo.files && updateInfo.files.length > 0
-            ? updateInfo.files.map(f => `<li><code>${f.path}</code> ${f.requires_restart ? '<span class="badge bg-warning">需重启</span>' : ''}</li>`).join('')
+            ? updateInfo.files.map(f => `<li><code>${escapeHtml(f.path)}</code> ${f.requires_restart ? '<span class="badge bg-warning">需重启</span>' : ''}</li>`).join('')
             : '<li>暂无详细文件列表</li>';
 
         const totalSizeKB = (updateInfo.total_size / 1024).toFixed(2);
 
         const modalHtml = `
             <div class="modal fade" id="hotUpdateConfirmModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content" style="border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
-                        <div class="modal-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
-                            <h5 class="modal-title mb-0" style="color: #fff; font-weight: 600; font-size: 18px;">
-                                <i class="bi bi-cloud-download me-2"></i>确认热更新
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title mb-0">确认热更新</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body py-4 px-4" style="background: linear-gradient(180deg, #f0fff4 0%, #f8fafc 100%);">
-                            <div class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                                <div>
-                                    <div style="color: #666; font-size: 14px;">当前版本</div>
-                                    <div style="font-size: 18px; font-weight: 600; color: #6c757d;">${updateInfo.current_version}</div>
+                        <div class="modal-body">
+                            <div class="modal-metric-grid">
+                                <div class="modal-metric">
+                                    <span class="modal-metric__label">当前版本</span>
+                                    <strong class="modal-metric__value">${escapeHtml(updateInfo.current_version)}</strong>
                                 </div>
-                                <i class="bi bi-arrow-right" style="color: #28a745; font-size: 1.5rem;"></i>
-                                <div>
-                                    <div style="color: #28a745; font-size: 14px;">目标版本</div>
-                                    <div style="font-size: 18px; font-weight: 600; color: #28a745;">${updateInfo.new_version}</div>
+                                <div class="modal-metric">
+                                    <span class="modal-metric__label">目标版本</span>
+                                    <strong class="modal-metric__value">${escapeHtml(updateInfo.new_version)}</strong>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3 p-3 rounded-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span style="color: #666;"><i class="bi bi-files me-1"></i>更新文件数</span>
-                                    <span style="font-weight: 600; color: #333;">${updateInfo.files_count} 个</span>
+                                <div class="modal-metric">
+                                    <span class="modal-metric__label">更新文件数</span>
+                                    <strong class="modal-metric__value">${escapeHtml(String(updateInfo.files_count))} 个</strong>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span style="color: #666;"><i class="bi bi-hdd me-1"></i>下载大小</span>
-                                    <span style="font-weight: 600; color: #333;">${totalSizeKB} KB</span>
+                                <div class="modal-metric">
+                                    <span class="modal-metric__label">下载大小</span>
+                                    <strong class="modal-metric__value">${escapeHtml(totalSizeKB)} KB</strong>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <div style="color: #444; font-size: 14px; font-weight: 600; margin-bottom: 8px;">
-                                    <i class="bi bi-list-check me-1"></i>将更新以下文件：
-                                </div>
-                                <div style="max-height: 150px; overflow-y: auto; background: #f8f9fa; border-radius: 8px; padding: 12px;">
-                                    <ul class="list-unstyled mb-0" style="font-size: 13px;">
+
+                            <div class="modal-section">
+                                <span class="modal-section__label">将更新以下文件</span>
+                                <div style="max-height: 220px; overflow-y: auto;">
+                                    <ul class="modal-list">
                                         ${filesInfo}
                                     </ul>
                                 </div>
                             </div>
-                            
-                            <div class="rounded-3 p-3" style="background: linear-gradient(135deg, #fff3cd, #ffeeba); color: #856404; font-size: 14px;">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                <strong>提示：</strong>更新前会自动备份原文件，如遇问题可恢复。
-                            </div>
+
+                            <div class="modal-note">更新前会自动备份原文件，如遇问题可恢复。</div>
                         </div>
-                        <div class="modal-footer py-3" style="background: #fff; border-top: 1px solid #e8ecf0;">
-                            <button type="button" class="btn" style="background: #f0f0f0; color: #666; border: none; font-size: 15px; padding: 8px 20px;" data-bs-dismiss="modal" id="hotUpdateCancelBtn">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="hotUpdateCancelBtn">
                                 取消
                             </button>
-                            <button type="button" class="btn" style="background: linear-gradient(135deg, #28a745, #20c997); color: #fff; border: none; font-size: 15px; padding: 8px 20px;" id="hotUpdateConfirmBtn">
-                                <i class="bi bi-check-lg me-1"></i>确认更新
+                            <button type="button" class="btn btn-primary" id="hotUpdateConfirmBtn">
+                                确认更新
                             </button>
                         </div>
                     </div>
@@ -15937,13 +16141,13 @@ function showHotUpdateProgress() {
     const modalHtml = `
         <div class="modal fade" id="hotUpdateProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content" style="border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
-                    <div class="modal-body py-4 px-4 text-center" style="background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 100%);">
-                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <div class="modal-content">
+                    <div class="modal-body progress-modal">
+                        <div class="spinner-border text-primary mb-3" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <h5 style="color: #333; font-weight: 600;">正在更新...</h5>
-                        <p id="hotUpdateProgressText" style="color: #666; font-size: 14px; margin-bottom: 0;">正在下载更新文件</p>
+                        <h5 class="mb-2">正在更新</h5>
+                        <p id="hotUpdateProgressText" class="text-muted mb-0">正在下载更新文件</p>
                     </div>
                 </div>
             </div>
@@ -15983,38 +16187,24 @@ function showHotUpdateRestartDialog(updateData) {
     const modalHtml = `
         <div class="modal fade" id="hotUpdateRestartModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
-                    <div class="modal-header py-3" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border: none;">
-                        <h5 class="modal-title mb-0" style="color: #fff; font-weight: 600; font-size: 18px;">
-                            <i class="bi bi-arrow-repeat me-2"></i>更新完成，需要重启
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title mb-0">更新完成，需要重启</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body py-4 px-4" style="background: linear-gradient(180deg, #fffbf0 0%, #f8fafc 100%);">
-                        <div class="text-center mb-4">
-                            <i class="bi bi-check-circle-fill" style="font-size: 64px; color: #28a745;"></i>
+                    <div class="modal-body">
+                        <div class="modal-section">
+                            <span class="modal-section__label">更新结果</span>
+                            <div class="modal-section__copy">共更新 ${escapeHtml(String(updateData.updated_files.length))} 个文件到版本 ${escapeHtml(updateData.new_version)}。</div>
                         </div>
-                        
-                        <div class="mb-3 p-3 rounded-3" style="background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                            <p style="color: #333; font-size: 16px; margin-bottom: 8px;">
-                                <strong>更新成功！</strong>
-                            </p>
-                            <p style="color: #666; font-size: 14px; margin-bottom: 0;">
-                                共更新 <strong>${updateData.updated_files.length}</strong> 个文件到版本 <strong>${updateData.new_version}</strong>
-                            </p>
-                        </div>
-                        
-                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, #fff3cd, #ffeeba); color: #856404; font-size: 14px;">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>注意：</strong>部分更新的文件需要重启应用才能生效。
-                        </div>
+                        <div class="modal-note">部分更新的文件需要重启应用后才能生效。</div>
                     </div>
-                    <div class="modal-footer py-3" style="background: #fff; border-top: 1px solid #e8ecf0;">
-                        <button type="button" class="btn" style="background: #f0f0f0; color: #666; border: none; font-size: 15px; padding: 8px 20px;" data-bs-dismiss="modal">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             稍后重启
                         </button>
-                        <button type="button" class="btn" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: #fff; border: none; font-size: 15px; padding: 8px 20px;" onclick="restartApplication()">
-                            <i class="bi bi-arrow-repeat me-1"></i>立即重启
+                        <button type="button" class="btn btn-primary" onclick="restartApplication()">
+                            立即重启
                         </button>
                     </div>
                 </div>

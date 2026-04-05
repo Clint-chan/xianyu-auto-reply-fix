@@ -2,7 +2,7 @@
 
 
 [![GitHub](https://img.shields.io/badge/GitHub-GuDong2003%2Fxianyu--auto--reply--fix-blue?logo=github)](https://github.com/GuDong2003/xianyu-auto-reply-fix)
-[![Docker](https://img.shields.io/badge/Docker-暂不可用-blue?logo=docker)](https://github.com/zhinianboke/xianyu-auto-reply#-快速开始)
+[![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&logoColor=white)](https://github.com/zhinianboke/xianyu-auto-reply#-快速开始)
 [![Python](https://img.shields.io/badge/Python-3.11+-green?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-仅供学习-red.svg)](#️-版权声明与使用条款)
 
@@ -240,7 +240,25 @@ xianyu-auto-reply/
 
 **⚡ 最快部署方式（推荐）**：使用预构建镜像，无需下载源码，一条命令即可启动！
 
-### 方式一：Docker 一键部署（最简单）⭐
+### 方式一：Docker Compose 部署（推荐）⭐
+
+```bash
+cp .env.docker.example .env.docker
+mkdir -p data logs backups
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+默认访问地址是 `http://localhost:8080`。如果要改端口，修改 `.env.docker` 里的 `APP_PORT`。
+
+常用命令：
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f xianyu-app
+docker compose -f docker-compose.prod.yml down
+```
+
+这套 `docker-compose.prod.yml` 是生产部署用法，不会把整个源码目录挂进容器；原来的 `docker-compose.yml` 继续保留给本地开发调试。
 
 <details>
 <summary>暂未测试</summary>

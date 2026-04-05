@@ -366,6 +366,7 @@ class DBManager:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 keyword TEXT NOT NULL,
                 card_id INTEGER NOT NULL,
+                card_ids TEXT,
                 delivery_count INTEGER DEFAULT 1,
                 enabled BOOLEAN DEFAULT TRUE,
                 description TEXT,
@@ -1081,6 +1082,17 @@ Cookie数量: {cookie_count}
                 except sqlite3.OperationalError:
                     self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN item_ids TEXT")
                     logger.info("已添加 item_ids 字段到 delivery_rules 表")
+
+                # 为delivery_rules表添加card_ids字段（如果不存在）
+                try:
+                    self._execute_sql(cursor, "SELECT card_ids FROM delivery_rules LIMIT 1")
+                except sqlite3.OperationalError:
+                    self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN card_ids TEXT")
+                    self._execute_sql(
+                        cursor,
+                        "UPDATE delivery_rules SET card_ids = '[' || card_id || ']' WHERE (card_ids IS NULL OR card_ids = '') AND card_id IS NOT NULL"
+                    )
+                    logger.info("已添加 card_ids 字段到 delivery_rules 表")
 
                 # 为notification_channels表添加user_id字段（如果不存在）
                 try:
@@ -4487,18 +4499,30 @@ Cookie数量: {cookie_count}
 
     def create_delivery_rule(self, keyword: str, card_id: int, delivery_count: int = 1,
                            enabled: bool = True, description: str = None, user_id: int = None,
-                           item_ids: str = None):
+                           item_ids: str = None, card_ids=None):
         """创建发货规则"""
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
+                normalized_card_ids = self._normalize_card_ids(card_ids, card_id)
+                primary_card_id = normalized_card_ids[0] if normalized_card_ids else int(card_id)
                 cursor.execute('''
-                INSERT INTO delivery_rules (keyword, card_id, delivery_count, enabled, description, user_id, item_ids)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (keyword, card_id, delivery_count, enabled, description, user_id, item_ids))
+                INSERT INTO delivery_rules (keyword, card_id, card_ids, delivery_count, enabled, description, user_id, item_ids)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    keyword,
+                    primary_card_id,
+                    json.dumps(normalized_card_ids, ensure_ascii=False),
+                    delivery_count,
+                    enabled,
+                    description,
+                    user_id,
+                    item_ids
+                ))
                 self.conn.commit()
                 rule_id = cursor.lastrowid
-                logger.info(f"创建发货规则成功: {keyword} -> 卡券ID {card_id} (规则ID: {rule_id})")
+                logger.info(f"创建发货规则成功: {keyword} -> 卡券ID列表 {normalized_card_ids} (规则ID: {rule_id})")
                 return rule_id
             except Exception as e:
                 logger.error(f"创建发货规则失败: {e}")
@@ -4509,50 +4533,39 @@ Cookie数量: {cookie_count}
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
                 if user_id is not None:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
-                           c.name as card_name, c.type as card_type,
-                           c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2
-                    FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    WHERE dr.user_id = ?
-                    ORDER BY dr.created_at DESC
+                    SELECT id, keyword, card_id, card_ids, delivery_count, enabled,
+                           description, delivery_times, created_at, updated_at, item_ids
+                    FROM delivery_rules
+                    WHERE user_id = ?
+                    ORDER BY created_at DESC
                     ''', (user_id,))
                 else:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
-                           c.name as card_name, c.type as card_type,
-                           c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2
-                    FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    ORDER BY dr.created_at DESC
+                    SELECT id, keyword, card_id, card_ids, delivery_count, enabled,
+                           description, delivery_times, created_at, updated_at, item_ids
+                    FROM delivery_rules
+                    ORDER BY created_at DESC
                     ''')
 
                 rules = []
                 for row in cursor.fetchall():
-                    rules.append({
+                    rule_data = {
                         'id': row[0],
                         'keyword': row[1],
                         'card_id': row[2],
-                        'delivery_count': row[3],
-                        'enabled': bool(row[4]),
-                        'description': row[5],
-                        'delivery_times': row[6],
-                        'created_at': row[7],
-                        'updated_at': row[8],
-                        'card_name': row[9],
-                        'card_type': row[10],
-                        'is_multi_spec': bool(row[11]) if row[11] is not None else False,
-                        'spec_name': row[12],
-                        'spec_value': row[13],
-                        'spec_name_2': row[14],
-                        'spec_value_2': row[15]
-                    })
+                        'card_ids': row[3],
+                        'delivery_count': row[4],
+                        'enabled': bool(row[5]),
+                        'description': row[6],
+                        'delivery_times': row[7],
+                        'created_at': row[8],
+                        'updated_at': row[9],
+                        'item_ids': row[10]
+                    }
+                    rules.append(self._hydrate_delivery_rule_summary(cursor, rule_data))
 
                 return rules
             except Exception as e:
@@ -4579,36 +4592,169 @@ Cookie数量: {cookie_count}
             pass
         return {'is_multi_spec': False, 'spec_name': '', 'spec_value': '', 'spec_name_2': '', 'spec_value_2': ''}
 
+    def _ensure_delivery_rule_card_ids_column(self, cursor):
+        """确保 delivery_rules.card_ids 字段存在，兼容旧数据库"""
+        try:
+            self._execute_sql(cursor, "SELECT card_ids FROM delivery_rules LIMIT 1")
+        except sqlite3.OperationalError:
+            self._execute_sql(cursor, "ALTER TABLE delivery_rules ADD COLUMN card_ids TEXT")
+            self._execute_sql(
+                cursor,
+                "UPDATE delivery_rules SET card_ids = '[' || card_id || ']' WHERE (card_ids IS NULL OR card_ids = '') AND card_id IS NOT NULL"
+            )
+            self.conn.commit()
+            logger.info("运行时补齐 delivery_rules.card_ids 字段成功")
+
+    def _normalize_card_ids(self, card_ids, fallback_card_id: int = None) -> List[int]:
+        """标准化规则绑定的卡券ID列表"""
+        normalized: List[int] = []
+        raw_values = []
+
+        if isinstance(card_ids, str) and card_ids.strip():
+            try:
+                parsed = json.loads(card_ids)
+                if isinstance(parsed, list):
+                    raw_values.extend(parsed)
+                else:
+                    raw_values.append(parsed)
+            except (json.JSONDecodeError, TypeError):
+                raw_values.extend([part.strip() for part in card_ids.split(',') if part.strip()])
+        elif isinstance(card_ids, (list, tuple, set)):
+            raw_values.extend(list(card_ids))
+        elif card_ids not in (None, ''):
+            raw_values.append(card_ids)
+
+        if fallback_card_id not in (None, ''):
+            raw_values.insert(0, fallback_card_id)
+
+        for value in raw_values:
+            try:
+                card_id = int(value)
+            except (TypeError, ValueError):
+                continue
+            if card_id > 0 and card_id not in normalized:
+                normalized.append(card_id)
+
+        return normalized
+
+    def _get_cards_by_ids(self, cursor, card_ids: List[int]) -> List[Dict[str, Any]]:
+        """按顺序获取多张卡券详情（内部方法，调用者需持有锁）"""
+        card_ids = self._normalize_card_ids(card_ids)
+        if not card_ids:
+            return []
+
+        placeholders = ','.join(['?'] * len(card_ids))
+        self._execute_sql(cursor, f'''
+            SELECT id, name, type, api_config, text_content, data_content, image_url,
+                   enabled, description, delay_seconds, is_multi_spec,
+                   spec_name, spec_value, spec_name_2, spec_value_2
+            FROM cards
+            WHERE id IN ({placeholders})
+        ''', tuple(card_ids))
+
+        card_map: Dict[int, Dict[str, Any]] = {}
+        for row in cursor.fetchall():
+            api_config = row[3]
+            if api_config:
+                try:
+                    api_config = json.loads(api_config)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            card_map[row[0]] = {
+                'id': row[0],
+                'name': row[1],
+                'type': row[2],
+                'api_config': api_config,
+                'text_content': row[4],
+                'data_content': row[5],
+                'image_url': row[6],
+                'enabled': bool(row[7]),
+                'description': row[8],
+                'delay_seconds': row[9] or 0,
+                'is_multi_spec': bool(row[10]) if row[10] is not None else False,
+                'spec_name': row[11],
+                'spec_value': row[12],
+                'spec_name_2': row[13],
+                'spec_value_2': row[14]
+            }
+
+        return [card_map[card_id] for card_id in card_ids if card_id in card_map]
+
+    def _hydrate_delivery_rule_summary(self, cursor, rule_data: Dict[str, Any]) -> Dict[str, Any]:
+        """为发货规则补充关联卡券摘要信息"""
+        card_ids = self._normalize_card_ids(rule_data.get('card_ids'), rule_data.get('card_id'))
+        related_cards = self._get_cards_by_ids(cursor, card_ids)
+        primary_card = related_cards[0] if related_cards else {}
+
+        hydrated = dict(rule_data)
+        hydrated['card_id'] = primary_card.get('id') or (card_ids[0] if card_ids else rule_data.get('card_id'))
+        hydrated['card_ids'] = json.dumps(card_ids, ensure_ascii=False)
+        hydrated['related_cards'] = related_cards
+        hydrated['card_name'] = primary_card.get('name')
+        hydrated['card_type'] = primary_card.get('type')
+        hydrated['is_multi_spec'] = primary_card.get('is_multi_spec', False)
+        hydrated['spec_name'] = primary_card.get('spec_name')
+        hydrated['spec_value'] = primary_card.get('spec_value')
+        hydrated['spec_name_2'] = primary_card.get('spec_name_2')
+        hydrated['spec_value_2'] = primary_card.get('spec_value_2')
+        return hydrated
+
+    def _expand_delivery_rule_candidates(self, cursor, rule_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """把一条规则展开成多个卡券候选，用于自动发货匹配"""
+        summary = self._hydrate_delivery_rule_summary(cursor, rule_data)
+        related_cards = summary.get('related_cards') or []
+        if not related_cards:
+            return []
+
+        candidates: List[Dict[str, Any]] = []
+        for index, card in enumerate(related_cards):
+            if not card.get('enabled', True):
+                continue
+            candidate = dict(summary)
+            candidate.update({
+                'card_id': card['id'],
+                'card_name': card['name'],
+                'card_type': card['type'],
+                'api_config': card.get('api_config'),
+                'text_content': card.get('text_content'),
+                'data_content': card.get('data_content'),
+                'image_url': card.get('image_url'),
+                'card_enabled': card.get('enabled', True),
+                'card_description': card.get('description'),
+                'card_delay_seconds': card.get('delay_seconds', 0),
+                'is_multi_spec': card.get('is_multi_spec', False),
+                'spec_name': card.get('spec_name'),
+                'spec_value': card.get('spec_value'),
+                'spec_name_2': card.get('spec_name_2'),
+                'spec_value_2': card.get('spec_value_2'),
+                'is_primary_card': index == 0
+            })
+            candidates.append(candidate)
+
+        return candidates
+
     def get_delivery_rules_by_item_id(self, item_id: str, user_id: int = None):
         """根据商品ID精确匹配发货规则（优先于关键词匹配）"""
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
                 if user_id:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.item_ids,
-                           c.name as card_name, c.type as card_type, c.api_config,
-                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled,
-                           c.description as card_description,
-                           c.delay_seconds as card_delay_seconds
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.item_ids
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    WHERE dr.enabled = 1 AND c.enabled = 1 AND dr.user_id = ?
+                    WHERE dr.enabled = 1 AND dr.user_id = ?
                     AND dr.item_ids IS NOT NULL AND dr.item_ids != ''
                     ORDER BY dr.delivery_times ASC, dr.id ASC
                     ''', (user_id,))
                 else:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.item_ids,
-                           c.name as card_name, c.type as card_type, c.api_config,
-                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled,
-                           c.description as card_description,
-                           c.delay_seconds as card_delay_seconds
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.item_ids
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    WHERE dr.enabled = 1 AND c.enabled = 1
+                    WHERE dr.enabled = 1
                     AND dr.item_ids IS NOT NULL AND dr.item_ids != ''
                     ORDER BY dr.delivery_times ASC, dr.id ASC
                     ''')
@@ -4616,29 +4762,25 @@ Cookie数量: {cookie_count}
                 import json
                 rules = []
                 for row in cursor.fetchall():
-                    item_ids_str = row[7] or ''
+                    item_ids_str = row[8] or ''
                     try:
                         item_ids_list = json.loads(item_ids_str) if item_ids_str else []
                     except (json.JSONDecodeError, TypeError):
                         item_ids_list = []
 
                     if item_id in item_ids_list:
-                        # 获取卡券的规格信息
-                        card_id = row[2]
-                        card_spec = self._get_card_spec_info(cursor, card_id)
                         rule_dict = {
-                            'id': row[0], 'keyword': row[1], 'card_id': card_id,
-                            'delivery_count': row[3], 'enabled': row[4],
-                            'description': row[5], 'delivery_times': row[6],
-                            'item_ids': item_ids_str,
-                            'card_name': row[8], 'card_type': row[9],
-                            'api_config': row[10], 'text_content': row[11],
-                            'data_content': row[12], 'image_url': row[13],
-                            'card_enabled': row[14], 'card_description': row[15],
-                            'card_delay_seconds': row[16]
+                            'id': row[0],
+                            'keyword': row[1],
+                            'card_id': row[2],
+                            'card_ids': row[3],
+                            'delivery_count': row[4],
+                            'enabled': bool(row[5]),
+                            'description': row[6],
+                            'delivery_times': row[7],
+                            'item_ids': item_ids_str
                         }
-                        rule_dict.update(card_spec)
-                        rules.append(rule_dict)
+                        rules.extend(self._expand_delivery_rule_candidates(cursor, rule_dict))
                 return rules
             except Exception as e:
                 logger.error(f"根据商品ID获取发货规则失败: {e}")
@@ -4654,17 +4796,14 @@ Cookie数量: {cookie_count}
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
                 # 使用更灵活的匹配方式：既支持商品内容包含关键字，也支持关键字包含在商品内容中
                 if user_id is not None:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times,
-                           c.name as card_name, c.type as card_type, c.api_config,
-                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled, c.description as card_description,
-                           c.delay_seconds as card_delay_seconds
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    WHERE dr.enabled = 1 AND c.enabled = 1 AND dr.user_id = ?
+                    WHERE dr.enabled = 1 AND dr.user_id = ?
                     AND (? LIKE '%' || dr.keyword || '%' OR dr.keyword LIKE '%' || ? || '%')
                     ORDER BY
                         CASE
@@ -4675,14 +4814,10 @@ Cookie数量: {cookie_count}
                     ''', (user_id, keyword, keyword, keyword))
                 else:
                     cursor.execute('''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times,
-                           c.name as card_name, c.type as card_type, c.api_config,
-                           c.text_content, c.data_content, c.image_url, c.enabled as card_enabled, c.description as card_description,
-                           c.delay_seconds as card_delay_seconds
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
-                    WHERE dr.enabled = 1 AND c.enabled = 1
+                    WHERE dr.enabled = 1
                     AND (? LIKE '%' || dr.keyword || '%' OR dr.keyword LIKE '%' || ? || '%')
                     ORDER BY
                         CASE
@@ -4694,34 +4829,17 @@ Cookie数量: {cookie_count}
 
                 rules = []
                 for row in cursor.fetchall():
-                    # 解析api_config JSON字符串
-                    api_config = row[9]
-                    if api_config:
-                        try:
-                            import json
-                            api_config = json.loads(api_config)
-                        except (json.JSONDecodeError, TypeError):
-                            # 如果解析失败，保持原始字符串
-                            pass
-
-                    rules.append({
+                    rule_data = {
                         'id': row[0],
                         'keyword': row[1],
                         'card_id': row[2],
-                        'delivery_count': row[3],
-                        'enabled': bool(row[4]),
-                        'description': row[5],
-                        'delivery_times': row[6],
-                        'card_name': row[7],
-                        'card_type': row[8],
-                        'api_config': api_config,  # 修复字段名
-                        'text_content': row[10],
-                        'data_content': row[11],
-                        'image_url': row[12],
-                        'card_enabled': bool(row[13]),
-                        'card_description': row[14],  # 卡券备注信息
-                        'card_delay_seconds': row[15] or 0  # 延时秒数
-                    })
+                        'card_ids': row[3],
+                        'delivery_count': row[4],
+                        'enabled': bool(row[5]),
+                        'description': row[6],
+                        'delivery_times': row[7]
+                    }
+                    rules.extend(self._expand_delivery_rule_candidates(cursor, rule_data))
 
                 return rules
             except Exception as e:
@@ -4733,50 +4851,38 @@ Cookie数量: {cookie_count}
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
                 if user_id is not None:
                     self._execute_sql(cursor, '''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
-                           c.name as card_name, c.type as card_type,
-                           c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2, dr.item_ids
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at, dr.item_ids
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
                     WHERE dr.id = ? AND dr.user_id = ?
                     ''', (rule_id, user_id))
                 else:
                     self._execute_sql(cursor, '''
-                    SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at,
-                           c.name as card_name, c.type as card_type,
-                           c.is_multi_spec, c.spec_name, c.spec_value,
-                           c.spec_name_2, c.spec_value_2, dr.item_ids
+                    SELECT dr.id, dr.keyword, dr.card_id, dr.card_ids, dr.delivery_count, dr.enabled,
+                           dr.description, dr.delivery_times, dr.created_at, dr.updated_at, dr.item_ids
                     FROM delivery_rules dr
-                    LEFT JOIN cards c ON dr.card_id = c.id
                     WHERE dr.id = ?
                     ''', (rule_id,))
 
                 row = cursor.fetchone()
                 if row:
-                    return {
+                    rule_data = {
                         'id': row[0],
                         'keyword': row[1],
                         'card_id': row[2],
-                        'delivery_count': row[3],
-                        'enabled': bool(row[4]),
-                        'description': row[5],
-                        'delivery_times': row[6],
-                        'created_at': row[7],
-                        'updated_at': row[8],
-                        'card_name': row[9],
-                        'card_type': row[10],
-                        'is_multi_spec': bool(row[11]) if row[11] is not None else False,
-                        'spec_name': row[12],
-                        'spec_value': row[13],
-                        'spec_name_2': row[14],
-                        'spec_value_2': row[15],
-                        'item_ids': row[16]
+                        'card_ids': row[3],
+                        'delivery_count': row[4],
+                        'enabled': bool(row[5]),
+                        'description': row[6],
+                        'delivery_times': row[7],
+                        'created_at': row[8],
+                        'updated_at': row[9],
+                        'item_ids': row[10]
                     }
+                    return self._hydrate_delivery_rule_summary(cursor, rule_data)
                 return None
             except Exception as e:
                 logger.error(f"获取发货规则失败: {e}")
@@ -4785,11 +4891,12 @@ Cookie数量: {cookie_count}
     def update_delivery_rule(self, rule_id: int, keyword: str = None, card_id: int = None,
                            delivery_count: int = None, enabled: bool = None,
                            description: str = None, user_id: int = None,
-                           item_ids: str = None):
+                           item_ids: str = None, card_ids=None):
         """更新发货规则（支持用户隔离）"""
         with self.lock:
             try:
                 cursor = self.conn.cursor()
+                self._ensure_delivery_rule_card_ids_column(cursor)
 
                 # 构建更新语句
                 update_fields = []
@@ -4798,9 +4905,14 @@ Cookie数量: {cookie_count}
                 if keyword is not None:
                     update_fields.append("keyword = ?")
                     params.append(keyword)
-                if card_id is not None:
+                normalized_card_ids = None
+                if card_ids is not None or card_id is not None:
+                    normalized_card_ids = self._normalize_card_ids(card_ids, card_id)
+                if normalized_card_ids:
                     update_fields.append("card_id = ?")
-                    params.append(card_id)
+                    params.append(normalized_card_ids[0])
+                    update_fields.append("card_ids = ?")
+                    params.append(json.dumps(normalized_card_ids, ensure_ascii=False))
                 if delivery_count is not None:
                     update_fields.append("delivery_count = ?")
                     params.append(delivery_count)
@@ -4905,183 +5017,47 @@ Cookie数量: {cookie_count}
 
     def get_delivery_rules_by_keyword_and_spec(self, keyword: str, spec_name: str = None, spec_value: str = None,
                                                spec_name_2: str = None, spec_value_2: str = None, user_id: int = None):
-        """根据关键字和规格信息获取匹配的发货规则（支持双规格）
-
-        Args:
-            keyword: 搜索关键字（商品标题）
-            spec_name: 规格1名称
-            spec_value: 规格1值
-            spec_name_2: 规格2名称
-            spec_value_2: 规格2值
-            user_id: 用户ID，用于过滤只属于该用户的发货规则
-        """
-        with self.lock:
-            try:
-                cursor = self.conn.cursor()
-
-                # 构建user_id过滤条件
-                user_filter = "AND dr.user_id = ?" if user_id is not None else ""
-
-                # 优先匹配：卡券名称+规格1+规格2（如果都有的话）
-                if spec_name and spec_value:
-                    # 构建匹配条件：规格1必须匹配，规格2如果订单有则必须匹配，如果订单没有则卡券也不能有
-                    if spec_name_2 and spec_value_2:
-                        # 订单有双规格，卡券也必须有双规格且都匹配
-                        sql = f'''
-                        SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                               dr.description, dr.delivery_times,
-                               c.name as card_name, c.type as card_type, c.api_config,
-                               c.text_content, c.data_content, c.enabled as card_enabled,
-                               c.description as card_description, c.delay_seconds as card_delay_seconds,
-                               c.is_multi_spec, c.spec_name, c.spec_value, c.spec_name_2, c.spec_value_2
-                        FROM delivery_rules dr
-                        LEFT JOIN cards c ON dr.card_id = c.id
-                        WHERE dr.enabled = 1 AND c.enabled = 1 {user_filter}
-                        AND (? LIKE '%' || dr.keyword || '%' OR dr.keyword LIKE '%' || ? || '%')
-                        AND c.is_multi_spec = 1 AND c.spec_name = ? AND c.spec_value = ?
-                        AND c.spec_name_2 = ? AND c.spec_value_2 = ?
-                        ORDER BY
-                            CASE
-                                WHEN ? LIKE '%' || dr.keyword || '%' THEN LENGTH(dr.keyword)
-                                ELSE LENGTH(dr.keyword) / 2
-                            END DESC,
-                            dr.delivery_times ASC
-                        '''
-                        params = [user_id, keyword, keyword, spec_name, spec_value, spec_name_2, spec_value_2, keyword] if user_id is not None else [keyword, keyword, spec_name, spec_value, spec_name_2, spec_value_2, keyword]
-                        cursor.execute(sql, [p for p in params if p is not None or user_id is None])
-                    else:
-                        # 订单只有单规格，优先匹配只有单规格的卡券
-                        sql = f'''
-                        SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                               dr.description, dr.delivery_times,
-                               c.name as card_name, c.type as card_type, c.api_config,
-                               c.text_content, c.data_content, c.enabled as card_enabled,
-                               c.description as card_description, c.delay_seconds as card_delay_seconds,
-                               c.is_multi_spec, c.spec_name, c.spec_value, c.spec_name_2, c.spec_value_2
-                        FROM delivery_rules dr
-                        LEFT JOIN cards c ON dr.card_id = c.id
-                        WHERE dr.enabled = 1 AND c.enabled = 1 {user_filter}
-                        AND (? LIKE '%' || dr.keyword || '%' OR dr.keyword LIKE '%' || ? || '%')
-                        AND c.is_multi_spec = 1 AND c.spec_name = ? AND c.spec_value = ?
-                        AND (c.spec_name_2 IS NULL OR c.spec_name_2 = '')
-                        ORDER BY
-                            CASE
-                                WHEN ? LIKE '%' || dr.keyword || '%' THEN LENGTH(dr.keyword)
-                                ELSE LENGTH(dr.keyword) / 2
-                            END DESC,
-                            dr.delivery_times ASC
-                        '''
-                        params = [user_id, keyword, keyword, spec_name, spec_value, keyword] if user_id is not None else [keyword, keyword, spec_name, spec_value, keyword]
-                        cursor.execute(sql, [p for p in params if p is not None or user_id is None])
-
-                    rules = []
-                    for row in cursor.fetchall():
-                        # 解析api_config JSON字符串
-                        api_config = row[9]
-                        if api_config:
-                            try:
-                                import json
-                                api_config = json.loads(api_config)
-                            except (json.JSONDecodeError, TypeError):
-                                # 如果解析失败，保持原始字符串
-                                pass
-
-                        rules.append({
-                            'id': row[0],
-                            'keyword': row[1],
-                            'card_id': row[2],
-                            'delivery_count': row[3],
-                            'enabled': bool(row[4]),
-                            'description': row[5],
-                            'delivery_times': row[6] or 0,
-                            'card_name': row[7],
-                            'card_type': row[8],
-                            'api_config': api_config,
-                            'text_content': row[10],
-                            'data_content': row[11],
-                            'card_enabled': bool(row[12]),
-                            'card_description': row[13],
-                            'card_delay_seconds': row[14] or 0,
-                            'is_multi_spec': bool(row[15]),
-                            'spec_name': row[16],
-                            'spec_value': row[17],
-                            'spec_name_2': row[18],
-                            'spec_value_2': row[19]
-                        })
-
-                    if rules:
-                        if spec_name_2 and spec_value_2:
-                            logger.info(f"找到双规格匹配规则: {keyword} - {spec_name}:{spec_value}, {spec_name_2}:{spec_value_2}")
-                        else:
-                            logger.info(f"找到单规格匹配规则: {keyword} - {spec_name}:{spec_value}")
-                        return rules
-
-                # 兜底匹配：仅卡券名称
-                cursor.execute('''
-                SELECT dr.id, dr.keyword, dr.card_id, dr.delivery_count, dr.enabled,
-                       dr.description, dr.delivery_times,
-                       c.name as card_name, c.type as card_type, c.api_config,
-                       c.text_content, c.data_content, c.enabled as card_enabled,
-                       c.description as card_description, c.delay_seconds as card_delay_seconds,
-                       c.is_multi_spec, c.spec_name, c.spec_value, c.spec_name_2, c.spec_value_2
-                FROM delivery_rules dr
-                LEFT JOIN cards c ON dr.card_id = c.id
-                WHERE dr.enabled = 1 AND c.enabled = 1
-                AND (? LIKE '%' || dr.keyword || '%' OR dr.keyword LIKE '%' || ? || '%')
-                AND (c.is_multi_spec = 0 OR c.is_multi_spec IS NULL)
-                ORDER BY
-                    CASE
-                        WHEN ? LIKE '%' || dr.keyword || '%' THEN LENGTH(dr.keyword)
-                        ELSE LENGTH(dr.keyword) / 2
-                    END DESC,
-                    dr.delivery_times ASC
-                ''', (keyword, keyword, keyword))
-
-                rules = []
-                for row in cursor.fetchall():
-                    # 解析api_config JSON字符串
-                    api_config = row[9]
-                    if api_config:
-                        try:
-                            import json
-                            api_config = json.loads(api_config)
-                        except (json.JSONDecodeError, TypeError):
-                            # 如果解析失败，保持原始字符串
-                            pass
-
-                    rules.append({
-                        'id': row[0],
-                        'keyword': row[1],
-                        'card_id': row[2],
-                        'delivery_count': row[3],
-                        'enabled': bool(row[4]),
-                        'description': row[5],
-                        'delivery_times': row[6] or 0,
-                        'card_name': row[7],
-                        'card_type': row[8],
-                        'api_config': api_config,
-                        'text_content': row[10],
-                        'data_content': row[11],
-                        'card_enabled': bool(row[12]),
-                        'card_description': row[13],
-                        'card_delay_seconds': row[14] or 0,
-                        'is_multi_spec': bool(row[15]) if row[15] is not None else False,
-                        'spec_name': row[16],
-                        'spec_value': row[17],
-                        'spec_name_2': row[18],
-                        'spec_value_2': row[19]
-                    })
-
-                if rules:
-                    logger.info(f"找到兜底匹配规则: {keyword}")
-                else:
-                    logger.info(f"未找到匹配规则: {keyword}")
-
-                return rules
-
-            except Exception as e:
-                logger.error(f"获取发货规则失败: {e}")
+        """根据关键字和规格信息获取匹配的发货规则（支持同一规则绑定多个规格卡券）"""
+        try:
+            rules = self.get_delivery_rules_by_keyword(keyword, user_id=user_id)
+            if not rules:
+                logger.info(f"未找到匹配规则: {keyword}")
                 return []
+
+            matched_rules: List[Dict[str, Any]] = []
+            for rule in rules:
+                if not rule.get('card_enabled', True):
+                    continue
+                if not rule.get('is_multi_spec'):
+                    continue
+                if not spec_name or not spec_value:
+                    continue
+                if rule.get('spec_name') != spec_name or rule.get('spec_value') != spec_value:
+                    continue
+
+                has_second_spec = bool(rule.get('spec_name_2') and rule.get('spec_value_2'))
+                if spec_name_2 and spec_value_2:
+                    if not has_second_spec:
+                        continue
+                    if rule.get('spec_name_2') != spec_name_2 or rule.get('spec_value_2') != spec_value_2:
+                        continue
+                elif has_second_spec:
+                    continue
+
+                matched_rules.append(rule)
+
+            if matched_rules:
+                if spec_name_2 and spec_value_2:
+                    logger.info(f"找到双规格匹配规则: {keyword} - {spec_name}:{spec_value}, {spec_name_2}:{spec_value_2}")
+                else:
+                    logger.info(f"找到单规格匹配规则: {keyword} - {spec_name}:{spec_value}")
+            else:
+                logger.info(f"未找到匹配规格规则: {keyword}")
+
+            return matched_rules
+        except Exception as e:
+            logger.error(f"获取发货规则失败: {e}")
+            return []
 
     def delete_card(self, card_id: int):
         """删除卡券"""
